@@ -275,16 +275,256 @@ grep -v SPAIN4 temp2 > LRRK2_condi_covariates.MF.txt
 
 #### Covariate files with GS and '5 variant <= meaning normal files...
 
-```
-FILL IT!!!!
 
 ```
+### loop for making PCA
+cd /data/LNG/CORNELIS_TEMP/PD_AAO/pre_impute_vcf_files/
+# all samplessss!!
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+do 
+	cd $line
+	plink --bfile $line --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
+	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
+	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_NORMAL
+	scp $line.LRRK2_condi_PCA_NORMAL.eigenvec /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/
+	cd ..
+done
+
+```
+
+Then merge new PC's with other phenotype data we already have
+
+```
+### Merge new PC's in R with other data
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/
+
+cat *.eigenvec > new_fresh_PCs_NORMAL.txt
+
+module load R
+R
+cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+PC <- read.table("new_fresh_PCs_NORMAL.txt",header=F)
+cov2 <- cov[,c(1:10)]
+MM <- merge(cov2,PC,by.x="FID",by.y="V1")
+MM$V2 <- NULL
+MM2 <- MM[,c(1:20)]
+colnames(MM2)[11]  <- "PC1"
+colnames(MM2)[12]  <- "PC2"
+colnames(MM2)[13]  <- "PC3"
+colnames(MM2)[14]  <- "PC4"
+colnames(MM2)[15]  <- "PC5"
+colnames(MM2)[16]  <- "PC6"
+colnames(MM2)[17]  <- "PC7"
+colnames(MM2)[18]  <- "PC8"
+colnames(MM2)[19]  <- "PC9"
+colnames(MM2)[20]  <- "PC10"
+write.table(MM2, file="LRRK2_condi_covariates_NORMAL.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+# then subset each cohort due to potentially overlapping sample names...
+
+head -1 LRRK2_condi_covariates_NORMAL.txt > header.txt
+
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+do 
+grep $line LRRK2_condi_covariates_NORMAL.txt > temp
+cat header.txt temp > LRRK2_condi_covariates_NORMAL.$line.txt
+done
+
+# fix MF data...
+grep -v HBS LRRK2_condi_covariates_NORMAL.MF.txt > temp
+grep -v PDBP temp > temp2
+grep -v SPAIN4 temp2 > LRRK2_condi_covariates_NORMAL.MF.txt
+# fixed...
+
+```
+
+### 3. Running GWAS on IPDGC data 
 
 
+#### variants of interest:
+```
+12:40657700	p.Asn551Lys
+12:40671989	p.Ile723Val
+12:40702911	p.Arg1398His
+12:40707778	p.Arg1514Gln
+12:40707861	p.Pro1542Ser
+12:40713899	p.Met1646Thr
+12:40740686	p.Asn2081Asp
+12:40734202	p.Gly2019Ser
+12:40713901	p.Ser1647Thr
+12:40758652	p.Met2397Thr
+12:40614434	rs76904798
+```
 
-### 3. Adding in UKBiobank
+#### covariates for GWAS no '5 risk and GS
+```
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
+LRRK2_condi_covariates.DUTCH.txt
+LRRK2_condi_covariates.GERMANY.txt
+LRRK2_condi_covariates.HBS.txt
+LRRK2_condi_covariates.MCGILL.txt
+LRRK2_condi_covariates.MF.txt
+LRRK2_condi_covariates.NEUROX_DBGAP.txt
+LRRK2_condi_covariates.NIA.txt
+LRRK2_condi_covariates.PDBP.txt
+LRRK2_condi_covariates.PPMI.txt
+LRRK2_condi_covariates.SHULMAN.txt
+LRRK2_condi_covariates.SPAIN3.txt
+LRRK2_condi_covariates.VANCE.txt
+LRRK2_condi_covariates.SPAIN4.txt
+```
+
+#### "normal" covariates for GWAS 
+```
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
+LRRK2_condi_covariates.DUTCH.txt
+LRRK2_condi_covariates.GERMANY.txt
+LRRK2_condi_covariates.HBS.txt
+LRRK2_condi_covariates.MCGILL.txt
+LRRK2_condi_covariates.MF.txt
+LRRK2_condi_covariates.NEUROX_DBGAP.txt
+LRRK2_condi_covariates.NIA.txt
+LRRK2_condi_covariates.PDBP.txt
+LRRK2_condi_covariates.PPMI.txt
+LRRK2_condi_covariates.SHULMAN.txt
+LRRK2_condi_covariates.SPAIN3.txt
+LRRK2_condi_covariates.VANCE.txt
+LRRK2_condi_covariates.SPAIN4.txt
+```
+
+
+#### GWAS start...
+```
+cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+
+module load plink/2.0-dev-20191128
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
+--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/TEST
+
+# run test in loop....
+### normal
+module load plink/2.0-dev-20191128
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+do 
+	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--pheno-name PHENO_PLINK --covar-variance-standardize \
+	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--covar-name AGE,SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--pheno-name PHENO_PLINK --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.VANCE
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--pheno-name PHENO_PLINK --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.MF
+
+
+### condi
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+do 
+	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--pheno-name PHENOTYPE --covar-variance-standardize \
+	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.VANCE
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.MF
+
+```
+
+#### munging data before continuing
+
+```
+Files => 
+CONDI_GWAS.*.PHENOTYPE.glm.logistic.hybrid
+NORMAL_GWAS.*.PHENO_PLINK.glm.logistic.hybrid
+
+columns of interest... => 3,4,5,6,13,19,20,22
+cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS.*.PHENOTYPE.glm.logistic.hybrid > DATASETNAME_GWAS.txt
+
+# loop over...
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+do 
+	cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS.$line.PHENOTYPE.glm.logistic.hybrid > ../CONDI_GWAS.$line.txt
+	cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS.$line.PHENO_PLINK.glm.logistic.hybrid > ../NORMAL_GWAS.$line.txt
+done
+
+mkdir NORMAL
+mkdir CONDI
+mkdir prep_files
+mv *.log prep_files/
+mv *.hybrid prep_files/
+mv CONDI_GWAS* CONDI/
+mv NORMAL_GWAS* NORMAL/
+
+# DONE for now....
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW
+HEADER:
+ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
+
+```
+
+
+### 4. Adding in UKBiobank
  This section goes through: 
-- Adding the UK Biobank data to point 2
+- Adding the UK Biobank data (bit long section though)
 
 ```
 # raw data filtered and unrelated:
@@ -736,10 +976,9 @@ n
 ```
 
 ```
-# redo metal with UKB included...
+# reformat further....
 cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB_GWAS/GWAS_output
 scp toMeta.*.txt /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS/METAL/
-
 
 cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS/METAL/
 
@@ -767,15 +1006,7 @@ toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
 
 
-```
-
-
-## Getting ready for forest plotting of variants signals....
-
-```
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS/METAL/
-
-# prep the UKB files
+# prep the UKB files for forest
 ## first proxy
 cut -f 1,2,3 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part1.txt
 cut -f 7 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part2.txt
@@ -790,29 +1021,147 @@ cut -f 4,5 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part3.txt
 cut -f 6 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part4.txt
 paste part1.txt part3.txt part2.txt part4.txt > toMeta.UKB_PD.txt
 
-## get header
-head -1 toMeta.DUTCH.tab > header.txt
+# need format...
+# ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
 
-## loop over variants
+toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
+toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
+toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
+
+toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
+toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
+toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
+
+# UKB cases
+head -1 toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 > header_PD.txt
+grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 > temp
+cat header_PD.txt temp > NORMAL_GWAS.UKBPD.txt
+grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt | cut -f 1-7 > temp
+cat header_PD.txt temp > CONDI_GWAS_SPECIAL.UKBPD.txt
+grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt | cut -f 1-7 > temp
+cat header_PD.txt temp > CONDI_GWAS.UKBPD.txt
+
+# UKB proxies
+head -1 toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | cut -f 1,2,3,7,15,16,17 > header_proxy.txt
+grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
+cat header_proxy.txt temp > NORMAL_GWAS.UKBproxy.txt
+grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
+cat header_proxy.txt temp > CONDI_GWAS_SPECIAL.UKBproxy.txt
+grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
+cat header_proxy.txt temp > CONDI_GWAS.UKBproxy.txt
+
+# copy to folders...
+
+scp NORMAL_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL/
+scp CONDI_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
+
+```
+
+
+
+### 4. Combining all data together....
+
+``` 
+# getting back to this:
+
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL/
+HEADER of almost all:
+ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
+
+
+HEADER of UKB case:
+markerID	effectAllele	alternateAllele	beta	se	P	effectAlleleFreq
+
+HEADER of UKB proxy:
+markerID	effectAllele	alternateAllele	effectAlleleFreq	b_adjusted	se_adjusted	p_derived
+
+# remove column 2 from IPDGC and create beta
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+do 
+	Rscript --vanilla quick_reformat.R $line
+done
+
+# reformat UKB
+awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' NORMAL_GWAS.UKBPD.txt > NORMAL_GWAS.UKBPDv2.txt
+awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' NORMAL_GWAS.UKBproxy.txt > NORMAL_GWAS.UKBproxyv2.txt
+
+# create files per sample
+
+head -1 NORMAL_GWAS.DUTCHv2.txt > header.txt
 cat variants.txt  | while read line
 do 
-   	grep $line * | grep toMeta | grep -v "cases_control" > $line.txt
+   	grep $line NORMAL_GWAS.*v2.txt > $line.txt
 	cat header.txt $line.txt > header_$line.txt
-	sed -e 's/toMeta.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' | sed -e 's/.tab:'$line'//g' > header_"$line"v2.txt
+	sed -e 's/NORMAL_GWAS.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
 done
-   
-POS		change
-Rscript --vanilla forest_plot_LRRK2.R 12:40657700 p.Asn551Lys
-Rscript --vanilla forest_plot_LRRK2.R 12:40671989 p.Ile723Val
-Rscript --vanilla forest_plot_LRRK2.R 12:40702911 p.Arg1398His
-Rscript --vanilla forest_plot_LRRK2.R 12:40707778 p.Arg1514Gln
-Rscript --vanilla forest_plot_LRRK2.R 12:40707861 p.Pro1542Ser
-Rscript --vanilla forest_plot_LRRK2.R 12:40713899 p.Met1646Thr
-Rscript --vanilla forest_plot_LRRK2.R 12:40740686 p.Asn2081Asp
-Rscript --vanilla forest_plot_LRRK2.R 12:40734202 p.Gly2019Ser
-Rscript --vanilla forest_plot_LRRK2.R 12:40713901 p.Ser1647Thr
-Rscript --vanilla forest_plot_LRRK2.R 12:40758652 p.Met2397Thr
-Rscript --vanilla forest_plot_LRRK2.R 12:40614434 rs76904798
+
+```
+Now doing the same for => CONDITIONAL
+
+```
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
+HEADER of almost all:
+ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
+
+
+HEADER of UKB case:
+markerID	effectAllele	alternateAllele	beta	se	P	effectAlleleFreq
+
+HEADER of UKB proxy:
+markerID	effectAllele	alternateAllele	effectAlleleFreq	b_adjusted	se_adjusted	p_derived
+
+# remove column 2 from IPDGC and create beta
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+do 
+	Rscript --vanilla quick_reformat.R $line
+done
+
+# reformat UKB
+awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' CONDI_GWAS.UKBPD.txt > CONDI_GWAS.UKBPDv2.txt
+awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' CONDI_GWAS.UKBproxy.txt > CONDI_GWAS.UKBproxyv2.txt
+
+# create files per sample
+
+head -1 CONDI_GWAS.DUTCHv2.txt > header.txt
+cat variants.txt  | while read line
+do 
+   	grep $line CONDI_GWAS.*v2.txt > $line.txt
+	cat header.txt $line.txt > header_$line.txt
+	sed -e 's/CONDI_GWAS.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
+done
+
+```
+
+
+###### making forest plots...
+
+
+```
+POS:change
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40657700 p.Asn551Lys
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40671989 p.Ile723Val
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40702911 p.Arg1398His
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40707778 p.Arg1514Gln
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40707861 p.Pro1542Ser
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40713899 p.Met1646Thr
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40740686 p.Asn2081Asp
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40734202 p.Gly2019Ser
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40713901 p.Ser1647Thr
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40758652 p.Met2397Thr
+Rscript --vanilla ../forest_plot_LRRK2.R 12:40614434 rs76904798
+
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40657700 p.Asn551Lys
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40671989 p.Ile723Val
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40702911 p.Arg1398His
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40707778 p.Arg1514Gln
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40707861 p.Pro1542Ser
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40713899 p.Met1646Thr
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40740686 p.Asn2081Asp
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40734202 p.Gly2019Ser
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40713901 p.Ser1647Thr
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40758652 p.Met2397Thr
+Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40614434 rs76904798
+
 
 #!/usr/bin/env Rscript
 args = commandArgs(trailingOnly=TRUE)
@@ -828,9 +1177,9 @@ print(FILENAME2)
 library(metafor)
 data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
 ##data <- read.table("header_12:40713899v2.txt", header = T)
-labs <- data$markerID
+labs <- data$ID
 yi   <- data$beta
-sei  <- data$se
+sei  <- data$LOG.OR._SE
 resFe  <- rma(yi=yi, sei=sei, method="FE")
 resRe  <- rma(yi=yi, sei=sei)
 print(summary(resFe))
@@ -846,7 +1195,7 @@ dev.off()
 
 ```
 
-
+# done... CHECK SNCA variant to confirm things....
 
 
 
