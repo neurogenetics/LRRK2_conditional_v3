@@ -1195,10 +1195,129 @@ dev.off()
 
 ```
 
-# done... CHECK SNCA variant to confirm things....
+### done... for now ....
+
+
+#### CHECK SNCA variant to confirm things....
+4:90641340 => rs356220
+
+```
+module load plink/2.0-dev-20191128
+
+cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+
+
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+do 
+	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--snp 4:90641340 \
+	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--pheno-name PHENO_PLINK --covar-variance-standardize \
+	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--covar-name AGE,SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/NORMAL_GWAS.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snp 4:90641340 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--pheno-name PHENO_PLINK --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/NORMAL_GWAS.VANCE
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snp 4:90641340 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--pheno-name PHENO_PLINK --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/NORMAL_GWAS.MF
+
+
+### condi
+cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+do 
+	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--snp 4:90641340 \
+	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--pheno-name PHENOTYPE --covar-variance-standardize \
+	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
+	--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/CONDI_GWAS.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snp 4:90641340 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/CONDI_GWAS.VANCE
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--snp 4:90641340 \
+--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/CONDI_GWAS.MF
+
+##
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/
+grep 90641340 CONDI_GWAS.*hybrid > CONDI_signal.txt
+grep 90641340 NORMAL_GWAS.*hybrid > NORMAL_signal.txt
+head -1 CONDI_GWAS.VANCE.PHENOTYPE.glm.logistic.hybrid > header.txt
+
+```
+
+```
+Make forest plots
+cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/SNCA/
+
+CONDI_forest.txt
+NORMAL_forest.txt
+
+module load R
+R
+library(metafor)
+data <- read.table("CONDI_forest.txt", header = T)
+## data <- read.table("NORMAL_forest.txt", header = T) 
+labs <- data$DATA
+yi   <- data$BETA
+sei  <- data$LOG.OR._SE
+resFe  <- rma(yi=yi, sei=sei, method="FE")
+resRe  <- rma(yi=yi, sei=sei)
+print(summary(resFe))
+print(summary(resRe))
+pdf(file = "SNCA_Final_condi.pdf", width = 8, height = 6)
+# pdf(file = "SNCA_Final_normal.pdf", width = 8, height = 6)
+Pvalue <- formatC(resFe$pval, digits=4)
+forest(resFe, xlim=c(-2,2), main=paste("SNCA variant P=",Pvalue ,sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5,0.75, 1, 2, 3)))
+dev.off()
+#png(file = paste(FILENAME,"_final.png",sep=""), width = 8, height = 6)
+#forest(resFe, xlim=c(resFe$beta-0.9931472,resFe$beta+0.9931472), main=paste(FILENAME2," option",sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5,0.75, 1, 2, 3)))
+#dev.off()
 
 
 
+```
 
 
 
