@@ -3,13 +3,13 @@
 `LNG ❤️ Open Science 😍`
 
  - **Project:** LRRK2 conditional GWAS
- - **Author(s):** Cornelis Blauwendraat (LNG) and Nicole Bryant-Garner (Duke Uni)
+ - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG) Nicole Bryant-Garner (Duke Uni)
  - **Date Last Updated:** October 2020
     - **Update Description:** Edits to README
 
 ---
 ### Quick Description: 
-LRRK2 is an important gene for PD and both rare highly damaging missense variants (including G2019S and R1441C) and common non-coding variants (rs76904798) have been associated with PD risk. Rare highly damaging missense variants often results in a very high increase of risk for PD >10 OR, while the common non-coding variant have the usual moderate risk increase of ~1.15. The goal here is too identify whether other more common coding variants also result in an higher risk of PD or whether they are just associated with PD as result of complex linkage disequilibrium (LD) structures.
+LRRK2 is an important gene for PD and both rare highly damaging missense variants (including G2019S) and common non-coding variants (rs76904798) have been associated with PD risk. Rare highly damaging missense variants often results in a very high increase of risk for PD >10 OR, while the common non-coding variant have the usual moderate risk increase of ~1.15. The goal here is too identify whether other more common coding variants also result in an higher risk of PD or whether they are just associated with PD as result of complex linkage disequilibrium (LD) structures.
 
 
 ### Motivation/Goals:
