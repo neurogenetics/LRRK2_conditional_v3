@@ -4,7 +4,7 @@
 
  - **Project:** LRRK2 conditional GWAS
  - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG) Nicole Bryant-Garner (Duke Uni)
- - **Date Last Updated:** October 2020
+ - **Date Last Updated:** November 2020
     - **Update Description:** Edits to README
 
 ---
@@ -59,10 +59,10 @@ This section goes through:
 ### 1.1 - Intro to the data
 ```
 Path to working folder:
-/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+/data/LNG/Julie/Julie_LRRK2_Condi
 
 File to use:
-HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
+/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
 this data is filtered for a lot of things... check https://github.com/neurogenetics/GWAS-pipeline for more details
 plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat <0.125
 
@@ -72,7 +72,7 @@ rs76904798 => hg19 12:40614434:C:T
 
 module load plink
 # simple test
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --assoc --out test
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --assoc --out test
 # Among remaining phenotypes, 21478 are cases and 24388 are controls.
  CHR           SNP         BP   A1      F_A      F_U   A2        CHISQ            P           OR 
   12   12:40614434   40614434    T   0.1564   0.1406    C        45.29    1.702e-11        1.133 
@@ -89,7 +89,7 @@ grep 12:40734202 info_all.12 > LRRK2_2.txt
 cat header LRRK2_1.txt LRRK2_2.txt > overview_for_LRRK2_conditional_GWAS.txt
 
 Copy file home
-scp blauwendraatc@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/overview_for_LRRK2_conditional_GWAS.txt /Users/blauwendraatc/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/overview_for_LRRK2_conditional_GWAS.txt /Users/lakejs/Desktop/
 
 # summary
 12:40614434 -> very well imputed, present in almost all data
@@ -117,11 +117,12 @@ scp blauwendraatc@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUA
 | UK_GWAS_Rsq  | 1  | Genotyped  | 0.99984  | Genotyped |
 | VANCE_Rsq  | 1  | Genotyped  | 0.99384  | Imputed |
 
+Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/Imputation_quality.xlsx
 
 ### 1.3 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 ```
 # check allelic distribution
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --model --out test
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --model --out allelic_dist
 
 # allelic distribution:
  CHR           SNP   A1   A2     TEST            AFF          UNAFF        CHISQ   DF            P
@@ -130,32 +131,42 @@ plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614
 
 # so in total to use likely ~25,000 samples because we want homozygous reference for both variants
 ```
+Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/allelic_dist.xlsx
 
 ### 1.4 - Overview of the full data and selection of which data to continue with
 
 ```
 ## to select homozygous reference carriers for both variants
 
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
 
 module load R
 R
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
+#subsetting the data to include only homozygous reference carriers of both variants
 newdata <- subset(data, X12.40614434_T == 0 & X12.40734202_A == 0) 
 dim(newdata) # 24532     8
-# adding some additional sampleinfo
-cov <- read.table("IPDGC_all_samples_covariates.txt",header=T)
+# adding some additional sample info
+cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
 # drop some columns because otherwise merge conflict
 cov$IID <- NULL
 cov$fatid <- NULL
 cov$matid <- NULL
 MM = merge(newdata,cov,by='FID')
 dim(MM) # 24532    44
-# datasets with good data:
+# datasets with good data (the ones with homo-ref carriers):
 # [1] "DUTCH"        "GERMANY"      "HBS"          "MCGILL"       "MF"          
 # [6] "NEUROX_DBGAP" "NIA"          "PDBP"         "PPMI"         "SHULMAN"     
 # [11] "SPAIN3"       "SPAIN4"       "VANCE"       
+
+#creating a file for selecting the variants with homo-ref carriers
 write.table(MM, file="LRRK2_condi_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
+
+#displaying the case-control distribution for each dataset
+library(dplyr)
+MM_grouped <- MM %>% group_by(PHENOTYPE, DATASET) %>% summarise(n = n())
+write.table(MM_grouped, file="LRRK2_condi_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
+q()
 
 ```
 
@@ -176,7 +187,6 @@ write.table(MM, file="LRRK2_condi_sample_selection.txt", quote=FALSE,row.names=F
 | PDBP  | 204  | 384 | 588 |
 | SPAIN4  | 1147  | 1634 | 2781 |
 | SUM  | 13091  | 11441 | **24532** |
-| **TOTAL**  | **24532**  | NA  | NA  |
 
 
 ## 2. Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze
@@ -192,12 +202,8 @@ Steps to go thru for each cohort:
 - Prep before meta-analysis
 - meta-analyze results
 
-Create new working folder
-cd /data/LNG/CORNELIS_TEMP/
-mkdir LRRK2_conditional
-
 Create cohort loop over file:
-/data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt 
+/data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
 
 Create sample inclusion file:
 Using LRRK2_condi_sample_selection.txt from above...
@@ -215,16 +221,21 @@ First loop over all cleaned unimputed data to create fresh PC's
 
 ```
 ### loop for making PCA
-cd /data/LNG/CORNELIS_TEMP/PD_AAO/pre_impute_vcf_files/
-# all LRRK2 conditional samples
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+cat cohort_file.txt | while read line
 do 
+	#first copy over the pre_impute_vcf_files to new directories
+	mkdir $line
+	cp /data/LNG/CORNELIS_TEMP/PD_AAO/pre_impute_vcf_files/$line/{$line.bed,$line.bim,$line.fam} /data/LNG/Julie/Julie_LRRK2_Condi/$line
+	
 	cd $line
-	plink --bfile $line --keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_sample_selection.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+	plink --bfile $line --keep /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
 	plink --bfile prune --pca --out $line.LRRK2_condi_PCA
-	scp $line.LRRK2_condi_PCA.eigenvec /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
+	
+	#send the .eigenvec files back to the working directory to combine into a new combined PC file
+	scp $line.LRRK2_condi_PCA.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
 	cd ..
 done
 
@@ -234,17 +245,20 @@ Then merge new PC's with other phenotype data we already have
 
 ```
 ### Merge new PC's in R with other data
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
-
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 cat *.eigenvec > new_fresh_PCs.txt
 
 module load R
 R
 cov <- read.table("LRRK2_condi_sample_selection.txt",header=T)
 PC <- read.table("new_fresh_PCs.txt",header=F)
-cov2 <- cov[,c(1:14)]
+#keep the phenotype information but get rid of the old covariates
+cov2 <- cov[,c(1:14)] 
+#add new PCs from the data that's been filtered for homo-ref carriers
 MM <- merge(cov2,PC,by.x="FID",by.y="V1")
+#get rid of the V2 column since it's a repeat of "FID"
 MM$V2 <- NULL
+#only keep the first 10 PCs
 MM2 <- MM[,c(1:24)]
 colnames(MM2)[15]  <- "PC1"
 colnames(MM2)[16]  <- "PC2"
@@ -260,21 +274,32 @@ write.table(MM2, file="LRRK2_condi_covariates.txt", quote=FALSE,row.names=F,sep=
 q()
 n
 
-# then subset each cohort due to potentially overlapping sample names...
+###then subset each cohort due to potentially overlapping sample names...
 
+#keep the header so that you can add it to each separate file
 head -1 LRRK2_condi_covariates.txt > header.txt
 
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+cat cohort_file.txt  | while read line
 do 
+#pull out all of the lines that contain the cohort name 
 grep $line LRRK2_condi_covariates.txt > temp
+#combine these lines with the header
 cat header.txt temp > LRRK2_condi_covariates.$line.txt
 done
 
 # fix MF data...
+#the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
+
+#return all non-matching lines--without HBS, PDBP, SPAIN4
 grep -v HBS LRRK2_condi_covariates.MF.txt > temp
 grep -v PDBP temp > temp2
 grep -v SPAIN4 temp2 > LRRK2_condi_covariates.MF.txt
 # fixed...
+
+#move the conditional covariate files into a new directory
+mkdir CONDI_COVARIATES
+mv *.eigenvec CONDI_COVARIATES
+mv LRRK2_condi_covariates* CONDI_COVARIATES
 
 ```
 
@@ -283,16 +308,19 @@ grep -v SPAIN4 temp2 > LRRK2_condi_covariates.MF.txt
 
 ```
 ### loop for making PCA
-cd /data/LNG/CORNELIS_TEMP/PD_AAO/pre_impute_vcf_files/
-# all samplessss!!
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+# all samplessss!! 
+cat cohort_file.txt  | while read line
 do 
 	cd $line
+	#the only difference here is that we don't use --keep to filter out people with the GS or 5' variants
 	plink --bfile $line --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
 	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_NORMAL
-	scp $line.LRRK2_condi_PCA_NORMAL.eigenvec /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/
+	
+	#send the .eigenvec files back to the working directory to combine into a new combined PC file
+	scp $line.LRRK2_condi_PCA_NORMAL.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
 	cd ..
 done
 
@@ -302,7 +330,7 @@ Then merge new PC's with other phenotype data we already have
 
 ```
 ### Merge new PC's in R with other data
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 cat *.eigenvec > new_fresh_PCs_NORMAL.txt
 
@@ -310,10 +338,12 @@ module load R
 R
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
 PC <- read.table("new_fresh_PCs_NORMAL.txt",header=F)
+#get rid of the dummy dataset variables and all of the old PCs
 cov2 <- cov[,c(1:10)]
 MM <- merge(cov2,PC,by.x="FID",by.y="V1")
 MM$V2 <- NULL
-MM2 <- MM[,c(1:20)]
+#only keep the first 10 PCs
+MM2 <- MM[,c(1:20)] 
 colnames(MM2)[11]  <- "PC1"
 colnames(MM2)[12]  <- "PC2"
 colnames(MM2)[13]  <- "PC3"
@@ -328,21 +358,49 @@ write.table(MM2, file="LRRK2_condi_covariates_NORMAL.txt", quote=FALSE,row.names
 q()
 n
 
-# then subset each cohort due to potentially overlapping sample names...
+###then subset each cohort due to potentially overlapping sample names...
 
+#keep the header so that you can add it to each separate file
 head -1 LRRK2_condi_covariates_NORMAL.txt > header.txt
 
 cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
 do 
+#pull out all of the lines that contain the cohort name 
 grep $line LRRK2_condi_covariates_NORMAL.txt > temp
+#combine these lines with the header
 cat header.txt temp > LRRK2_condi_covariates_NORMAL.$line.txt
 done
 
 # fix MF data...
+#the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
+
+#return all non-matching lines--without HBS, PDBP, SPAIN4
 grep -v HBS LRRK2_condi_covariates_NORMAL.MF.txt > temp
 grep -v PDBP temp > temp2
 grep -v SPAIN4 temp2 > LRRK2_condi_covariates_NORMAL.MF.txt
 # fixed...
+
+#move the NORMAL covariate files into a new directory
+mkdir NORMAL_COVARIATES
+mv *.eigenvec NORMAL_COVARIATES
+
+
+###sanity check that the covariate files contain the correct cohort data
+
+#do this for the conditional cov files
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do 
+   #check that the DATASET is only the appropriate cohort
+   awk '{print $10}' LRRK2_condi_covariates_NORMAL.$line.txt | sort | uniq
+done
+
+#do this for the normal cov files
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do 
+   #check that the DATASET is only the appropriate cohort
+   awk '{print $14}' LRRK2_condi_covariates.$line.txt | sort | uniq #note that DATASET IS #13 because of the additional columns
+done
+#everything looks good…
 
 ```
 
