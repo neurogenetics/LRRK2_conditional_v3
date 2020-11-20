@@ -9,7 +9,7 @@
 
 ---
 ### Quick Description: 
-LRRK2 is an important gene for PD and both rare highly damaging missense variants (including G2019S) and common non-coding variants (rs76904798) have been associated with PD risk. Rare highly damaging missense variants often results in a very high increase of risk for PD >10 OR, while the common non-coding variant have the usual moderate risk increase of ~1.15. The goal here is too identify whether other more common coding variants also result in an higher risk of PD or whether they are just associated with PD as result of complex linkage disequilibrium (LD) structures.
+LRRK2 is an important gene for PD and both rare highly damaging missense variants (including G2019S) and common non-coding variants (rs76904798) have been associated with PD risk. Rare highly damaging missense variants often results in a very high increase of risk for PD >10 OR, while the common non-coding variant have the usual moderate risk increase of ~1.15. The goal here is to identify whether other more common coding variants also result in an higher risk of PD or whether they are just associated with PD as result of complex linkage disequilibrium (LD) structures.
 
 
 ### Motivation/Goals:
@@ -24,21 +24,26 @@ TBD
 ### [1. Understanding the underlying data and creating an overview of the data](#1-Understanding-the-underlying-data-and-creating-an-overview-of-the-data)
 This section goes through:
 - Intro to the data
-- Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 - Checking the imputation quality of the data
+- Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 - Overview of the full data and selection of which data to continue with
 
 ### [2. Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze](#2-Perform-GWAS-excluding-risk-and-G2019S-variant-on-a-cohort-level-basis-and-meta-analyze)
 This section goes through:
-- Performing cohort level analyses on the created data from 1 and then meta-analyze
+- Create new PC's for each cohort
 
-### [3. Adding in UKBiobank](#3-Adding-in-UKBiobank)
- This section goes through: 
+### [3. Running GWAS on IPDGC data](#3-Running-GWAS-on-IPDGC-data)
+
+### [4. Adding in UKBiobank](#4-Adding-in-UKBiobank)
+This section goes through: 
 - Adding the UK biobank data to point 2
 
-### [4. Check LD co-inheritance of LRRK2 coding variants](#4-Check-LD-co-inheritance-of-LRRK2-coding-variants)
+### [5. Combining all data together](#5-Combining-all-data-together)
+
+### [6. Check LD co-inheritance of LRRK2 coding variants](#6-Check-LD-co-inheritance-of-LRRK2-coding-variants)
 This section goes through:
 - Checking if LRRK2 variants are typically co-inherited or not?
+- Assessing frequency of these variants in full data-set
 - LRRK2 G2019S with all other coding variants
 - LRRK2 rs76904798 with all other coding variants
 - Preparing files for Tables for manuscript
@@ -1059,7 +1064,7 @@ scp CONDI_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
 
 
 
-### 4. Combining all data together....
+### 5. Combining all data together
 
 ``` 
 # getting back to this:
@@ -1323,7 +1328,7 @@ dev.off()
 
 
 
-## 4. Check LD co-inheritance of LRRK2 coding variants
+## 6. Check LD co-inheritance of LRRK2 coding variants
 This section goes through:
 - First check which coding variants can be imputed here...?
 - Checking if LRRK2 variants are typically co-inherited or not?
@@ -1332,7 +1337,7 @@ This section goes through:
 - Preparing files for Tables for manuscript
 
 
-### 4.1 - First check which coding variants can be imputed here...?
+### 6.1 - First check which coding variants can be imputed here...?
 
 ```
 mkdir HRC_LRRK2
@@ -1348,7 +1353,7 @@ paste first_row.txt LRRK2_HRC_coding_V2.txt > LRRK2_HRC_coding_V3.txt
 
 ```
 
-### 4.2 - Assessing frequency of these variants in full data-set...
+### 6.2 - Assessing frequency of these variants in full data-set...
 
 ```
 # Create a couple subset files to use....
@@ -1516,7 +1521,7 @@ Table with frequencies below...
 | Freq_Control_noGSRisk	| 0.002559 | 0.001222 | Big Drop... |
 
 
-### 4.3 - Preparing files for Tables for manuscript
+### 6.3 - Preparing files for Tables for manuscript
 
 Lets first do this for the IPDGC data....
 
@@ -1661,7 +1666,7 @@ SNP		MAF	NCHROBS
 Done...
 
 
-## 5 - Checking R1441C and R1441G carrier status in AMP-PD....
+## 7 - Checking R1441C and R1441G carrier status in AMP-PD....
 
 ```
 cd /PATH/TO/PD/AMP-PD/VCFs/
