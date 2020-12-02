@@ -154,7 +154,6 @@ R
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
 data2 <- read.table("LRRK2_condi_special_variant_selection.raw",header=T)
 
-
 #X12.40614434_T is rs76904798 and X12.40734202_A is G2019S
 newdata <- subset(data, X12.40614434_T == 0 & X12.40734202_A == 0) 
 dim(newdata) # 24532     8
@@ -194,6 +193,7 @@ write.table(MM2_grouped, file="LRRK2_condi_special_sample_selection_grouped.txt"
 q()
 n
 
+#copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection_grouped.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection_grouped.txt /Users/lakejs/Desktop/
 
@@ -218,7 +218,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 | SPAIN3       | 1459  | 989     | 2448  |
 | SPAIN4       | 1634  | 1147    | 2781  |
 | VANCE        | 423   | 218     | 641   |
-| SUM          | 11441 | 13091   | 24532 |
+| SUM          | 11441 | 13091   | **24532** |
 
 </td><td>
 
@@ -237,7 +237,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 | SPAIN3       | 1969  | 1288    | 3257  |
 | SPAIN4       | 2219  | 1490    | 3709  |
 | VANCE        | 569   | 284     | 853   |
-| SUM          | 15265 | 16962   | 32227 |
+| SUM          | 15265 | 16962   | **32227** |
 
 </td></tr></table>
 
