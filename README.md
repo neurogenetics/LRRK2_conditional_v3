@@ -23,16 +23,16 @@ TBD
 ## Structure of README:
 ### [1. Understanding the underlying data and creating an overview of the data](#1-Understanding-the-underlying-data-and-creating-an-overview-of-the-data)
 This section goes through:
-- Intro to the data
-- Checking the imputation quality of the data
+- Intro to the IPDGC data
+- Checking the imputation quality of the IPDGC data
 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
-- Overview of the full data and selection of which data to continue with
+- Overview of the full data and selection of data
 
 ### [2. Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze](#2-Perform-GWAS-excluding-risk-and-G2019S-variant-on-a-cohort-level-basis-and-meta-analyze)
 This section goes through:
 - Create new PC's for each cohort
 
-### [3. Running GWAS on IPDGC data](#3-Running-GWAS-on-IPDGC-data)
+### [3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants](#3-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-risk-(rs76904798)-and-G2019S-variants)
 
 ### [4. Adding in UKBiobank](#4-Adding-in-UKBiobank)
 This section goes through: 
@@ -56,15 +56,12 @@ This section goes through:
 - Checking the imputation quality of the data
 - Overview of the full data and selection of which data to continue with
 
-### 1.1 - Intro to the data
+### 1.1 - Intro to the IPDGC data
 ```
-Path to working folder:
-/data/LNG/Julie/Julie_LRRK2_Condi
+Path to working folder: /data/LNG/Julie/Julie_LRRK2_Condi
 
-File to use:
-/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
-this data is filtered for a lot of things... check https://github.com/neurogenetics/GWAS-pipeline for more details
-plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat <0.125
+Path to IPDGC genetics data: /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
+This data is filtered for a lot of things... check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
 
 Variants of interest:
 LRRK2 G2019S => hg19 12:40734202:G:A
@@ -80,7 +77,7 @@ plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september
 # confirming associations, so thats good :)
 ```
 
-### 1.2 - Checking the imputation quality of the data
+### 1.2 - Checking the imputation quality of the IPDGC data
 
 ```
 cd /data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/
@@ -88,18 +85,17 @@ grep 12:40614434 info_all.12 > LRRK2_1.txt
 grep 12:40734202 info_all.12 > LRRK2_2.txt
 cat header LRRK2_1.txt LRRK2_2.txt > overview_for_LRRK2_conditional_GWAS.txt
 
-Copy file home
+# Copy file home
 scp lakejs@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/overview_for_LRRK2_conditional_GWAS.txt /Users/lakejs/Desktop/
 
 # summary
 12:40614434 -> very well imputed, present in almost all data
 12:40734202 -> also not bad...
 ```
-#### Table if needed:
+#### IPDGC imputation quality table:
 
 | SNP	| 12:40614434 | How | 12:40734202 | How |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
-| SNP  | Risk variant  | NA  | G2019S  | NA |
 | DUTCH_Rsq  | 0.99903  | Imputed  | 0.87355  | Imputed |
 | FINLAND_Rsq  | 0.99972  | Imputed  | **0.00109**  | Imputed |
 | GERMANY_Rsq  | 0.9961  | Imputed  | 0.85943  | Imputed |
@@ -122,6 +118,7 @@ Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/Imputation_quality.x
 ### 1.3 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 ```
 # check allelic distribution
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --model --out allelic_dist
 
 # allelic distribution:
@@ -133,20 +130,34 @@ plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september
 ```
 Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/allelic_dist.xlsx
 
-### 1.4 - Overview of the full data and selection of which data to continue with
+### 1.4 - Overview of the full data and selection of data
 
 ```
-## to select homozygous reference carriers for both variants
+## to select homozygous reference carriers for both variants 
 
+#recode the genotypes of interest as single allele dosage numbers (no rs76904798 + no G2019S)
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
+
+#recode the genotypes of interest as single allele dosage numbers (no N2081D + no G2019S)
+#call this the "special" conditional GWAS to see if rs76904798 signal remains
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40740686 --recodeA --out LRRK2_condi_special_variant_selection
 
 module load R
 R
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
-#subsetting the data to include only homozygous reference carriers of both variants
+data2 <- read.table("LRRK2_condi_special_variant_selection.raw",header=T)
+
+## subset the data to include only homozygous reference carriers of both variants
+
+#X12.40614434_T is rs76904798 and X12.40734202_A is G2019S
 newdata <- subset(data, X12.40614434_T == 0 & X12.40734202_A == 0) 
 dim(newdata) # 24532     8
-# adding some additional sample info
+
+#X12:40740686_G is N2081D and X12.40734202_A is G2019S
+newdata2 <- subset(data2, X12.40740686_G == 0 & X12.40734202_A == 0)
+dim(newdata2) # 32227     8
+
+#add some additional sample info
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
 # drop some columns because otherwise merge conflict
 cov$IID <- NULL
@@ -154,53 +165,80 @@ cov$fatid <- NULL
 cov$matid <- NULL
 MM = merge(newdata,cov,by='FID')
 dim(MM) # 24532    44
-# datasets with good data (the ones with homo-ref carriers):
+
+MM2 = merge(newdata2,cov,by='FID')
+dim(MM2) # 32227    44
+
+#datasets with good data (the ones with homo-ref carriers):
 # [1] "DUTCH"        "GERMANY"      "HBS"          "MCGILL"       "MF"          
 # [6] "NEUROX_DBGAP" "NIA"          "PDBP"         "PPMI"         "SHULMAN"     
 # [11] "SPAIN3"       "SPAIN4"       "VANCE"       
 
-#creating a file for selecting the variants with homo-ref carriers
+#create a file for selecting individuals who are homo-ref carriers
 write.table(MM, file="LRRK2_condi_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(MM2, file="LRRK2_condi_special_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
 
-#displaying the case-control distribution for each dataset
-library(dplyr)
-MM_grouped <- MM %>% group_by(PHENOTYPE, DATASET) %>% summarise(n = n())
+
+#display the case-control distribution for each dataset
+require(dplyr)
+MM_grouped <- MM %>% group_by(DATASET) %>% summarise(Case = sum(PHENOTYPE == 2), Control = sum(PHENOTYPE == 1), TOTAL = n()) %>% bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "SUM"))
 write.table(MM_grouped, file="LRRK2_condi_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
+
+MM2_grouped <- MM2 %>% group_by(DATASET) %>% summarise(Case = sum(PHENOTYPE == 2), Control = sum(PHENOTYPE == 1), TOTAL = n()) %>% bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "SUM"))
+write.table(MM2_grouped, file="LRRK2_condi_special_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
 q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection_grouped.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection_grouped.txt /Users/lakejs/Desktop/
 
 ```
 
-#### data includes:
-| DATASET | Control | Case | TOTAL | 
-| ------------- | ------------- | ------------- | ------------- |
-| NEUROX_DBGAP  | 4248  | 3801 | 8049 |
-| MCGILL  | 669  | 410 | 1079 |
-| VANCE  | 218  | 423 | 641 |
-| NIA  | 2233  | 579 | 2812 |
-| GERMANY  | 723  | 505 | 1228 |
-| PPMI  | 134  | 252 | 386 |
-| SPAIN3  | 989  | 1459 | 2448 |
-| HBS  | 333  | 365 | 698 |
-| SHULMAN  | 152  | 553 | 705 |
-| MF  | 565  | 537 | 1102 |
-| DUTCH  | 1476  | 539 | 2015 |
-| PDBP  | 204  | 384 | 588 |
-| SPAIN4  | 1147  | 1634 | 2781 |
-| SUM  | 13091  | 11441 | **24532** |
+#### Data for conditional GWAS (no N2081D + no G2019S) includes:
+| DATASET      | Case  | Control | TOTAL |
+|--------------|-------|---------|-------|
+| DUTCH        | 539   | 1476    | 2015  |
+| GERMANY      | 505   | 723     | 1228  |
+| HBS          | 365   | 333     | 698   |
+| MCGILL       | 410   | 669     | 1079  |
+| MF           | 537   | 565     | 1102  |
+| NEUROX_DBGAP | 3801  | 4248    | 8049  |
+| NIA          | 579   | 2233    | 2812  |
+| PDBP         | 384   | 204     | 588   |
+| PPMI         | 252   | 134     | 386   |
+| SHULMAN      | 553   | 152     | 705   |
+| SPAIN3       | 1459  | 989     | 2448  |
+| SPAIN4       | 1634  | 1147    | 2781  |
+| VANCE        | 423   | 218     | 641   |
+| SUM          | 11441 | 13091   | 24532 |
 
 
-## 2. Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze
+#### Data for special conditional GWAS (no rs76904798 + no G2019S) includes:
+| DATASET      | Case  | Control | TOTAL |
+|--------------|-------|---------|-------|
+| DUTCH        | 719   | 1905    | 2624  |
+| GERMANY      | 668   | 902     | 1570  |
+| HBS          | 489   | 447     | 936   |
+| MCGILL       | 554   | 890     | 1444  |
+| MF           | 713   | 739     | 1452  |
+| NEUROX_DBGAP | 5036  | 5500    | 10536 |
+| NIA          | 785   | 2898    | 3683  |
+| PDBP         | 486   | 270     | 756   |
+| PPMI         | 339   | 162     | 501   |
+| SHULMAN      | 719   | 187     | 906   |
+| SPAIN3       | 1969  | 1288    | 3257  |
+| SPAIN4       | 2219  | 1490    | 3709  |
+| VANCE        | 569   | 284     | 853   |
+| SUM          | 15265 | 16962   | 32227 |
+
+
+## 2. Create covariate files for each IPDGC cohort for conditional and normal GWAS
 
 This section goes through:
-- Performing cohort level analyses on the created data from 1 and then meta-analyze
+- Creating new PC's for each cohort
+- Creating covariate files
 - Total cohorts to include is **13** totalling 24532 samples (13091 controls and 11441 cases)
 
-Steps to go thru for each cohort:
-- Create new PC's for each cohort
-- Create covariate file 
-- Perform GWAS for each cohort for chromosome 12
-- Prep before meta-analysis
-- meta-analyze results
 
 Create cohort loop over file:
 /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
@@ -404,8 +442,12 @@ done
 
 ```
 
-### 3. Running GWAS on IPDGC data 
+### 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
 
+This section goes through: 
+- Perform GWAS for each cohort for chromosome 12
+- Prep before meta-analysis
+- meta-analyze results (not this until we get UKB data)
 
 #### variants of interest:
 ```
@@ -1123,6 +1165,9 @@ scp CONDI_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
 
 
 ### 5. Combining all data together
+
+This section goes through: 
+- Performing cohort level analyses on the created data from 1 and 4 and then meta-analyzing
 
 ``` 
 # getting back to this:
