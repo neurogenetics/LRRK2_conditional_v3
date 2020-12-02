@@ -61,13 +61,16 @@ This section goes through:
 Path to working folder: /data/LNG/Julie/Julie_LRRK2_Condi
 
 Path to IPDGC genetics data: /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
-This data is filtered for a lot of things... check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
+This data is filtered for a lot of things... 
+	...check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
 
 Variants of interest:
 LRRK2 G2019S => hg19 12:40734202:G:A
 rs76904798 => hg19 12:40614434:C:T
 
+cd /data/LNG/Julie/Julie_LRRK2_Condi 
 module load plink
+
 # simple test
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --assoc --out test
 # Among remaining phenotypes, 21478 are cases and 24388 are controls.
@@ -133,21 +136,24 @@ Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/allelic_dist.xlsx
 ### 1.4 - Overview of the full data and selection of data
 
 ```
-## to select homozygous reference carriers for both variants 
+##recode the genotypes of interest as single allele dosage numbers 
 
-#recode the genotypes of interest as single allele dosage numbers (no rs76904798 + no G2019S)
+#use for the no rs76904798 + no G2019S dataset
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
 
-#recode the genotypes of interest as single allele dosage numbers (no N2081D + no G2019S)
-#call this the "special" conditional GWAS to see if rs76904798 signal remains
+#use for the no N2081D + no G2019S dataset
+#call this the "special" conditional GWAS: see if rs76904798 signal remains
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40740686 --recodeA --out LRRK2_condi_special_variant_selection
+```
+
+```
+## subset the data to include only homozygous reference carriers of both variants
 
 module load R
 R
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
 data2 <- read.table("LRRK2_condi_special_variant_selection.raw",header=T)
 
-## subset the data to include only homozygous reference carriers of both variants
 
 #X12.40614434_T is rs76904798 and X12.40734202_A is G2019S
 newdata <- subset(data, X12.40614434_T == 0 & X12.40734202_A == 0) 
@@ -163,9 +169,9 @@ cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples
 cov$IID <- NULL
 cov$fatid <- NULL
 cov$matid <- NULL
+
 MM = merge(newdata,cov,by='FID')
 dim(MM) # 24532    44
-
 MM2 = merge(newdata2,cov,by='FID')
 dim(MM2) # 32227    44
 
@@ -177,7 +183,6 @@ dim(MM2) # 32227    44
 #create a file for selecting individuals who are homo-ref carriers
 write.table(MM, file="LRRK2_condi_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(MM2, file="LRRK2_condi_special_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
-
 
 #display the case-control distribution for each dataset
 require(dplyr)
@@ -194,7 +199,10 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 
 ```
 
-#### Data for conditional GWAS (no N2081D + no G2019S) includes:
+<table>
+<tr><th>Data for conditional GWAS (no N2081D + no G2019S)</th><th>Data for special conditional GWAS (no rs76904798 + no G2019S)</th></tr>
+<tr><td>
+
 | DATASET      | Case  | Control | TOTAL |
 |--------------|-------|---------|-------|
 | DUTCH        | 539   | 1476    | 2015  |
@@ -212,8 +220,8 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 | VANCE        | 423   | 218     | 641   |
 | SUM          | 11441 | 13091   | 24532 |
 
+</td><td>
 
-#### Data for special conditional GWAS (no rs76904798 + no G2019S) includes:
 | DATASET      | Case  | Control | TOTAL |
 |--------------|-------|---------|-------|
 | DUTCH        | 719   | 1905    | 2624  |
@@ -230,6 +238,8 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 | SPAIN4       | 2219  | 1490    | 3709  |
 | VANCE        | 569   | 284     | 853   |
 | SUM          | 15265 | 16962   | 32227 |
+
+</td></tr></table>
 
 
 ## 2. Create covariate files for each IPDGC cohort for conditional and normal GWAS
