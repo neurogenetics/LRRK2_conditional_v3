@@ -28,7 +28,7 @@ This section goes through:
 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 - Overview of the full data and selection of data
 
-### [2. Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze](#2-Perform-GWAS-excluding-risk-and-G2019S-variant-on-a-cohort-level-basis-and-meta-analyze)
+### [2. Create covariate files for each IPDGC cohort](#2-Create-covariate-files-for-each-IPDGC-cohort)
 This section goes through:
 - Create new PC's for each cohort
 
@@ -242,13 +242,17 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 </td></tr></table>
 
 
-## 2. Create covariate files for each IPDGC cohort for conditional and normal GWAS
+## 2. Create covariate files for each IPDGC cohort
 
 This section goes through:
 - Creating new PC's for each cohort
 - Creating covariate files
-- Total cohorts to include is **13** totalling 24532 samples (13091 controls and 11441 cases)
-
+	- Total cohorts to include is 13 
+	- For each cohort, make covariate files for: 
+		Normal GWAS: PD vs control 
+		Conditional GWAS: PD vs control (no rs76904798 + no G2019S)
+		Special conditional GWAS: PD vs control (no N2081D + no G2019S)
+	- Total covariate files needed is 13 x 3 = 39
 
 Create cohort loop over file:
 /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
@@ -265,7 +269,7 @@ and has been used in previous GWAS such as https://pubmed.ncbi.nlm.nih.gov/31701
 
 First loop over all cleaned unimputed data to create fresh PC's
 
-#### Covariate files without GS and '5 variant
+#### PC files without G2019S and rs76904798
 
 ```
 ### loop for making PCA
@@ -280,7 +284,7 @@ do
 	plink --bfile $line --keep /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
-	plink --bfile prune --pca --out $line.LRRK2_condi_PCA
+	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_CONDI
 	
 	#send the .eigenvec files back to the working directory to combine into a new combined PC file
 	scp $line.LRRK2_condi_PCA.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
@@ -289,79 +293,36 @@ done
 
 ```
 
-Then merge new PC's with other phenotype data we already have
 
-```
-### Merge new PC's in R with other data
-cd /data/LNG/Julie/Julie_LRRK2_Condi
-cat *.eigenvec > new_fresh_PCs.txt
-
-module load R
-R
-cov <- read.table("LRRK2_condi_sample_selection.txt",header=T)
-PC <- read.table("new_fresh_PCs.txt",header=F)
-#keep the phenotype information but get rid of the old covariates
-cov2 <- cov[,c(1:14)] 
-#add new PCs from the data that's been filtered for homo-ref carriers
-MM <- merge(cov2,PC,by.x="FID",by.y="V1")
-#get rid of the V2 column since it's a repeat of "FID"
-MM$V2 <- NULL
-#only keep the first 10 PCs
-MM2 <- MM[,c(1:24)]
-colnames(MM2)[15]  <- "PC1"
-colnames(MM2)[16]  <- "PC2"
-colnames(MM2)[17]  <- "PC3"
-colnames(MM2)[18]  <- "PC4"
-colnames(MM2)[19]  <- "PC5"
-colnames(MM2)[20]  <- "PC6"
-colnames(MM2)[21]  <- "PC7"
-colnames(MM2)[22]  <- "PC8"
-colnames(MM2)[23]  <- "PC9"
-colnames(MM2)[24]  <- "PC10"
-write.table(MM2, file="LRRK2_condi_covariates.txt", quote=FALSE,row.names=F,sep="\t")
-q()
-n
-
-###then subset each cohort due to potentially overlapping sample names...
-
-#keep the header so that you can add it to each separate file
-head -1 LRRK2_condi_covariates.txt > header.txt
-
-cat cohort_file.txt  | while read line
-do 
-#pull out all of the lines that contain the cohort name 
-grep $line LRRK2_condi_covariates.txt > temp
-#combine these lines with the header
-cat header.txt temp > LRRK2_condi_covariates.$line.txt
-done
-
-# fix MF data...
-#the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
-
-#return all non-matching lines--without HBS, PDBP, SPAIN4
-grep -v HBS LRRK2_condi_covariates.MF.txt > temp
-grep -v PDBP temp > temp2
-grep -v SPAIN4 temp2 > LRRK2_condi_covariates.MF.txt
-# fixed...
-
-#move the conditional covariate files into a new directory
-mkdir CONDI_COVARIATES
-mv *.eigenvec CONDI_COVARIATES
-mv LRRK2_condi_covariates* CONDI_COVARIATES
-
-```
-
-#### Covariate files with GS and '5 variant <= meaning normal files...
-
+#### PC files without G2019S and N2081D (unrun)
 
 ```
 ### loop for making PCA
-cd /data/LNG/Julie/Julie_LRRK2_Condi
-# all samplessss!! 
+cat cohort_file.txt | while read line
+do 
+	cd $line
+	plink --bfile $line --keep /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
+	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
+	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_SPECIAL
+	
+	#send the .eigenvec files back to the working directory to combine into a new combined PC file
+	scp $line.LRRK2_condi_PCA.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
+	cd ..
+done
+
+```
+
+
+#### PC files with G2019S, N2081D and rs76904798 <= meaning normal files...
+
+```
+#loop for making PCA
+#all samples!
 cat cohort_file.txt  | while read line
 do 
 	cd $line
-	#the only difference here is that we don't use --keep to filter out people with the GS or 5' variants
+	#the only difference here is that we don't use --keep to filter out people with the variants
 	plink --bfile $line --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
@@ -374,66 +335,141 @@ done
 
 ```
 
-Then merge new PC's with other phenotype data we already have
+### 2.2 Create covariate files
 
+(note below I'm combining the previous sections)
 ```
-### Merge new PC's in R with other data
-cd /data/LNG/Julie/Julie_LRRK2_Condi
+### Merge new PC's in R with other phenotype data
 
-cat *.eigenvec > new_fresh_PCs_NORMAL.txt
+#combine the eigenvec files for each GWAS
+cat *NORMAL.eigenvec > NORMAL_PCs.txt
+cat *SPECIAL.eigenvec > SPECIAL_PCs.txt
+cat *CONDI.eigenvec > CONDI_PCs.txt
+
 
 module load R
 R
-cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
-PC <- read.table("new_fresh_PCs_NORMAL.txt",header=F)
-#get rid of the dummy dataset variables and all of the old PCs
-cov2 <- cov[,c(1:10)]
-MM <- merge(cov2,PC,by.x="FID",by.y="V1")
-MM$V2 <- NULL
+NORMAL_cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+SPECIAL_cov <- read.table("LRRK2_condi_special_sample_selection.txt",header=T)
+CONDI_cov <- read.table("LRRK2_condi_sample_selection.txt",header=T)
+
+NORMAL_PC <- read.table("NORMAL_PCs.txt",header=F)
+SPECIAL_PC <- read.table("SPECIAL_PCs.txt",header=F)
+CONDI_PC <- read.table("CONDI_PCs.txt",header=F)
+
+#we want to keep the phenotype information but get rid of the old PCs before merging
+NORMAL_cov2 <- NORMAL_cov[,c(1:10)]
+SPECIAL_cov2 <- SPECIAL_cov[,c(1:14)] #double check this number is correct...going to run after I finish this section
+CONDI_cov2 <- condi_cov[,c(1:14)]
+
+#now add the new PCs
+NORMAL_Mrg <- merge(NORMAL_cov2,NORMAL_PC,by.x="FID",by.y="V1") 
+SPECIAL_Mrg <- merge(SPECIAL_cov2,SPECIAL_PC,by.x="FID",by.y="V1") 
+CONDI_Mrg <- merge(CONDI_cov2,CONDI_PC,by.x="FID",by.y="V1") 
+
+#get rid of this column since it is a repeat of "FID"
+NORMAL_Mrg$V2 <- NULL 
+SPECIAL_Mrg$V2 <- NULL 
+CONDI_Mrg$V2 <- NULL 
+
 #only keep the first 10 PCs
-MM2 <- MM[,c(1:20)] 
-colnames(MM2)[11]  <- "PC1"
-colnames(MM2)[12]  <- "PC2"
-colnames(MM2)[13]  <- "PC3"
-colnames(MM2)[14]  <- "PC4"
-colnames(MM2)[15]  <- "PC5"
-colnames(MM2)[16]  <- "PC6"
-colnames(MM2)[17]  <- "PC7"
-colnames(MM2)[18]  <- "PC8"
-colnames(MM2)[19]  <- "PC9"
-colnames(MM2)[20]  <- "PC10"
-write.table(MM2, file="LRRK2_condi_covariates_NORMAL.txt", quote=FALSE,row.names=F,sep="\t")
+NORMAL_Mrg2 <- NORMAL_Mrg[,c(1:20)]
+SPECIAL_Mrg2 <- SPECIAL_Mrg[,c(1:24)] #note to self check if this is right
+CONDI_Mrg2 <- CONDI_Mrg[,c(1:24)]
+
+#change the name of the first 10 PCs
+**note to self see what they were named before, just curious
+
+#do this for the normal files
+colnames(NORMAL_Mrg2)[11]  <- "PC1"
+colnames(NORMAL_Mrg2)[12]  <- "PC2"
+colnames(NORMAL_Mrg2)[13]  <- "PC3"
+colnames(NORMAL_Mrg2)[14]  <- "PC4"
+colnames(NORMAL_Mrg2)[15]  <- "PC5"
+colnames(NORMAL_Mrg2)[16]  <- "PC6"
+colnames(NORMAL_Mrg2)[17]  <- "PC7"
+colnames(NORMAL_Mrg2)[18]  <- "PC8"
+colnames(NORMAL_Mrg2)[19]  <- "PC9"
+colnames(NORMAL_Mrg2)[20]  <- "PC10"
+
+#do this for the special conditional files
+**note to self check that this is correct
+colnames(SPECIAL_Mrg2)[15]  <- "PC1"
+colnames(SPECIAL_Mrg2)[16]  <- "PC2"
+colnames(SPECIAL_Mrg2)[17]  <- "PC3"
+colnames(SPECIAL_Mrg2)[18]  <- "PC4"
+colnames(SPECIAL_Mrg2)[19]  <- "PC5"
+colnames(SPECIAL_Mrg2)[20]  <- "PC6"
+colnames(SPECIAL_Mrg2)[21]  <- "PC7"
+colnames(SPECIAL_Mrg2)[22]  <- "PC8"
+colnames(SPECIAL_Mrg2)[23]  <- "PC9"
+colnames(SPECIAL_Mrg2)[24]  <- "PC10"
+
+#do this for the conditional files
+colnames(CONDI_Mrg2)[15]  <- "PC1"
+colnames(CONDI_Mrg2)[16]  <- "PC2"
+colnames(CONDI_Mrg2)[17]  <- "PC3"
+colnames(CONDI_Mrg2)[18]  <- "PC4"
+colnames(CONDI_Mrg2)[19]  <- "PC5"
+colnames(CONDI_Mrg2)[20]  <- "PC6"
+colnames(CONDI_Mrg2)[21]  <- "PC7"
+colnames(CONDI_Mrg2)[22]  <- "PC8"
+colnames(CONDI_Mrg2)[23]  <- "PC9"
+colnames(CONDI_Mrg2)[24]  <- "PC10"
+
+#export the final coviariate files
+write.table(NORMAL_Mrg2, file="LRRK2_condi_covariates_NORMAL.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(SPECIAL_Mrg2, file="LRRK2_condi_covariates_SPECIAL.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(CONDI_Mrg2, file="LRRK2_condi_covariates.txt", quote=FALSE,row.names=F,sep="\t")
+
 q()
 n
+```
 
-###then subset each cohort due to potentially overlapping sample names...
+
+```
+### Then subset each cohort due to potentially overlapping sample names
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 #keep the header so that you can add it to each separate file
-head -1 LRRK2_condi_covariates_NORMAL.txt > header.txt
+head -1 LRRK2_condi_covariates_NORMAL.txt > header1.txt
+head -1 LRRK2_condi_covariates_SPECIAL.txt > header2.txt
+head -1 LRRK2_condi_covariates.txt > header3.txt
 
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
-do 
-#pull out all of the lines that contain the cohort name 
-grep $line LRRK2_condi_covariates_NORMAL.txt > temp
-#combine these lines with the header
-cat header.txt temp > LRRK2_condi_covariates_NORMAL.$line.txt
+cat cohort_file.txt  | while read line
+do
+	#pull out all of the lines that contain the cohort name 
+	grep $line LRRK2_condi_covariates_NORMAL.txt > temp1
+	grep $line LRRK2_condi_covariates_SPECIAL.txt > temp2
+	grep $line LRRK2_condi_covariates.txt > temp3
+	#combine these lines with the header
+	cat header1.txt temp1 > LRRK2_condi_covariates_NORMAL.$line.txt
+	cat header2.txt temp2 > LRRK2_condi_covariates_SPECIAL.$line.txt
+	cat header3.txt temp3 > LRRK2_condi_covariates.$line.txt
 done
+
 
 # fix MF data...
 #the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
 
-#return all non-matching lines--without HBS, PDBP, SPAIN4
-grep -v HBS LRRK2_condi_covariates_NORMAL.MF.txt > temp
-grep -v PDBP temp > temp2
-grep -v SPAIN4 temp2 > LRRK2_condi_covariates_NORMAL.MF.txt
-# fixed...
+#want to return all non matching lines -- lines without HBS, PDBP, SPAIN4
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_NORMAL.MF.txt > LRRK2_condi_covariates_NORMAL.MF.txt
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_SPECIAL.MF.txt > LRRK2_condi_covariates_SPECIAL.MF.txt
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates.MF.txt > LRRK2_condi_covariates.MF.txt
 
-#move the NORMAL covariate files into a new directory
-mkdir NORMAL_COVARIATES
-mv *.eigenvec NORMAL_COVARIATES
+# fixed…
 
 
 ###sanity check that the covariate files contain the correct cohort data
+**note to self come back to this and check the special section, potentially delete this section
+
+#do this for the normal cov files
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do 
+   #check that the DATASET is only the appropriate cohort
+   awk '{print $14}' LRRK2_condi_covariates.$line.txt | sort | uniq #note that DATASET IS #13 because of the additional columns
+done
 
 #do this for the conditional cov files
 cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
@@ -442,15 +478,33 @@ do
    awk '{print $10}' LRRK2_condi_covariates_NORMAL.$line.txt | sort | uniq
 done
 
-#do this for the normal cov files
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
-do 
-   #check that the DATASET is only the appropriate cohort
-   awk '{print $14}' LRRK2_condi_covariates.$line.txt | sort | uniq #note that DATASET IS #13 because of the additional columns
-done
+
 #everything looks good…
 
 ```
+
+
+```
+### Reorganize the files
+**note to self double check this when I re-run
+
+#move the NORMAL covariate files into a new directory
+mkdir NORMAL_COVARIATES
+mv *NORMAL.eigenvec NORMAL_COVARIATES
+**note to self I'm not sure why I don't have the last line moving the covariates file...
+
+#move the SPECIAL covariate files into a new directory
+mkdir SPECIAL_COVARIATES
+mv *SPECIAL.eigenvec SPECIAL_COVARIATES
+**note to self I'm not sure why I don't have the last line moving the covariates file...
+
+#move the conditional covariate files into a new directory
+mkdir CONDI_COVARIATES
+mv *.eigenvec CONDI_COVARIATES
+mv LRRK2_condi_covariates* CONDI_COVARIATES
+
+```
+
 
 ### 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
 
