@@ -200,7 +200,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 ```
 
 <table>
-<tr><th>Data for conditional GWAS (no N2081D + no G2019S)</th><th>Data for special conditional GWAS (no rs76904798 + no G2019S)</th></tr>
+<tr><th>Data for conditional GWAS (no rs76904798 + no G2019S)</th><th>Data for special conditional GWAS (no N2081D + no G2019S)</th></tr>
 <tr><td>
 
 | DATASET      | Case  | Control | TOTAL |
