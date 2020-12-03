@@ -66,13 +66,14 @@ This section goes through:
 Path to working folder: /data/LNG/Julie/Julie_LRRK2_Condi
 
 Path to IPDGC genetics data: /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.bim/bed/fam
+
 This data is filtered for a lot of things...check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
 
+```
 Variants of interest:
 LRRK2 G2019S => hg19 12:40734202:G:A
 rs76904798 => hg19 12:40614434:C:T
 
-```
 cd /data/LNG/Julie/Julie_LRRK2_Condi 
 module load plink
 
