@@ -488,7 +488,7 @@ mv LRRK2_condi_covariates* CONDI_COVARIATES
 ```
 
 
-### 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
+## 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
 
 This section goes through: 
 - Extracting all LRRK2 coding variants
@@ -708,7 +708,7 @@ ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
 
 ```
 
-### 4. Adding in UKBiobank
+## 4. Adding in UKBiobank
  This section goes through: 
 - Adding the UK Biobank data (bit long section though)
 
@@ -1245,7 +1245,7 @@ scp CONDI_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
 
 
 
-### 5. Combining all data together
+## 5. Combining all data together
 
 This section goes through: 
 - Performing cohort level analyses on the created data from 1 and 4 and then meta-analyzing
