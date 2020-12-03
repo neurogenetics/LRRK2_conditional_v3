@@ -307,7 +307,7 @@ do
 	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_SPECIAL
 	
 	#send the .eigenvec files back to the working directory to combine into a new combined PC file
-	scp $line.LRRK2_condi_PCA.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
+	scp $line.LRRK2_condi_PCA_SPECIAL.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
 	cd ..
 done
 
@@ -317,7 +317,7 @@ done
 #### PC files with G2019S, N2081D and rs76904798 <= meaning normal files...
 
 ```
-#loop for making PCA
+## loop for making PCA
 #all samples!
 cat cohort_file.txt  | while read line
 do 
@@ -359,7 +359,7 @@ CONDI_PC <- read.table("CONDI_PCs.txt",header=F)
 
 #we want to keep the phenotype information but get rid of the old PCs before merging
 NORMAL_cov2 <- NORMAL_cov[,c(1:10)]
-SPECIAL_cov2 <- SPECIAL_cov[,c(1:14)] #double check this number is correct...going to run after I finish this section
+SPECIAL_cov2 <- SPECIAL_cov[,c(1:14)]
 CONDI_cov2 <- condi_cov[,c(1:14)]
 
 #now add the new PCs
@@ -374,11 +374,10 @@ CONDI_Mrg$V2 <- NULL
 
 #only keep the first 10 PCs
 NORMAL_Mrg2 <- NORMAL_Mrg[,c(1:20)]
-SPECIAL_Mrg2 <- SPECIAL_Mrg[,c(1:24)] #note to self check if this is right
+SPECIAL_Mrg2 <- SPECIAL_Mrg[,c(1:24)]
 CONDI_Mrg2 <- CONDI_Mrg[,c(1:24)]
 
 #change the name of the first 10 PCs
-**note to self see what they were named before, just curious
 
 #do this for the normal files
 colnames(NORMAL_Mrg2)[11]  <- "PC1"
@@ -393,7 +392,6 @@ colnames(NORMAL_Mrg2)[19]  <- "PC9"
 colnames(NORMAL_Mrg2)[20]  <- "PC10"
 
 #do this for the special conditional files
-**note to self check that this is correct
 colnames(SPECIAL_Mrg2)[15]  <- "PC1"
 colnames(SPECIAL_Mrg2)[16]  <- "PC2"
 colnames(SPECIAL_Mrg2)[17]  <- "PC3"
@@ -454,49 +452,30 @@ done
 #the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
 
 #want to return all non matching lines -- lines without HBS, PDBP, SPAIN4
-grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_NORMAL.MF.txt > LRRK2_condi_covariates_NORMAL.MF.txt
-grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_SPECIAL.MF.txt > LRRK2_condi_covariates_SPECIAL.MF.txt
-grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates.MF.txt > LRRK2_condi_covariates.MF.txt
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_NORMAL.MF.txt > temp
+mv temp LRRK2_condi_covariates_NORMAL.MF.txt
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_SPECIAL.MF.txt > temp
+mv temp LRRK2_condi_covariates_SPECIAL.MF.txt
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates.MF.txt > temp
+mv temp LRRK2_condi_covariates.MF.txt
 
 # fixed…
-
-
-###sanity check that the covariate files contain the correct cohort data
-**note to self come back to this and check the special section, potentially delete this section
-
-#do this for the normal cov files
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
-do 
-   #check that the DATASET is only the appropriate cohort
-   awk '{print $14}' LRRK2_condi_covariates.$line.txt | sort | uniq #note that DATASET IS #13 because of the additional columns
-done
-
-#do this for the conditional cov files
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
-do 
-   #check that the DATASET is only the appropriate cohort
-   awk '{print $10}' LRRK2_condi_covariates_NORMAL.$line.txt | sort | uniq
-done
-
-
-#everything looks good…
 
 ```
 
 
 ```
 ### Reorganize the files
-**note to self double check this when I re-run
 
 #move the NORMAL covariate files into a new directory
 mkdir NORMAL_COVARIATES
 mv *NORMAL.eigenvec NORMAL_COVARIATES
-**note to self I'm not sure why I don't have the last line moving the covariates file...
+**note to self I'm not sure why I don't have the last line moving the covariates files...
 
 #move the SPECIAL covariate files into a new directory
 mkdir SPECIAL_COVARIATES
 mv *SPECIAL.eigenvec SPECIAL_COVARIATES
-**note to self I'm not sure why I don't have the last line moving the covariates file...
+**note to self I'm not sure why I don't have the last line moving the covariates files...
 
 #move the conditional covariate files into a new directory
 mkdir CONDI_COVARIATES
