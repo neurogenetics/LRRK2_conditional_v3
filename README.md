@@ -30,9 +30,14 @@ This section goes through:
 
 ### [2. Create covariate files for each IPDGC cohort](#2-Create-covariate-files-for-each-IPDGC-cohort)
 This section goes through:
-- Create new PC's for each cohort
+- Creating new PC's for each cohort
+- Creating covariate files
 
 ### [3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants](#3-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-risk-(rs76904798)-and-G2019S-variants)
+This section goes through: 
+- Extracting all LRRK2 coding variants
+- Performing GWAS of chromosome 12 for each cohort
+- Prepping before meta-analysis
 
 ### [4. Adding in UKBiobank](#4-Adding-in-UKBiobank)
 This section goes through: 
@@ -147,7 +152,7 @@ plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september
 ```
 
 ```
-## subset the data to include only homozygous reference carriers of both variants
+##subset the data to include only homozygous reference carriers of both variants
 
 module load R
 R
@@ -312,7 +317,6 @@ do
 done
 
 ```
-
 
 #### PC files with G2019S, N2081D and rs76904798 <= meaning normal files...
 
@@ -487,11 +491,15 @@ mv LRRK2_condi_covariates* CONDI_COVARIATES
 ### 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
 
 This section goes through: 
-- Perform GWAS for each cohort for chromosome 12
-- Prep before meta-analysis
-- meta-analyze results (not this until we get UKB data)
+- Extracting all LRRK2 coding variants
+- Performing GWAS of chromosome 12 for each cohort
+- Prepping before meta-analysis
 
-#### variants of interest:
+### 3.1 Extract all LRRK2 coding variants
+
+#### variants of interest (VOI):
+note to self this is the section I will change to include all LRRK2 coding variants...
+...plus some others on CHR 12 as positive controls --> call these VOI
 ```
 12:40657700	p.Asn551Lys
 12:40671989	p.Ile723Val
@@ -542,101 +550,133 @@ LRRK2_condi_covariates.VANCE.txt
 LRRK2_condi_covariates.SPAIN4.txt
 ```
 
+### 3.2 Perform GWAS of chromosome 12 for each cohort
+note to self I will want to make this a batch script when I re-run
 
-#### GWAS start...
+#### Normal GWAS for IPDGC cohorts
 ```
-cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 
+mkdir NORMAL_GWAS_CHR12
 module load plink/2.0-dev-20191128
 
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
---keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
---pheno-name PHENOTYPE --covar-variance-standardize \
---pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
---covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.DUTCH.txt \
---covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
---out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/TEST
-
-# run test in loop....
-### normal
-module load plink/2.0-dev-20191128
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt  | while read line
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt  | while read line
 do 
-	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
 	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
-	--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
-	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--chr 12 \
+	--keep /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
 	--pheno-name PHENO_PLINK --covar-variance-standardize \
-	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
-	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--pheno /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
+	--covar /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.$line.txt \
 	--covar-name AGE,SEX_COV,PC1,PC2,PC3,PC4,PC5 \
-	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.$line
+	--out /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.$line
 done
 
 ## EXCEPTIONS => VANCE + MF no age...
-
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
 --glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
---keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
 --pheno-name PHENO_PLINK --covar-variance-standardize \
---pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
---covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.VANCE.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES//LRRK2_condi_covariates_NORMAL.VANCE.txt \
 --covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
---out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.VANCE
+--out /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.VANCE
 
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
 --glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
---keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
 --pheno-name PHENO_PLINK --covar-variance-standardize \
---pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
---covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.MF.txt \
 --covar-name SEX_COV,PC1,PC2,PC3,PC4,PC5 \
---out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL_GWAS.MF
-
-
-### condi
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
-do 
-	plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
-	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
-	--snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
-	--keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
-	--pheno-name PHENOTYPE --covar-variance-standardize \
-	--pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
-	--covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.$line.txt \
-	--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
-	--out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.$line
-done
-
-## EXCEPTIONS => VANCE + MF no age...
-
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
---keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
---pheno-name PHENOTYPE --covar-variance-standardize \
---pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
---covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.VANCE.txt \
---covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
---out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.VANCE
-
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---snps 12:40657700,12:40671989,12:40702911,12:40707778,12:40707861,12:40713899,12:40740686,12:40734202,12:40713901,12:40758652,12:40614434 \
---keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
---pheno-name PHENOTYPE --covar-variance-standardize \
---pheno /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
---covar /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_covariates.MF.txt \
---covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
---out /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI_GWAS.MF
+--out /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.MF
 
 ```
 
-#### munging data before continuing
+#### Conditional GWAS for IPDGC cohorts (no rs76904798 + no G2019S)
+```
+mkdir CONDI_GWAS_CHR12
+
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do 
+	plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--chr 12 \
+	--keep /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.$line.txt \
+	--pheno-name PHENOTYPE --covar-variance-standardize \
+	--pheno /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.$line.txt \
+	--covar /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.$line.txt \
+	--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.VANCE.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.VANCE.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.VANCE.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.VANCE
+
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.MF.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.MF.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_COVARIATES/LRRK2_condi_covariates.MF.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.MF
+
+```
+
+#### Special conditional GWAS for IPDGC cohorts (no N2081D + no G2019S)
+```
+mkdir SPECIAL_GWAS_CHR12
+
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do 
+	plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--chr 12 \
+	--keep /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.$line.txt \
+	--pheno-name PHENOTYPE --covar-variance-standardize \
+	--pheno /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.$line.txt \
+	--covar /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.$line.txt \
+	--covar-name AGE,SEX,PC1,PC2,PC3,PC4,PC5 \
+	--out /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.$line
+done
+
+## EXCEPTIONS => VANCE + MF no age...
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.VANCE.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.VANCE.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.VANCE.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.VANCE
+
+plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --memory 99000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--chr 12 \
+--keep /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.MF.txt \
+--pheno-name PHENOTYPE --covar-variance-standardize \
+--pheno /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.MF.txt \
+--covar /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_COVARIATES/LRRK2_condi_covariates_SPECIAL.MF.txt \
+--covar-name SEX,PC1,PC2,PC3,PC4,PC5 \
+--out /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.MF
+
+```
+
+### 3.2 Munging data
 
 ```
 Files => 
@@ -667,7 +707,6 @@ HEADER:
 ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
 
 ```
-
 
 ### 4. Adding in UKBiobank
  This section goes through: 
