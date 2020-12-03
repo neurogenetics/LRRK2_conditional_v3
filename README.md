@@ -294,7 +294,7 @@ done
 ```
 
 
-#### PC files without G2019S and N2081D (unrun)
+#### PC files without G2019S and N2081D
 
 ```
 ### loop for making PCA
@@ -337,7 +337,6 @@ done
 
 ### 2.2 Create covariate files
 
-(note below I'm combining the previous sections)
 ```
 ### Merge new PC's in R with other phenotype data
 
@@ -470,12 +469,12 @@ mv temp LRRK2_condi_covariates.MF.txt
 #move the NORMAL covariate files into a new directory
 mkdir NORMAL_COVARIATES
 mv *NORMAL.eigenvec NORMAL_COVARIATES
-**note to self I'm not sure why I don't have the last line moving the covariates files...
+mv LRRK2_condi_covariates_NORMAL* NORMAL_COVARIATES
 
 #move the SPECIAL covariate files into a new directory
 mkdir SPECIAL_COVARIATES
 mv *SPECIAL.eigenvec SPECIAL_COVARIATES
-**note to self I'm not sure why I don't have the last line moving the covariates files...
+mv LRRK2_condi_covariates_SPECIAL* SPECIAL_COVARIATES
 
 #move the conditional covariate files into a new directory
 mkdir CONDI_COVARIATES
