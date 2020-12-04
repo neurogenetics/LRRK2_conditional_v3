@@ -677,7 +677,7 @@ plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_septembe
 
 ```
 
-### 3.2 Munging data
+### 3.2 Munging data (note this has been updated)
 
 ```
 Files => 
@@ -693,7 +693,7 @@ CONDI_GWAS_CHR12.*.PHENOTYPE.glm.logistic.hybrid
 cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
 do 
   cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
-  cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid >  NORMAL_GWAS_CHR12.$line.txt
+  cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid > NORMAL_GWAS_CHR12.$line.txt
   cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/
   cut -f 3,4,5,6,13,19,20,22 SPECIAL_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid > SPECIAL_GWAS_CHR12.$line.txt
   cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
