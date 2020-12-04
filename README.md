@@ -453,7 +453,7 @@ done
 
 
 # fix MF data...
-#the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (i.e. HBS_PD_INVDG562MF3)
+#the MF covariates file also pulled out other cohorts since "MF" is contained within other cohorts' IDs (e.g. HBS_PD_INVDG562MF3)
 
 #want to return all non matching lines -- lines without HBS, PDBP, SPAIN4
 grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_NORMAL.MF.txt > temp
@@ -749,7 +749,7 @@ mv CONDI_GWAS_VOI* LRRK2_coding_VOI
 ```
 
 ```
-##Sanity checkL make sure all of the VOI files have 39 lines (including header)
+##Sanity check: make sure all of the VOI files have 39 lines (including header)
 #These are the variants from LRRK2_coding_VOI.txt that are present in our data
 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/
