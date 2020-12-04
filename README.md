@@ -681,31 +681,40 @@ plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_septembe
 
 ```
 Files => 
-CONDI_GWAS.*.PHENOTYPE.glm.logistic.hybrid
-NORMAL_GWAS.*.PHENO_PLINK.glm.logistic.hybrid
+NORMAL_GWAS_CHR12.*.PHENO_PLINK.glm.logistic.hybrid
+SPECIAL_GWAS_CHR12.*.PHENOTYPE.glm.logistic.hybrid
+CONDI_GWAS_CHR12.*.PHENOTYPE.glm.logistic.hybrid
 
-columns of interest... => 3,4,5,6,13,19,20,22
-cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS.*.PHENOTYPE.glm.logistic.hybrid > DATASETNAME_GWAS.txt
+#get rid of the first two columns (CHROM and POS) since they are repeats of ID
+#keep ID, REF, ALT, A1, A1_FREQ, OR, LOG(OR)_SE, P
+#columns of interest... => 3,4,5,6,13,19,20,22
 
-# loop over...
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
+### loop over to make the .hybrid files into readable .txt files 
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
 do 
-	cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS.$line.PHENOTYPE.glm.logistic.hybrid > ../CONDI_GWAS.$line.txt
-	cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS.$line.PHENO_PLINK.glm.logistic.hybrid > ../NORMAL_GWAS.$line.txt
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
+  cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid >  NORMAL_GWAS_CHR12.$line.txt
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/
+  cut -f 3,4,5,6,13,19,20,22 SPECIAL_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid > SPECIAL_GWAS_CHR12.$line.txt
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
+  cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid > CONDI_GWAS_CHR12.$line.txt
 done
 
-mkdir NORMAL
-mkdir CONDI
+#organize the files 
+cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
 mkdir prep_files
-mv *.log prep_files/
-mv *.hybrid prep_files/
-mv CONDI_GWAS* CONDI/
-mv NORMAL_GWAS* NORMAL/
+mv *.log prep_files
+mv *.hybrid prep_files
 
-# DONE for now....
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW
-HEADER:
-ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
+cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/
+mkdir prep_files
+mv *.log prep_files
+mv *.hybrid prep_files
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
+mkdir prep_files
+mv *.log prep_files
+mv *.hybrid prep_files
 
 ```
 
