@@ -765,7 +765,7 @@ done
 
 ```
 
-## 4. Adding in UKBiobank
+## 4. Add in UKBiobank
  This section goes through: 
 - Subsetting the UK Biobank data
 - Making covariate files
@@ -801,7 +801,7 @@ done
 
 ```
 
-### 4.2 Subsetting UKB data
+### 4.2 Filter UKB data
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -819,7 +819,7 @@ plink2 --bgen ukb_imp_chr12_v3.bgen --extract CHR12.SNPS_0_8.txt --geno 0.1 --hw
 --memory 235000
 
 ```
-### 4.3 Making covariate files
+### 4.3 Make covariate files
 
 Coviariate files to be made: N=6
 1) PD vs control 
@@ -858,7 +858,7 @@ rs33995883	rs33995883	40740686	A	G	0.0163887	G	1
 
 ```
 
-#### Make subset covariate files based on LRRK2 carrier status
+#### Make covariate files based on LRRK2 carrier status
 
 ```
 module load R
@@ -867,7 +867,7 @@ R
 require("data.table")
 require("dplyr")
 
-###Read in all of the files:
+### Read in all of the files:
 
 #full covariate files
 cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
@@ -879,7 +879,7 @@ Proxy <- fread("/data/CARD/UKBIOBANK/PHENOTYPE_DATA/disease_groups/PD_parent_no_
 keep <- fread("/data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cousins.fam",header=F)
 #Not controls: don't use PD cases or proxy cases as controls
 not_control <- fread("/data/CARD/UKBIOBANK/PHENOTYPE_DATA/disease_groups/PD_case_or_PD_parent.txt",header=T)
-#Use LRRK2 status to subset data for separate GWAS
+#Use LRRK2 status to subset covariate files for separate GWAS
 LRRK2_status <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/LRRK2_area_snps2.raw",header=T)
 
 
@@ -902,29 +902,29 @@ names(keepshort) <- c("FID")
 names(covshort) <- c("FID", "AGE", "SEX")
 
 
-###merge the covariate info with the FIDs for each group to add age and sex info
+### Merge the covariate info with the FIDs for each group to add age and sex info
 PD2 = merge(PDshort,covshort,by.x='FID',by.y='FID')
 Proxy2 = merge(Proxyshort,covshort,by.x='FID',by.y='FID')
 not_control2 = merge(not_controlshort,covshort,by.x='FID',by.y='FID')
 
-###filter the groups using the filtered and unrelated data (keepshort)
+### Filter the groups using the filtered and unrelated data (keepshort)
 PD3 = merge(PD2,keepshort,by.x='FID',by.y='FID')
 Proxy3 = merge(Proxy2,keepshort,by.x='FID',by.y='FID')
 not_control3 = merge(not_control2,keepshort,by.x='FID',by.y='FID')
 
-### get all controls....
+### Get all controls....
 keep3 = merge(keepshort,covshort,by.x='FID',by.y='FID')
 #use anti_join to find unmatched records, those that are in keep3 but not not_control3 --> controls 
 keep4 = anti_join(keep3,not_control3, by = c('FID'))
 #we only want controls that are 60+ yrs old
 keep5 = subset(keep4, AGE >= 60)
 
-### add column on PD status
+### Add column on PD status
 PD3$STATUS <- "PD"
 Proxy3$STATUS <- "PROXY"
 keep5$STATUS <- "CONTROL"
 
-###subset controls randonly... 
+### Subset controls randonly... 
 #we want 10X as many controls as there are cases
 # case-control = 1530 x 10 = 15300
 nrow(PD3) #1530
@@ -933,7 +933,7 @@ PD3_controls <- sample_n(keep5, 15300)
 #use the rest of the controls for the Proxy GWAS
 Proxy3_controls <- anti_join(keep5,PD3_controls, by = c('FID'))
 
-###cat dataframes...
+### Cat dataframes...
 PD_FINAL <- rbind(PD3, PD3_controls)
 PROXY_FINAL <- rbind(Proxy3, Proxy3_controls)
 #add the IID column
@@ -943,13 +943,10 @@ PROXY_FINAL$IID <- PROXY_FINAL$FID
 PD_FINAL <- PD_FINAL[c(1,5,3,4,2)]
 PROXY_FINAL <- PROXY_FINAL[c(1,5,3,4,2)]
 
-
-
-###subset based on LRRK2 carrier status
+### Subset based on LRRK2 carrier status
 # rs76904798_T => 5' risk variant
 # rs34637584_A => G2019S 
 # rs33995883_G => N2081D
-
 
 #get rid of unneeded columns: only need FID, rs76904798_T, rs34637584_A, rs33995883_G
 LRRK2_status$IID <- NULL
@@ -962,14 +959,13 @@ LRRK2_status$PHENOTYPE <- NULL
 PD_FINAL_LRRK2 <- merge(PD_FINAL,LRRK2_status,by.x='FID',by.y='FID')
 PROXY_FINAL_LRRK2 <- merge(PROXY_FINAL,LRRK2_status,by.x='FID',by.y='FID')
 
-
 #subset the final PD and Proxy datasets based on LRRK2  status
 PD_FINAL_norisk_GS <- subset(PD_FINAL_LRRK2, rs76904798_T == 0 & rs34637584_A == 0)
 PD_FINAL_noN2081D_GS <- subset(PD_FINAL_LRRK2, rs33995883_G == 0 & rs34637584_A == 0)
 PROXY_FINAL_norisk_GS <- subset(PROXY_FINAL_LRRK2, rs76904798_T == 0 & rs34637584_A == 0)
 PROXY_FINAL_noN2081D_GS <- subset(PROXY_FINAL_LRRK2, rs33995883_G == 0 & rs34637584_A == 0)
 
-# save dataframes
+#save dataframes
 write.table(PD_FINAL, file="UKB_PD_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PD_FINAL_norisk_GS, file="UKB_PD_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PD_FINAL_noN2081D_GS, file="UKB_PD_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
@@ -982,7 +978,10 @@ n
 #organize some files
 mkdir LRRK2_status_prep
 mv LRRK2_area_snps* LRRK2_status_prep
+
 ```
+
+### 4.4 Calculate PCs
 
 ``` 
 # calculate PC's
