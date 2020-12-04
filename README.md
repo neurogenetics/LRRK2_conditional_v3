@@ -829,11 +829,11 @@ Coviariate files to be made: N=6
 5) PD proxy vs control (no rs76904798 + no G2019S)
 6) PD proxy vs control (no N2081D + no G2019S)
 
-working dir => data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+Working directory: data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+
+#### Determine LRRK2 carrier status 
 
 ```
-
-###filter for SNPs of interest and convert to .bed/.bim/.fam files 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 
 module load plink/2.3-alpha
@@ -842,11 +842,12 @@ plink2 --bgen /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb_imp_chr12_v3.bgen --snps rs7
 module load plink
 plink --bfile LRRK2_area_snps --recodeA --out LRRK2_area_snps2
 
+LRRK2 carrier status stored here: LRRK2_area_snps2.raw
 
 ##Checking imputation quality:
-	#rs76904798_T => 5' risk variant
-	#rs34637584_A => G2019S 
-	#rs33995883_G => N2081D
+#rs76904798_T => 5' risk variant
+#rs34637584_A => G2019S 
+#rs33995883_G => N2081D
 
 grep 'rs76904798\|rs34637584\|rs33995883' /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb_mfi_chr12_v3.txt
 
