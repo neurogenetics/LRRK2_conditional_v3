@@ -654,7 +654,7 @@ plink2 --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_septembe
 
 ```
 
-### 3.2 Munging data (note this has been updated)
+### 3.3 Munging data (note this has been updated)
 
 ```
 Files => 
@@ -692,6 +692,76 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
 mkdir prep_files
 mv *.log prep_files
 mv *.hybrid prep_files
+
+```
+### 3.4 Pull LRRK2 coding variants from IPDGC CHR12 GWAS
+
+Purpose: After incorporating UKB data, we will make forest plots of LRRK2 coding variants and positive controls.
+
+```
+##make new GWAS results files with only the LRRK2 coding VOI
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/
+cat cohort_file.txt | while read line
+do 
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12
+  #keep the header to add to VOI files
+  head -1 NORMAL_GWAS_CHR12.$line.txt > header.txt
+  #pull out the variants of interest
+  grep -Ff /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt NORMAL_GWAS_CHR12.$line.txt > temp.txt
+  #combine these lines with the header
+  cat header.txt temp.txt > NORMAL_GWAS_VOI.$line.txt
+  rm header.txt temp.txt
+  
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12
+  #keep the header to add to VOI files
+  head -1 SPECIAL_GWAS_CHR12.$line.txt > header.txt
+  #pull out the variants of interest
+  grep -Ff /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt SPECIAL_GWAS_CHR12.$line.txt > temp.txt
+  #combine these lines with the header
+  cat header.txt temp.txt > SPECIAL_GWAS_VOI.$line.txt
+  rm header.txt temp.txt
+  
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12
+  #keep the header to add to VOI files
+  head -1 CONDI_GWAS_CHR12.$line.txt > header.txt
+  #pull out the variants of interest
+  grep -Ff /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt CONDI_GWAS_CHR12.$line.txt > temp.txt
+  #combine these lines with the header
+  cat header.txt temp.txt > CONDI_GWAS_VOI.$line.txt
+  rm header.txt temp.txt
+done
+
+##reorganize the files --> save the VOI files in LRRK2_coding_VOI within each GWAS directory
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12
+mkdir LRRK2_coding_VOI
+mv NORMAL_GWAS_VOI* LRRK2_coding_VOI
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12
+mkdir LRRK2_coding_VOI
+mv SPECIAL_GWAS_VOI* LRRK2_coding_VOI
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12
+mkdir LRRK2_coding_VOI
+mv CONDI_GWAS_VOI* LRRK2_coding_VOI
+
+```
+
+```
+##Sanity checkL make sure all of the VOI files have 39 lines (including header)
+#These are the variants from LRRK2_coding_VOI.txt that are present in our data
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/
+cat cohort_file.txt | while read line
+do 
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI
+  wc -l NORMAL_GWAS_VOI.$line.txt
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI
+  wc -l SPECIAL_GWAS_VOI.$line.txt
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI
+  wc -l CONDI_GWAS_VOI.$line.txt
+done
 
 ```
 
