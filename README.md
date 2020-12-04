@@ -521,9 +521,9 @@ cat LRRK2_HRC_coding_V2.txt pos_controls.txt > LRRK2_HRC_coding_V3.txt
 cut -f 1,2 LRRK2_HRC_coding_V3.txt | sed 's/\t/:/g' | sed 's/Chr:Start/ID/g' > first_column.txt
 paste first_column.txt LRRK2_HRC_coding_V3.txt > LRRK2_HRC_coding_V4.txt
 
-#copy the IDs back to working directory as VOI.txt (VOI=variants of interest)
+#copy the IDs back to working directory as LRRK2_coding_VOI.txt (VOI=variants of interest)
 cut -f1 LRRK2_HRC_coding_V4.txt  | tail -n +2 > LRRK2_HRC_coding_V4_IDs.txt
-scp LRRK2_HRC_coding_V4_IDs.txt /data/LNG/Julie/Julie_LRRK2_Condi/VOI.txt
+scp LRRK2_HRC_coding_V4_IDs.txt /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt
 
 # 48 variants present…
 ```
