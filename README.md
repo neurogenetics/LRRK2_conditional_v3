@@ -498,57 +498,34 @@ This section goes through:
 
 ### 3.1 Extract all LRRK2 coding variants
 
-#### variants of interest (VOI):
-note to self this is the section I will change to include all LRRK2 coding variants...
-...plus some others on CHR 12 as positive controls --> call these VOI
 ```
-12:40657700	p.Asn551Lys
-12:40671989	p.Ile723Val
-12:40702911	p.Arg1398His
-12:40707778	p.Arg1514Gln
-12:40707861	p.Pro1542Ser
-12:40713899	p.Met1646Thr
-12:40740686	p.Asn2081Asp
-12:40734202	p.Gly2019Ser
-12:40713901	p.Ser1647Thr
-12:40758652	p.Met2397Thr
-12:40614434	rs76904798
-```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir HRC_LRRK2
+cd HRC_LRRK2
 
-#### covariates for GWAS no '5 risk and GS
-```
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
-LRRK2_condi_covariates.DUTCH.txt
-LRRK2_condi_covariates.GERMANY.txt
-LRRK2_condi_covariates.HBS.txt
-LRRK2_condi_covariates.MCGILL.txt
-LRRK2_condi_covariates.MF.txt
-LRRK2_condi_covariates.NEUROX_DBGAP.txt
-LRRK2_condi_covariates.NIA.txt
-LRRK2_condi_covariates.PDBP.txt
-LRRK2_condi_covariates.PPMI.txt
-LRRK2_condi_covariates.SHULMAN.txt
-LRRK2_condi_covariates.SPAIN3.txt
-LRRK2_condi_covariates.VANCE.txt
-LRRK2_condi_covariates.SPAIN4.txt
-```
+head -1 /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt > header.txt
 
-#### "normal" covariates for GWAS 
-```
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/
-LRRK2_condi_covariates.DUTCH.txt
-LRRK2_condi_covariates.GERMANY.txt
-LRRK2_condi_covariates.HBS.txt
-LRRK2_condi_covariates.MCGILL.txt
-LRRK2_condi_covariates.MF.txt
-LRRK2_condi_covariates.NEUROX_DBGAP.txt
-LRRK2_condi_covariates.NIA.txt
-LRRK2_condi_covariates.PDBP.txt
-LRRK2_condi_covariates.PPMI.txt
-LRRK2_condi_covariates.SHULMAN.txt
-LRRK2_condi_covariates.SPAIN3.txt
-LRRK2_condi_covariates.VANCE.txt
-LRRK2_condi_covariates.SPAIN4.txt
+#pull out the variants from CHR12, then filter by LRRK2, exonic, nonsynonymous --> LRRK2 coding variants
+awk '$1 == "12"' /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt | grep LRRK2 | grep exonic | sed 's/ /_/g' | grep nonsynonymous > temp
+cat header.txt temp > LRRK2_HRC_coding.txt
+
+# manually add in rs76904798 (non-coding)
+grep rs76904798 /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt > risk_variant.txt
+cat LRRK2_HRC_coding.txt risk_variant.txt > LRRK2_HRC_coding_V2.txt
+
+#manually add in non-LRRK2 CHR12 GWAS hits from Nalls 2019 META5 GWAS (https://pdgenetics.shinyapps.io/GWASBrowser/) as positive controls for conditional analysis…expect to see little change in effect for these variants 
+grep -e rs7134559$ -e rs10847864$ -e rs11610045$ /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt > pos_controls.txt
+cat LRRK2_HRC_coding_V2.txt pos_controls.txt > LRRK2_HRC_coding_V3.txt
+
+#add in the first column ("ID") in CHR:POS format 
+cut -f 1,2 LRRK2_HRC_coding_V3.txt | sed 's/\t/:/g' | sed 's/Chr:Start/ID/g' > first_column.txt
+paste first_column.txt LRRK2_HRC_coding_V3.txt > LRRK2_HRC_coding_V4.txt
+
+#copy the IDs back to working directory as VOI.txt (VOI=variants of interest)
+cut -f1 LRRK2_HRC_coding_V4.txt  | tail -n +2 > LRRK2_HRC_coding_V4_IDs.txt
+scp LRRK2_HRC_coding_V4_IDs.txt /data/LNG/Julie/Julie_LRRK2_Condi/VOI.txt
+
+# 48 variants present…
 ```
 
 ### 3.2 Perform GWAS of chromosome 12 for each cohort
