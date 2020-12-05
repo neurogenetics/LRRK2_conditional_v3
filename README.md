@@ -1183,6 +1183,7 @@ COV_UKB_Proxy_cases_control_over60_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.STATUS.glm.logistic.hybrid
 
+#### Reformat plink2 GWAS output
 ```
 #check the number of variants in these files…
 wc -l COV_UKB_PD_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid 
@@ -1211,8 +1212,10 @@ done
 
 ```
 
+#### Adjust Proxy cases to the same scale as PD cases
+
 ```
-# make the toProxy files into .csv files
+# Make the toProxy files into .csv files
 module load R
 R
 require("data.table")
@@ -1225,9 +1228,10 @@ write.table(data3, file="toConvert.COV_UKB_Proxy_cases_control_over60_noriskGS_c
 q()
 n
 
-# convert proxies to "normal" files ready for meta-analysis
-#this adds the b_adjusted, se_adjusted and p_derived columns
-#For meta-analysis in METAL and similar, please use *_adjusted columns. These have been adjusted as per https://www.ncbi.nlm.nih.gov/pubmed/28092683. Taking logistic regression of proxy cases and adjusting to the same scale as actual cases assuming only one parent with disease per proxy case.
+# Convert proxies to "normal" files ready for meta-analysis
+# This adds the b_adjusted, se_adjusted and p_derived columns
+# For meta-analysis in METAL and similar, please use *_adjusted columns. These have been adjusted as per https://www.ncbi.nlm.nih.gov/pubmed/28092683. 
+# Taking logistic regression of proxy cases and adjusting to the same scale as actual cases assuming only one parent with disease per proxy case.
 
 python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxStyle.py \
 --infile toConvert.COV_UKB_Proxy_cases_control_over60_chr12.csv --beta-proxy beta \
@@ -1242,7 +1246,7 @@ python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxSt
 --se-proxy se --p-proxy P --outfile toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.csv
 
 
-# convert the "normal" proxy .csv files back to .txt files
+# Convert the "normalized" proxy .csv files back to .txt files
 module load R
 R
 require("data.table")
@@ -1256,6 +1260,8 @@ q()
 n
 
 ```
+
+#### Reformat further
 
 ```
 # reformat further....
