@@ -1118,6 +1118,8 @@ done
 
 ```
 
+### 4.6 Make data ready for meta-analysis
+
 ```
 # make data ready for meta-analysis...
 
