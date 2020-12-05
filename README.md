@@ -1079,8 +1079,9 @@ rm pruned_data*
 
 ### 4.5 Start GWAS on CHR 12 (note to self make the loop GWAS a bash script)
 
+#### Perform GWAS in a loop
+
 ```
-# start GWAS on chr 12 only...
 module load plink/2.0-dev-20191128
 
 cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB_GWAS/
@@ -1115,6 +1116,59 @@ do
 	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
 	--out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_${line%%.*}_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 done
+
+```
+
+#### Check the cases and controls included in each GWAS
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/
+
+### First check the case and control numbers in the covariate files 
+R
+require(dplyr)
+require(data.table)
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/", pattern="^COV_UKB_P") 
+for(file in file.names) {  
+  cov <- fread(paste("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/",file,sep=""),header=T)
+  num_cases <- sum(cov$STATUS==2)
+  num_controls <- sum(cov$STATUS==1)
+  print(paste(file," has ",num_cases," cases and ",num_controls," controls",sep=""))
+}
+q()
+n
+
+Results: 
+[1] "COV_UKB_PD_cases_control_over60_noNDGS.txt has 1466 cases and 14839 controls"
+[1] "COV_UKB_PD_cases_control_over60_noriskGS.txt has 1063 cases and 11232 controls"
+[1] "COV_UKB_PD_cases_control_over60.txt has 1530 cases and 15300 controls"
+[1] "COV_UKB_Proxy_cases_control_over60_noNDGS.txt has 12942 cases and 136250 controls"
+[1] "COV_UKB_Proxy_cases_control_over60_noriskGS.txt has 9679 cases and 102931 controls"
+[1] "COV_UKB_Proxy_cases_control_over60.txt has 13430 cases and 140908 controls"
+
+
+### Compare this to the results from the GWAS log files
+ls *.log > log_files.txt
+
+cat log_files.txt  | while read line
+do 
+	echo $line
+	grep "1 binary phenotype loaded" $line
+done
+
+Results: 
+COV_UKB_PD_cases_control_over60_chr12.log
+1 binary phenotype loaded (1529 cases, 15271 controls).
+COV_UKB_PD_cases_control_over60_noNDGS_chr12.log
+1 binary phenotype loaded (1466 cases, 14839 controls).
+COV_UKB_PD_cases_control_over60_noriskGS_chr12.log
+1 binary phenotype loaded (1063 cases, 11232 controls).
+COV_UKB_Proxy_cases_control_over60_chr12.log
+1 binary phenotype loaded (13404 cases, 140663 controls).
+COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.log
+1 binary phenotype loaded (12942 cases, 136250 controls).
+COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.log
+1 binary phenotype loaded (9679 cases, 102931 controls).
 
 ```
 
