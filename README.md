@@ -1119,7 +1119,7 @@ done
 
 ```
 
-#### Check the cases and controls included in each GWAS
+#### Check the cases and controls included in each GWAS (note I want to ask about this)
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/
