@@ -807,7 +807,7 @@ done
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 mkdir UKB_GWAS
 
-#subsetting UKB data:
+#filter for CHR12, Europeans only, etc...
 #!/bin/bash
 sbatch --cpus-per-task=20 --mem=240g --mail-type=END --time=24:00:00 make_pfile_UKB.sh
 module load plink/2.0-dev-20191128
@@ -819,7 +819,7 @@ plink2 --bgen ukb_imp_chr12_v3.bgen --extract CHR12.SNPS_0_8.txt --geno 0.1 --hw
 --memory 235000
 
 ```
-### 4.3 Make covariate files
+### 4.3 Subset phenotype data for covariate files
 
 Coviariate files to be made: N=6
 1) PD vs control 
@@ -858,7 +858,7 @@ rs33995883	rs33995883	40740686	A	G	0.0163887	G	1
 
 ```
 
-#### Make covariate files based on LRRK2 carrier status
+#### Subset phenotype info based on LRRK2 status
 
 ```
 module load R
@@ -889,7 +889,7 @@ Proxyshort <- data.frame(Proxy$V1)
 not_controlshort <- data.frame(not_control$eid)
 keepshort <- data.frame(keep$V1)
 
-#pull the relevant covariate info
+#pull the relevant phenotype info
 covshort <- data.frame(cov$FID, cov$AGE_OF_RECRUIT, cov$GENETIC_SEX)
 
 #rename the sample IDs with "FID" 
@@ -901,8 +901,7 @@ names(keepshort) <- c("FID")
 #rename the cov file header
 names(covshort) <- c("FID", "AGE", "SEX")
 
-
-### Merge the covariate info with the FIDs for each group to add age and sex info
+### Merge the phenotype info with the FIDs for each group to add age and sex info
 PD2 = merge(PDshort,covshort,by.x='FID',by.y='FID')
 Proxy2 = merge(Proxyshort,covshort,by.x='FID',by.y='FID')
 not_control2 = merge(not_controlshort,covshort,by.x='FID',by.y='FID')
@@ -983,14 +982,14 @@ mv LRRK2_area_snps* LRRK2_status_prep
 
 ### 4.4 Calculate PCs
 
-``` 
-# calculate PC's
-https://github.com/gabraham/flashpca
-cd 
+See here for more information on flashpca: https://github.com/gabraham/flashpca
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 module load flashpca
 module load plink
 
-
+#test run flashpca on the PD normal group
 plink --bfile /data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cousins \
 --maf 0.05 --geno 0.01 --hwe 5e-6 --autosome \
 --exclude /data/CARD/GENERAL/exclusion_regions_hg19.txt --make-bed --out FILENAME_2 \
@@ -999,8 +998,24 @@ plink --bfile FILENAME_2 --indep-pairwise 1000 10 0.02 --autosome --out pruned_d
 plink --bfile FILENAME_2 --extract pruned_data.prune.in --make-bed --out FILENAME_3 
 flashpca --bfile FILENAME_3 --suffix _UKB_PD_cases_control_over60.txt --numthreads 19
 
-ls | grep UKB_P > PC_files.txt
+```
 
+#### Run flashpca in a loop
+
+```
+#grep the subset filenames
+ls UKB_P*> PC_files.txt
+
+## make sure PC_files.txt contains these phenptype files: 
+# UKB_PD_cases_control_over60_noNDGS.txt
+# UKB_PD_cases_control_over60_noriskGS.txt
+# UKB_PD_cases_control_over60.txt
+# UKB_Proxy_cases_control_over60_noNDGS.txt
+# UKB_Proxy_cases_control_over60_noriskGS.txt
+# UKB_Proxy_cases_control_over60.txt
+
+#use the phenotype files to subset each GWAS group for flashpca
+#note this may take a few hours…
 cat PC_files.txt  | while read line
 do 
 	plink --bfile /data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cousins \
@@ -1012,100 +1027,59 @@ do
 	flashpca --bfile FILENAME_3 --suffix _$line --numthreads 19
 done
 
-# sanity check, note header is present in UKB_PD/PROXY files...:
-   16242 UKB_PD_cases_control_over60_noNDGS.txt
-1466 PD, 14775 CONTROL
-   12182 UKB_PD_cases_control_over60_noriskGS.txt
-1063 PD, 11118 CONTROL
-   16831 UKB_PD_cases_control_over60.txt
-1530 PD, 15300 CONTROL
-  149257 UKB_Proxy_cases_control_over60_noNDGS.txt
-12942 Proxy, 136314 CONTROL
-  112725 UKB_Proxy_cases_control_over60_noriskGS.txt
-9679 Proxy, 103045 CONTROL
-  154339 UKB_Proxy_cases_control_over60.txt
-13430 Proxy, 140908 CONTROL
+```
 
-   16242 pcs_UKB_PD_cases_control_over60_noNDGS.txt
-   12182 pcs_UKB_PD_cases_control_over60_noriskGS.txt
-   16831 pcs_UKB_PD_cases_control_over60.txt
-  149257 pcs_UKB_Proxy_cases_control_over60_noNDGS.txt
-  112725 pcs_UKB_Proxy_cases_control_over60_noriskGS.txt
-  154339 pcs_UKB_Proxy_cases_control_over60.txt
+#### Merge the PCs with phenotype info
 
+```
 # merge files in R
-
 module load R
 R
 require(data.table)
-cov <- fread("/data/LNG/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_to_use.txt",header=T)
-pc1 <- fread("pcs_UKB_PD_cases_control_over60_noNDGS.txt",header=T)
-pc2 <- fread("pcs_UKB_PD_cases_control_over60_noriskGS.txt",header=T)
-pc3 <- fread("pcs_UKB_PD_cases_control_over60.txt",header=T)
-pc4 <- fread("pcs_UKB_Proxy_cases_control_over60_noNDGS.txt",header=T)
-pc5 <- fread("pcs_UKB_Proxy_cases_control_over60_noriskGS.txt",header=T)
-pc6 <- fread("pcs_UKB_Proxy_cases_control_over60.txt",header=T)
-pc1$IID <- NULL
-pc2$IID <- NULL
-pc3$IID <- NULL
-pc4$IID <- NULL
-pc5$IID <- NULL
-pc6$IID <- NULL
-pheno1 <- fread("UKB_PD_cases_control_over60_noNDGS.txt",header=T)
-pheno2 <- fread("UKB_PD_cases_control_over60_noriskGS.txt",header=T)
-pheno3 <- fread("UKB_PD_cases_control_over60.txt",header=T)
-pheno4 <- fread("UKB_Proxy_cases_control_over60_noNDGS.txt",header=T)
-pheno5 <- fread("UKB_Proxy_cases_control_over60_noriskGS.txt",header=T)
-pheno6<- fread("UKB_Proxy_cases_control_over60.txt",header=T)
-pheno1$IID <- pheno1$SEX <- pheno1$AGE <- NULL
-pheno2$IID <- pheno2$SEX <- pheno2$AGE <- NULL
-pheno3$IID <- pheno3$SEX <- pheno3$AGE <- NULL
-pheno4$IID <- pheno4$SEX <- pheno4$AGE <- NULL
-pheno5$IID <- pheno5$SEX <- pheno5$AGE <- NULL
-pheno6$IID <- pheno6$SEX <- pheno6$AGE <- NULL
-MM1 = merge(cov,pheno1,by='FID')
-MM2 = merge(cov,pheno2,by='FID')
-MM3 = merge(cov,pheno3,by='FID')
-MM4 = merge(cov,pheno4,by='FID')
-MM5 = merge(cov,pheno5,by='FID')
-MM6 = merge(cov,pheno6,by='FID')
-MM11 = merge(MM1,pc1,by='FID')
-MM22 = merge(MM2,pc2,by='FID')
-MM33 = merge(MM3,pc3,by='FID')
-MM44 = merge(MM4,pc4,by='FID')
-MM55 = merge(MM5,pc5,by='FID')
-MM66 = merge(MM6,pc6,by='FID')
-write.table(MM11, file="COV_UKB_PD_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(MM22, file="COV_UKB_PD_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(MM33, file="COV_UKB_PD_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(MM44, file="COV_UKB_Proxy_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(MM55, file="COV_UKB_Proxy_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(MM66, file="COV_UKB_Proxy_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
+require(dplyr)
 
-# sanity check, note header is present in UKB_PD/PROXY files...:
-   16242 COV_UKB_PD_cases_control_over60_noNDGS.txt
-   12182 COV_UKB_PD_cases_control_over60_noriskGS.txt
-   16831 COV_UKB_PD_cases_control_over60.txt
-  149257 COV_UKB_Proxy_cases_control_over60_noNDGS.txt.txt
-  112725 COV_UKB_Proxy_cases_control_over60_noriskGS.txt
-  154339 COV_UKB_Proxy_cases_control_over60.txt
-# replace PD/CONTROL/PROXY with numbers
-sed -i 's/PD/2/g' COV_UKB_PD_cases_control_over60_noNDGS.txt
-sed -i 's/CONTROL/1/g' COV_UKB_PD_cases_control_over60_noNDGS.txt
-sed -i 's/PD/2/g' COV_UKB_PD_cases_control_over60_noriskGS.txt
-sed -i 's/CONTROL/1/g' COV_UKB_PD_cases_control_over60_noriskGS.txt
-sed -i 's/PD/2/g' COV_UKB_PD_cases_control_over60.txt
-sed -i 's/CONTROL/1/g' COV_UKB_PD_cases_control_over60.txt
-sed -i 's/PROXY/2/g' COV_UKB_Proxy_cases_control_over60_noNDGS.txt
-sed -i 's/CONTROL/1/g' COV_UKB_Proxy_cases_control_over60_noNDGS.txt
-sed -i 's/PROXY/2/g' COV_UKB_Proxy_cases_control_over60_noriskGS.txt
-sed -i 's/CONTROL/1/g' COV_UKB_Proxy_cases_control_over60_noriskGS.txt
-sed -i 's/PROXY/2/g' COV_UKB_Proxy_cases_control_over60.txt
-sed -i 's/CONTROL/1/g' COV_UKB_Proxy_cases_control_over60.txt
+#load the full covariates file
+cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
+#remove the PC columns from cov so that we can merge with the new PCs
+cov2 <- cov %>% select(1:8)
+
+#pull the subset phenptype files from your working directory
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/", pattern="^UKB_P") 
+for(file in file.names) {  
+  pc <- fread(paste("pcs_",file,sep=""),header=T)
+  pc$IID <- NULL
+  pheno <- fread(file,header=T)
+  #this info will become redundant when merging, keep (PD/CONTROL/PROXY) STATUS and LRRK2 carrier status
+  pheno$IID <- pheno$SEX <- pheno$AGE <- NULL
+  MM = merge(cov2,pheno,by='FID')
+  MM2 = merge(MM,pc,by='FID')
+  write.table(MM2, file=paste("COV_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+q()
+n
 
 
+#replace PD/CONTROL/PROXY STATUS with numbers
+cat /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/PC_files.txt | while read line
+do 
+  sed -i 's/PD/2/g' COV_$line
+  sed -i 's/PROXY/2/g' COV_$line
+  sed -i 's/CONTROL/1/g' COV_$line
+done
+
+
+#organize/remove some files
+mkdir flashpca_files
+mv eigenvalues_UKB_P* flashpca_files
+mv eigenvectors_UKB_P* flashpca_files
+mv pcs_UKB_P* flashpca_files
+mv pve_UKB_P* flashpca_files
+rm FILENAME_*
+rm pruned_data*
 
 ```
+
+### 4.5 Start GWAS on CHR 12
 
 ```
 # start GWAS on chr 12 only...
