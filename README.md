@@ -1261,91 +1261,150 @@ n
 
 ```
 
-#### Reformat further
+#### Reformat UKB further and extract LRRK2 coding variants (note this is where I left off)
+
+These are the files to reformat:
+
+toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
+toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
+toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
+toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
+toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
+toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
 
 ```
-# reformat further....
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB_GWAS/GWAS_output
-scp toMeta.*.txt /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS/METAL/
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+mkdir METAL 
+cd GWAS_output
 
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS/METAL/
+#Copy over the reformatted toMeta files into the METAL directory
+scp toMeta.*.txt /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/METAL
 
-# update variant names of UKB....
-
+###we need the variant names of UKB to match those of IPDGC:
+#EX of UKB case: 
+head -2 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/METAL/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt 
+markerID effectAllele alternateAllele beta se P effectAlleleFreq N rsID effectAlleleFreq_cases effectAlleleFreq_controls OR firthUsed error
+12:87074:T:C T C 0.6356186982531077 0.793412 0.423062 0.00037558199999999996 16800 rs564020348 0.0006897289999999999 0.00034412900000000004 1.88819 N .
+	
+#Get rid of the :N:N off the end of the markerID for the UKB files…
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/METAL
 ls | grep UKB > list.txt
 cat list.txt  | while read line
-do 
+do
    	sed -i 's/:A//g' $line
 	sed -i 's/:T//g' $line
 	sed -i 's/:C//g' $line
 	sed -i 's/:G//g' $line
 done
 
-cat list2.txt  | while read line
-do 
-	sed -i 's/chr//g' $line
-done
-
-toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
-
-
-# prep the UKB files for forest
-## first proxy
-cut -f 1,2,3 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part1.txt
-cut -f 7 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part2.txt
-cut -f 15,16 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part3.txt
-cut -f 17 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > part4.txt
-paste part1.txt part3.txt part2.txt part4.txt > toMeta.UKB_proxy.txt
-
-## then normal PD cases
-cut -f 1,2,3 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part1.txt
-cut -f 7 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part2.txt
-cut -f 4,5 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part3.txt
-cut -f 6 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > part4.txt
-paste part1.txt part3.txt part2.txt part4.txt > toMeta.UKB_PD.txt
-
-# need format...
+# This is the format we need for making forest plots for all of the UKB toMeta files
 # ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
 
-toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/METAL
 
-toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
+```
+
+#### Pull the LRRK2 coding variants from the UKB files for forest plots 
+
+```
+#note that the "special" conditional GWAS don't have the ND or GS variants
+
+#create a .txt file with these variants and call it variants.txt
+
+echo "12:40657700
+12:40671989
+12:40702911
+12:40707778
+12:40707861
+12:40713899
+12:40740686
+12:40734202
+12:40713901
+12:40758652
+12:40614434" > variants.txt
+
+
 
 # UKB cases
 head -1 toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 > header_PD.txt
 grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 > temp
-cat header_PD.txt temp > NORMAL_GWAS.UKBPD.txt
+cat header_PD.txt temp > NORMAL_GWAS_VOI.UKBPD.txt
 grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt | cut -f 1-7 > temp
-cat header_PD.txt temp > CONDI_GWAS_SPECIAL.UKBPD.txt
+cat header_PD.txt temp > CONDI_GWAS_VOI_SPECIAL.UKBPD.txt
 grep -f variants.txt toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt | cut -f 1-7 > temp
-cat header_PD.txt temp > CONDI_GWAS.UKBPD.txt
+cat header_PD.txt temp > CONDI_GWAS_VOI.UKBPD.txt
+
 
 # UKB proxies
+#we want to pull the b_adjusted, se_adjusted and p_derived for the proxy cases rather than b, se and p for the PD cases
 head -1 toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | cut -f 1,2,3,7,15,16,17 > header_proxy.txt
 grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
-cat header_proxy.txt temp > NORMAL_GWAS.UKBproxy.txt
+cat header_proxy.txt temp > NORMAL_GWAS_VOI.UKBproxy.txt
 grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
-cat header_proxy.txt temp > CONDI_GWAS_SPECIAL.UKBproxy.txt
+cat header_proxy.txt temp > CONDI_GWAS_VOI_SPECIAL.UKBproxy.txt
 grep -f variants.txt toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | cut -f 1,2,3,7,15,16,17 > temp
-cat header_proxy.txt temp > CONDI_GWAS.UKBproxy.txt
-
-# copy to folders...
-
-scp NORMAL_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL/
-scp CONDI_GWAS.* /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
+cat header_proxy.txt temp > CONDI_GWAS_VOI.UKBproxy.txt
 
 ```
 
 
+#### ALSO SAVE THE FULL CHR12 GWAS RESULTS
+
+```
+###making the UKB CHR12 files…
+
+
+# UKB cases
+cut -f 1-7 toMeta.COV_UKB_PD_cases_control_over60_chr12.txt > NORMAL_GWAS_CHR12.UKBPD.txt
+cut -f 1-7 toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt > CONDI_GWAS_CHR12_SPECIAL.UKBPD.txt
+cut -f 1-7 toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt > CONDI_GWAS_CHR12.UKBPD.txt
+
+
+# UKB proxies
+#we want to pull the b_adjusted, se_adjusted and p_derived for the proxy cases rather than b, se and p for the PD cases
+cut -f 1,2,3,7,15,16,17 toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt > NORMAL_GWAS_CHR12.UKBproxy.txt
+cut -f 1,2,3,7,15,16,17 toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt > CONDI_GWAS_CHR12_SPECIAL.UKBproxy.txt
+cut -f 1,2,3,7,15,16,17 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt > CONDI_GWAS_CHR12.UKBproxy.txt
+
+
+# copy to folders…
+#note that I removed the dot before * so that SPECIAL files are sent to the CONDI folder
+#copy the CHR12 files 
+scp NORMAL_GWAS_CHR12* /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
+scp CONDI_GWAS_CHR12* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
+
+#copy the VOI-filtered files
+scp NORMAL_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/VOI_files
+scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/VOI_files
+
+```
+
+#### UK Biobank files to combine with IPDGC for meta-analysis
+
+```
+...note that I need to change this section so that I put the SPECIAL UKB into the IPDGC SPECIAL GWAS folder
+
+#all of CHR12 - proxy GWAS
+/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBproxy.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12_SPECIAL.UKBproxy.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBproxy.txt
+
+#all of CHR12 - PD GWAS
+/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBPD.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12_SPECIAL.UKBPD.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBPD.txt
+
+#variant of interest - proxy GWAS
+/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/VOI_files/NORMAL_GWAS_VOI.UKBproxy.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/VOI_files/CONDI_GWAS_VOI_SPECIAL.UKBproxy.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/VOI_files/CONDI_GWAS_VOI.UKBproxy.txt
+
+#variant of interest - PD GWAS
+/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/VOI_files/NORMAL_GWAS_VOI.UKBPD.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/VOI_files/CONDI_GWAS_VOI_SPECIAL.UKBPD.txt
+/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/VOI_files/CONDI_GWAS_VOI.UKBPD.txt
+
+```
 
 ## 5. Combining all data together
 
