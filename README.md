@@ -1077,7 +1077,7 @@ rm pruned_data*
 
 ```
 
-### 4.5 Start GWAS on CHR 12
+### 4.5 Start GWAS on CHR 12 (note to self make the loop GWAS a bash script)
 
 ```
 # start GWAS on chr 12 only...
@@ -1086,6 +1086,7 @@ module load plink/2.0-dev-20191128
 cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB_GWAS/
 mkdir GWAS_output
 module load plink/2.0-dev-20191128
+
 6 GWAS:
 1) COV_UKB_PD_cases_control_over60_noNDGS.txt
 2) COV_UKB_PD_cases_control_over60_noriskGS.txt
@@ -1094,53 +1095,26 @@ module load plink/2.0-dev-20191128
 5) COV_UKB_Proxy_cases_control_over60_noriskGS.txt
 6) COV_UKB_Proxy_cases_control_over60.txt
 
-# 1) COV_UKB_PD_cases_control_over60_noNDGS.txt
+#test GWAS
+# COV_UKB_PD_cases_control_over60_noNDGS.txt
 # 1 binary phenotype loaded (1466 cases, 14775 controls).
 plink2 --pfile chr12.UKBB.EU.filtered_NEW \
 --pheno-name STATUS --pheno COV_UKB_PD_cases_control_over60_noNDGS.txt \
 --covar COV_UKB_PD_cases_control_over60_noNDGS.txt --memory 235000 \
 --glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_PD_cases_control_over60_noNDGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
+--out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_UKB_PD_cases_control_over60_noNDGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 
-# 2) COV_UKB_PD_cases_control_over60_noriskGS.txt
-# 1 binary phenotype loaded (1063 cases, 11118 controls).
-plink2 --pfile chr12.UKBB.EU.filtered_NEW \
---pheno-name STATUS --pheno COV_UKB_PD_cases_control_over60_noriskGS.txt \
---covar COV_UKB_PD_cases_control_over60_noriskGS.txt --memory 99000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_PD_cases_control_over60_noriskGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 
-# 3) COV_UKB_PD_cases_control_over60.txt
-# 1 binary phenotype loaded (1529 cases, 15277 controls).
-plink2 --pfile chr12.UKBB.EU.filtered_NEW \
---pheno-name STATUS --pheno COV_UKB_PD_cases_control_over60.txt \
---covar COV_UKB_PD_cases_control_over60.txt --memory 235000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_PD_cases_control_over60_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
-
-# 4) COV_UKB_Proxy_cases_control_over60_noNDGS.txt
-# 1 binary phenotype loaded (12942 cases, 136314 controls).
-plink2 --pfile chr12.UKBB.EU.filtered_NEW \
---pheno-name STATUS --pheno COV_UKB_Proxy_cases_control_over60_noNDGS.txt \
---covar COV_UKB_Proxy_cases_control_over60_noNDGS.txt --memory 235000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_Proxy_cases_control_over60_noNDGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
-
-# 5) COV_UKB_Proxy_cases_control_over60_noriskGS.txt
-# 1 binary phenotype loaded (9679 cases, 103045 controls).
-plink2 --pfile chr12.UKBB.EU.filtered_NEW \
---pheno-name STATUS --pheno COV_UKB_Proxy_cases_control_over60_noriskGS.txt \
---covar COV_UKB_Proxy_cases_control_over60_noriskGS.txt --memory 235000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_Proxy_cases_control_over60_noriskGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
-
-# 6) COV_UKB_Proxy_cases_control_over60.txt
-# 1 binary phenotype loaded (13404 cases, 140657 controls).
-plink2 --pfile chr12.UKBB.EU.filtered_NEW \
---pheno-name STATUS --pheno COV_UKB_Proxy_cases_control_over60.txt \
---covar COV_UKB_Proxy_cases_control_over60.txt --memory 235000 \
---glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
---out GWAS_output/COV_UKB_Proxy_cases_control_over60_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
+###loop for all GWAS chr 12 only
+#${line%%.*} allows you to remove the file extension
+cat PC_files.txt  | while read line
+do 
+	plink2 --pfile chr12.UKBB.EU.filtered_NEW \
+	--pheno-name STATUS --pheno COV_$line \
+	--covar COV_$line --memory 235000 \
+	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+	--out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_${line%%.*}_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
+done
 
 ```
 
