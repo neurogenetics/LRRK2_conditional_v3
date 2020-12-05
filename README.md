@@ -1175,6 +1175,7 @@ COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.log
 ### 4.6 Make data ready for meta-analysis
 
 These are the files to process:
+
 COV_UKB_PD_cases_control_over60_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_PD_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_PD_cases_control_over60_noriskGS_chr12.STATUS.glm.logistic.hybrid
