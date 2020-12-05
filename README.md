@@ -342,9 +342,9 @@ done
 
 ### 2.2 Create covariate files
 
-```
-### Merge new PC's in R with other phenotype data
+#### Merge new PC's in R with other phenotype data
 
+```
 #combine the eigenvec files for each GWAS
 cat *NORMAL.eigenvec > NORMAL_PCs.txt
 cat *SPECIAL.eigenvec > SPECIAL_PCs.txt
@@ -428,10 +428,9 @@ q()
 n
 ```
 
+#### Subset each cohort due to potentially overlapping sample names
 
 ```
-### Then subset each cohort due to potentially overlapping sample names
-
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 #keep the header so that you can add it to each separate file
@@ -467,10 +466,9 @@ mv temp LRRK2_condi_covariates.MF.txt
 
 ```
 
+#### Reorganize the files
 
 ```
-### Reorganize the files
-
 #move the NORMAL covariate files into a new directory
 mkdir NORMAL_COVARIATES
 mv *NORMAL.eigenvec NORMAL_COVARIATES
