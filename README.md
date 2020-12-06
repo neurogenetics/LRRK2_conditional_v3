@@ -1358,34 +1358,22 @@ scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_cod
 /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/CONDI_GWAS_VOI.UKBPD.txt
 ```
 
-## 5. Combining all data together
+## 5. Making forest plots for LRRK2 coding variants
 
 This section goes through: 
-- Performing cohort level analyses on the created data from 1 and 4 and then meta-analyzing
+- 
 
 ``` 
-# getting back to this:
+# These are the final headers after reformatting
 
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/NORMAL/
-HEADER of almost all:
-ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
-
+HEADER of IPDGC:
+ID REF A1 A1_FREQ beta LOG.OR._SE P
 
 HEADER of UKB case:
-markerID	effectAllele	alternateAllele	beta	se	P	effectAlleleFreq
+markerID alternateAllele effectAllele effectAlleleFreq beta se P
 
 HEADER of UKB proxy:
-markerID	effectAllele	alternateAllele	effectAlleleFreq	b_adjusted	se_adjusted	p_derived
-
-# remove column 2 from IPDGC and create beta
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
-do 
-	Rscript --vanilla quick_reformat.R $line
-done
-
-# reformat UKB
-awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' NORMAL_GWAS.UKBPD.txt > NORMAL_GWAS.UKBPDv2.txt
-awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' NORMAL_GWAS.UKBproxy.txt > NORMAL_GWAS.UKBproxyv2.txt
+markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_derived
 
 # create files per sample
 
@@ -1401,26 +1389,6 @@ done
 Now doing the same for => CONDITIONAL
 
 ```
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/GWAS_NEW/CONDI/
-HEADER of almost all:
-ID	REF	ALT	A1	A1_FREQ	OR	LOG(OR)_SE	P
-
-
-HEADER of UKB case:
-markerID	effectAllele	alternateAllele	beta	se	P	effectAlleleFreq
-
-HEADER of UKB proxy:
-markerID	effectAllele	alternateAllele	effectAlleleFreq	b_adjusted	se_adjusted	p_derived
-
-# remove column 2 from IPDGC and create beta
-cat /data/LNG/CORNELIS_TEMP/LRRK2_conditional/cohort_file.txt | while read line
-do 
-	Rscript --vanilla quick_reformat.R $line
-done
-
-# reformat UKB
-awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' CONDI_GWAS.UKBPD.txt > CONDI_GWAS.UKBPDv2.txt
-awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' CONDI_GWAS.UKBproxy.txt > CONDI_GWAS.UKBproxyv2.txt
 
 # create files per sample
 
