@@ -1089,12 +1089,12 @@ mkdir GWAS_output
 module load plink/2.0-dev-20191128
 
 6 GWAS:
-1) COV_UKB_PD_cases_control_over60_noNDGS.txt
-2) COV_UKB_PD_cases_control_over60_noriskGS.txt
-3) COV_UKB_PD_cases_control_over60.txt
-4) COV_UKB_Proxy_cases_control_over60_noNDGS.txt
-5) COV_UKB_Proxy_cases_control_over60_noriskGS.txt
-6) COV_UKB_Proxy_cases_control_over60.txt
+1. COV_UKB_PD_cases_control_over60_noNDGS.txt
+2. COV_UKB_PD_cases_control_over60_noriskGS.txt
+3. COV_UKB_PD_cases_control_over60.txt
+4. COV_UKB_Proxy_cases_control_over60_noNDGS.txt
+5. COV_UKB_Proxy_cases_control_over60_noriskGS.txt
+6. COV_UKB_Proxy_cases_control_over60.txt
 
 #test GWAS
 # COV_UKB_PD_cases_control_over60_noNDGS.txt
