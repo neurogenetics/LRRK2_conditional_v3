@@ -1353,7 +1353,6 @@ scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_cod
 /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/NORMAL_GWAS_VOI.UKBPD.txt
 /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/SPECIAL_GWAS_VOI.UKBPD.txt
 /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/CONDI_GWAS_VOI.UKBPD.txt
-
 ```
 
 ## 5. Combining all data together
