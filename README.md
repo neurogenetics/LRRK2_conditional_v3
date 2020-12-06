@@ -660,22 +660,23 @@ NORMAL_GWAS_CHR12.*.PHENO_PLINK.glm.logistic.hybrid
 SPECIAL_GWAS_CHR12.*.PHENOTYPE.glm.logistic.hybrid
 CONDI_GWAS_CHR12.*.PHENOTYPE.glm.logistic.hybrid
 
-#get rid of the first two columns (CHROM and POS) since they are repeats of ID
-#keep ID, REF, ALT, A1, A1_FREQ, OR, LOG(OR)_SE, P
-#columns of interest... => 3,4,5,6,13,19,20,22
+## This is the header we want
+ID REF A1 A1_FREQ beta LOG.OR._SE P
 
-### loop over to make the .hybrid files into readable .txt files 
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+## Loop over to reformat the .hybrid files into .txt files
+cd /data/LNG/Julie/Julie_LRRK2_Condi/
+cat cohort_file.txt | while read line
 do 
   cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
-  cut -f 3,4,5,6,13,19,20,22 NORMAL_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid > NORMAL_GWAS_CHR12.$line.txt
+  Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R NORMAL_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid
   cd /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/
-  cut -f 3,4,5,6,13,19,20,22 SPECIAL_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid > SPECIAL_GWAS_CHR12.$line.txt
+  Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R SPECIAL_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid
   cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
-  cut -f 3,4,5,6,13,19,20,22 CONDI_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid > CONDI_GWAS_CHR12.$line.txt
+  Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R CONDI_GWAS_CHR12.$line.PHENOTYPE.glm.logistic.hybrid
 done
 
-#organize the files 
+
+## Organize the files 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
 mkdir prep_files
 mv *.log prep_files
@@ -692,12 +693,13 @@ mv *.log prep_files
 mv *.hybrid prep_files
 
 ```
+
 ### 3.4 Pull LRRK2 coding variants from IPDGC CHR12 GWAS
 
 Purpose: After incorporating UKB data, we will make forest plots of LRRK2 coding variants and positive controls.
 
 ```
-##make new GWAS results files with only the LRRK2 coding VOI
+## Make new GWAS results files with only the LRRK2 coding VOI
 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/
 cat cohort_file.txt | while read line
@@ -730,7 +732,7 @@ do
   rm header.txt temp.txt
 done
 
-##reorganize the files --> save the VOI files in LRRK2_coding_VOI within each GWAS directory
+## Reorganize the files --> save the VOI files in LRRK2_coding_VOI within each GWAS directory
 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12
 mkdir LRRK2_coding_VOI
