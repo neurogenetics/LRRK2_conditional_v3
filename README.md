@@ -1266,12 +1266,12 @@ n
 
 These are the files to reformat:
 
-toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
-toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
+toMeta.COV_UKB_PD_cases_control_over60_chr12.txt \n
+toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt \n
+toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt \n
+toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt \n
+toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt \n
+toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt \n
 
 
 ```
