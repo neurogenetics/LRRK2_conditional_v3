@@ -33,7 +33,7 @@ This section goes through:
 - Creating new PC's for each cohort
 - Creating covariate files
 
-### [3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants](#3-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-risk-(rs76904798)-and-G2019S-variants)
+### [3. Perform cohort-level GWAS on IPDGC data excluding rs76904798 and G2019S](#3-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-rs76904798-and-G2019S)
 This section goes through: 
 - Extracting all LRRK2 coding variants
 - Performing GWAS of chromosome 12 for each cohort
@@ -487,7 +487,7 @@ mv LRRK2_condi_covariates* CONDI_COVARIATES
 ```
 
 
-## 3. Perform cohort-level GWAS on IPDGC data excluding 5' risk (rs76904798) and G2019S variants
+## 3. Perform cohort-level GWAS on IPDGC data excluding rs76904798 and G2019S
 
 This section goes through: 
 - Extracting all LRRK2 coding variants
