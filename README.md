@@ -1183,6 +1183,7 @@ COV_UKB_Proxy_cases_control_over60_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid
 COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.STATUS.glm.logistic.hybrid
 
+
 #### Reformat plink2 GWAS output
 ```
 #check the number of variants in these files…
@@ -1263,7 +1264,7 @@ n
 
 #### Reformat UKB further and extract LRRK2 coding variants
 
-These are the files to reformat (located here: /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/)
+These are the files to reformat:
 
 toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
 toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
@@ -1272,8 +1273,9 @@ toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
 toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
 toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
 
+
 ```
-#copy over the toMeta files for reformatting in a new directory called META
+## Copy over the toMeta files for reformatting in a new directory called META
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 mkdir META
 cd META
@@ -1310,7 +1312,7 @@ markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_
 ```
 
 ```
-# Reformat UKB cases and pull out LRRK2 coding variants
+# Reformat UKB PD files and pull out LRRK2 coding variants
 head -1 toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > header_PD.txt
 
 grep -f ../../LRRK2_coding_VOI.txt toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | cut -f 1-7 | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > temp
@@ -1323,7 +1325,7 @@ grep -f ../../LRRK2_coding_VOI.txt toMeta.COV_UKB_PD_cases_control_over60_norisk
 cat header_PD.txt temp > CONDI_GWAS_VOI.UKBPD.txt
 
 
-# Reformat UKB proxy cases and pull out LRRK2 coding variants
+# Reformat UKB proxy files and pull out LRRK2 coding variants
 # We want to pull the b_adjusted, se_adjusted and p_derived for the proxy cases rather than b, se and p for the PD cases
 head -1 toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | cut -f 1,2,3,7,15,16,17 | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > header_proxy.txt
 
