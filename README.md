@@ -1299,7 +1299,6 @@ done
 
 
 ## These are the headers we want
-
 HEADER of IPDGC:
 ID REF A1 A1_FREQ beta LOG.OR._SE P
 
