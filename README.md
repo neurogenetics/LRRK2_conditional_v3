@@ -43,7 +43,11 @@ This section goes through:
 This section goes through: 
 - Adding the UK biobank data to point 2
 
-### [5. Combining all data together](#5-Combining-all-data-together)
+### [5. Making forest plots for LRRK2 coding variants](#5-Making-forest-plots-for-LRRK2-coding-variants)
+This section goes through: 
+- Pulling the amino acid changes for each variant
+- Using metafor to make forest plots for LRRK2 coding variants
+
 
 ### [6. Check LD co-inheritance of LRRK2 coding variants](#6-Check-LD-co-inheritance-of-LRRK2-coding-variants)
 This section goes through:
@@ -1361,7 +1365,8 @@ scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_cod
 ## 5. Making forest plots for LRRK2 coding variants
 
 This section goes through: 
-- 
+- Pulling the amino acid changes for each variant
+- Using metafor to make forest plots for LRRK2 coding variants
 
 #### These are the final headers after reformatting
 
