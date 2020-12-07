@@ -1363,9 +1363,9 @@ scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_cod
 This section goes through: 
 - 
 
-``` 
-# These are the final headers after reformatting
+#### These are the final headers after reformatting
 
+``` 
 HEADER of IPDGC:
 ID REF A1 A1_FREQ beta LOG.OR._SE P
 
@@ -1375,93 +1375,60 @@ markerID alternateAllele effectAllele effectAlleleFreq beta se P
 HEADER of UKB proxy:
 markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_derived
 
-# create files per sample
+```
 
-head -1 NORMAL_GWAS.DUTCHv2.txt > header.txt
-cat variants.txt  | while read line
-do 
-   	grep $line NORMAL_GWAS.*v2.txt > $line.txt
+#### Pull the amino acid changes for each variant
+
+```
+## The amino acid (AA) changes will be used as the titles for the forest plots
+cd /data/LNG/Julie/Julie_LRRK2_Condi/
+R
+require(dplyr)
+require(data.table)
+var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt",header=T)
+f <- function(row) {
+if (row[11] != ".") sub(".*p.", "", row[11]) else row[12]
+}
+AA_short <- c(apply(var_df, 1, f))
+id <- var_df$ID
+df <- data.frame(id, AA_short)
+write.table(df, file="LRRK2_AA_list.txt", quote=FALSE,row.names=F,sep="\t")
+
+```
+
+#### Use metafor to make forest plots for LRRK2 coding variants
+
+```
+make_forest() {
+# create files per variant
+gwas_type=$1
+cd /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/LRRK2_coding_VOI
+head -1 ${gwas_type}_GWAS_VOI.DUTCH.txt > header.txt
+cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt | while read line; do
+	grep $line ${gwas_type}_GWAS_VOI.*.txt > $line.txt
 	cat header.txt $line.txt > header_$line.txt
-	sed -e 's/NORMAL_GWAS.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
+	sed -e 's/${gwas_type}_GWAS_VOI.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
 done
 
-```
-Now doing the same for => CONDITIONAL
+#organize the files
+mkdir metafor_plots
+mv 12:* metafor_plots
+mv header* metafor_plots
+#need to copy over the forest plot script so that it can pull the files from its current directory
+cp /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2.R metafor_plots
 
-```
-
-# create files per sample
-
-head -1 CONDI_GWAS.DUTCHv2.txt > header.txt
-cat variants.txt  | while read line
-do 
-   	grep $line CONDI_GWAS.*v2.txt > $line.txt
-	cat header.txt $line.txt > header_$line.txt
-	sed -e 's/CONDI_GWAS.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
+#now make the forest plots
+cd metafor_plots
+cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
+	ID=$(echo $line|awk '{print $1}')
+	AA=$(echo $line|awk '{print $2}')
+	Rscript --vanilla metafor_LRRK2.R $ID $AA ${gwas_type}
 done
+}
 
-```
-
-
-###### making forest plots...
-
-
-```
-POS:change
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40657700 p.Asn551Lys
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40671989 p.Ile723Val
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40702911 p.Arg1398His
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40707778 p.Arg1514Gln
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40707861 p.Pro1542Ser
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40713899 p.Met1646Thr
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40740686 p.Asn2081Asp
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40734202 p.Gly2019Ser
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40713901 p.Ser1647Thr
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40758652 p.Met2397Thr
-Rscript --vanilla ../forest_plot_LRRK2.R 12:40614434 rs76904798
-
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40657700 p.Asn551Lys
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40671989 p.Ile723Val
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40702911 p.Arg1398His
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40707778 p.Arg1514Gln
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40707861 p.Pro1542Ser
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40713899 p.Met1646Thr
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40740686 p.Asn2081Asp
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40734202 p.Gly2019Ser
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40713901 p.Ser1647Thr
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40758652 p.Met2397Thr
-Rscript --vanilla ../forest_plot_LRRK2_condi.R 12:40614434 rs76904798
-
-
-#!/usr/bin/env Rscript
-args = commandArgs(trailingOnly=TRUE)
-# start like this
-# Rscript --vanilla forest_plot_LRRK2.R $FILENAME $FILENAME2
-# Rscript --vanilla forest_plot_LRRK2.R 12:40713899 Met1646Thr
-FILENAME = args[1]
-FILENAME2 = args[2]
-print(args[1])
-print(args[2])
-print(FILENAME)
-print(FILENAME2)
-library(metafor)
-data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
-##data <- read.table("header_12:40713899v2.txt", header = T)
-labs <- data$ID
-yi   <- data$beta
-sei  <- data$LOG.OR._SE
-resFe  <- rma(yi=yi, sei=sei, method="FE")
-resRe  <- rma(yi=yi, sei=sei)
-print(summary(resFe))
-print(summary(resRe))
-pdf(file = paste(FILENAME,"_final.pdf",sep=""), width = 8, height = 6)
-Pvalue <- formatC(resFe$pval, digits=4, format="f")
-## pdf(file = "12:40713899_final.pdf", width = 8, height = 6)
-forest(resFe, xlim=c(-2,2), main=paste(FILENAME2," P=",Pvalue ,sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5,0.75, 1, 2, 3)))
-dev.off()
-#png(file = paste(FILENAME,"_final.png",sep=""), width = 8, height = 6)
-#forest(resFe, xlim=c(resFe$beta-0.9931472,resFe$beta+0.9931472), main=paste(FILENAME2," option",sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5,0.75, 1, 2, 3)))
-#dev.off()
+make_forest NORMAL
+make_forest CONDI
+make_forest SPECIAL
 
 ```
 
