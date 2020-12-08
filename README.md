@@ -1385,19 +1385,41 @@ markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_
 #### Pull the amino acid changes for each variant
 
 ```
-## The amino acid (AA) changes will be used as the titles for the forest plots
 cd /data/LNG/Julie/Julie_LRRK2_Condi/
+
+module load R
 R
 require(dplyr)
 require(data.table)
 var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt",header=T)
+
+#use the function f to pull out the amino acid change…if not a coding variant, use the rsID
 f <- function(row) {
 if (row[11] != ".") sub(".*p.", "", row[11]) else row[12]
 }
+#note that these names have the one letter amino acid code
 AA_short <- c(apply(var_df, 1, f))
 id <- var_df$ID
-df <- data.frame(id, AA_short)
+
+## Make the forest plot titles with the three letter amino acid codes
+# load in a dataframe for converting one letter to three letter amino acid codes
+AA_conversion <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/AA_conversion.txt",header=T)
+
+#split the short amino acid names at the number
+split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
+first_AA <- split[,1]
+middle_num <- split[,2]
+last_AA <- split[,3]
+
+#replace the one letter amino acid code with the three letter code
+require(seqinr)
+AA_long <- paste(aaa(first_AA),middle_num,aaa(last_AA)) %>% gsub(pattern="NA", replacement="") %>% gsub(pattern=" ",replacement= "")
+
+df <- data.frame(id, AA_short, AA_long)
 write.table(df, file="LRRK2_AA_list.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
 
 ```
 
@@ -1426,7 +1448,7 @@ cp /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2.R metafor_plots
 cd metafor_plots
 cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
 	ID=$(echo $line|awk '{print $1}')
-	AA=$(echo $line|awk '{print $2}')
+	AA=$(echo $line|awk '{print $3}')
 	Rscript --vanilla metafor_LRRK2.R $ID $AA ${gwas_type}
 done
 }
@@ -1434,6 +1456,11 @@ done
 make_forest NORMAL
 make_forest CONDI
 make_forest SPECIAL
+
+#copy the files
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/NORMAL_forest
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/SPECIAL_forest
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/CONDI_forest
 
 ```
 
