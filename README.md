@@ -1400,10 +1400,6 @@ if (row[11] != ".") sub(".*p.", "", row[11]) else row[12]
 AA_short <- c(apply(var_df, 1, f))
 id <- var_df$ID
 
-## Make the forest plot titles with the three letter amino acid codes
-# load in a dataframe for converting one letter to three letter amino acid codes
-AA_conversion <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/AA_conversion.txt",header=T)
-
 #split the short amino acid names at the number
 split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
 first_AA <- split[,1]
@@ -1422,7 +1418,7 @@ n
 
 ```
 
-#### Use metafor to make forest plots for LRRK2 coding variants
+#### Make individual forest plots for LRRK2 coding variants
 
 ```
 make_forest() {
@@ -1460,6 +1456,50 @@ make_forest SPECIAL
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/NORMAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/SPECIAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/CONDI_forest
+
+```
+
+#### Make combined forest plots with normal, conditional and special conditional GWAS
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir metafor_combined_plots
+cd metafor_combined_plots
+
+#now make the forest plots
+cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
+  ID=$(echo $line|awk '{print $1}')
+  AA=$(echo $line|awk '{print $3}')
+  Rscript --vanilla ../metafor_LRRK2_combined.R $ID $AA
+done
+
+
+#copy the files
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots/*pdf /Users/lakejs/Desktop/Combined_forest
+
+```
+
+#### Make combined forest plots with normal and special conditional GWAS for rs76904798
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+Rscript --vanilla metafor_combined_rs76904798.R 12:40614434 rs76904798
+
+#copy the file
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf /Users/lakejs/Desktop/
+
+```
+
+#### Make combined forest plots with normal and conditional GWAS for N2081D
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+Rscript --vanilla metafor_combined_N2081D.R 12:40740686 Asn2081Asp
+
+#copy the file
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf /Users/lakejs/Desktop/
 
 ```
 
