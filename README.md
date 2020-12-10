@@ -76,6 +76,7 @@ This data is filtered for a lot of things...check https://github.com/neurogeneti
 Variants of interest:
 LRRK2 G2019S => hg19 12:40734202:G:A
 rs76904798 => hg19 12:40614434:C:T
+LRRK2 N2081D => 12:40740686:A:G
 
 cd /data/LNG/Julie/Julie_LRRK2_Condi 
 module load plink
@@ -1505,11 +1506,160 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combin
 
 ## 6. Check LD co-inheritance of LRRK2 coding variants
 This section goes through:
-- First check which coding variants can be imputed here...?
-- Checking if LRRK2 variants are typically co-inherited or not?
+- Assessing frequency of these variants in full data-set
+- Checking if LRRK2 variants are typically co-inherited
 - LRRK2 G2019S with all other coding variants
 - LRRK2 rs76904798 with all other coding variants
 - Preparing files for Tables for manuscript
+
+### 6.1 - Assessing frequency of these variants in full data-set
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir co_inheritance
+cd co_inheritance
+
+### Create a couple subset files to use....
+
+# recode the genotypes of interest as single allele dosage numbers 
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202 --recodeA --out LRRK2_G2019S_only
+plink --bfile  /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40614434 --recodeA --out LRRK2_rs76904798_only
+plink --bfile  /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40740686 --recodeA --out LRRK2_N2081D_only
+
+module load R
+R
+data_GS <- read.table("LRRK2_G2019S_only.raw",header=T)
+data_rs <- read.table("LRRK2_rs76904798_only.raw",header=T)
+data_ND <- read.table("LRRK2_N2081D_only.raw",header=T)
+
+newdata_GS <- subset(data_GS, X12.40734202_A == 0)
+newdata_rs <- subset(data_rs, X12.40614434_T == 0) 
+newdata_ND <- subset(data_ND, X12.40740686_G == 0) 
+
+dim(newdata_GS) # 33757     7
+dim(newdata_rs) # 33335     7
+dim(newdata_ND) # 43954     7
+
+# adding some additional sample info
+cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+
+# drop some columns because otherwise merge conflict
+cov$IID <- NULL
+cov$fatid <- NULL
+cov$matid <- NULL
+
+Mrg_GS = merge(newdata_GS,cov,by='FID')
+Mrg_rs = merge(newdata_rs,cov,by='FID')
+Mrg_ND = merge(newdata_ND,cov,by='FID')
+
+dim(Mrg_GS) # 33757    43
+dim(Mrg_rs) # 33335    43
+dim(Mrg_ND) # 43954    43
+
+write.table(Mrg_GS, file="LRRK2_G2019S_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Mrg_rs, file="LRRK2_rs76904798_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Mrg_ND, file="LRRK2_N2081D_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+# Excluding all G2019S AND rs76904798 carriers
+cp /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection.txt .
+
+# Excluding all G2019S AND N2081D carriers
+cp /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection.txt .
+
+```
+
+### 6.2 Run association tests in a loop
+
+```
+# all data
+# run the normal association tests separately since no file to --keep
+# 21478 are cases and 24388 are controls.
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --assoc --out freq
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --logistic --out freq
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --model --out freq
+
+ls *.txt > keep_files.txt
+
+#includes these files, use with --keep
+LRRK2_condi_sample_selection.txt
+LRRK2_condi_special_sample_selection.txt
+LRRK2_G2019S_only_with_COV.txt
+LRRK2_N2081D_only_with_COV.txt
+LRRK2_rs76904798_only_with_COV.txt
+
+#make a bash array with the output filenames for the conditional tests
+outfile=(
+ freq_no_G2019S_rs76904798
+ freq_no_G2019S_N2081D
+ freq_no_G2019S
+ freq_no_N2081D
+ freq_no_rs76904798
+)
+
+# run the rest of the association tests 
+index=0
+cat keep_files.txt | while read line
+do
+	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --assoc --out ${outfile[${index}]} --keep $line
+	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --logistic --out ${outfile[${index}]} --keep $line
+	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --model --out ${outfile[${index}]} --keep $line
+	index=`expr $index + 1`
+done
+
+```
+
+### 6.3 Merge files in R
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load R
+R
+require(dplyr)
+require(data.table)
+
+#make a list of the output files from the association tests
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="^freq")
+
+#pull the prefixes for the output files
+file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique()
+
+for(file in file.prefixes) {  
+ data1 <- read.table(paste(file,".assoc",sep=""),header=T)
+ data2 <- read.table(paste(file,".assoc.logistic",sep=""),header=T)
+ data3 <- read.table(paste(file,".model",sep=""),header=T)
+ MM <- data1[,c(2,4,5,6,7)]
+ MM2 <- data2[,c(2,6,7,9)]
+ MM3 <- subset(data3, TEST=="GENO")
+ MM4 <- MM3[,c(2,6,7)]
+ MM5 <- merge(MM,MM4,by="SNP")
+ MM6 <- merge(MM5,MM2, by="SNP")
+ colnames(MM6) <- c("SNP","A1","F_A","F_U","A2","AFF","UNAFF","NMISS","OR","P")
+ write.table(MM6, file=paste("LRRK2_coding_variants_", file,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+
+```
+
+### 6.4 Assess whether there are differences
+
+```
+
+```
+
+
+
+
+
+
+___________________
+THIS IS THE OLD STUFF
 
 
 ### 6.1 - First check which coding variants can be imputed here...?
