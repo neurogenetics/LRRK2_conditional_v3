@@ -862,14 +862,18 @@ rs33995883	rs33995883	40740686	A	G	0.0163887	G	1
 
 ```
 
-#### Subset phenotype info based on LRRK2 status
+#### Subset phenotype info based on LRRK2 status (note this has been updated)
 
 ```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+#making directory for co-inheritance analysis to copy over some files
+mkdir co_inheritance
+
 module load R
-cd data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 R
-require("data.table")
-require("dplyr")
+require(data.table)
+require(dplyr)
 
 ### Read in all of the files:
 
@@ -932,6 +936,8 @@ keep5$STATUS <- "CONTROL"
 # case-control = 1530 x 10 = 15300
 nrow(PD3) #1530
 #remember that keep5 is the controls >= 60 yrs
+#set a random seed so you choose the same controls if re-run
+set.seed(76418) #(note to self this has been changed)
 PD3_controls <- sample_n(keep5, 15300)
 #use the rest of the controls for the Proxy GWAS
 Proxy3_controls <- anti_join(keep5,PD3_controls, by = c('FID'))
@@ -968,6 +974,14 @@ PD_FINAL_noN2081D_GS <- subset(PD_FINAL_LRRK2, rs33995883_G == 0 & rs34637584_A 
 PROXY_FINAL_norisk_GS <- subset(PROXY_FINAL_LRRK2, rs76904798_T == 0 & rs34637584_A == 0)
 PROXY_FINAL_noN2081D_GS <- subset(PROXY_FINAL_LRRK2, rs33995883_G == 0 & rs34637584_A == 0)
 
+#adding these for co-inheritance analysis later, not for GWAS
+PD_FINAL_noGS <- subset(PD_FINAL_LRRK2, rs34637584_A == 0)
+PD_FINAL_norisk <- subset(PD_FINAL_LRRK2, rs76904798_T == 0)
+PD_FINAL_noND <- subset(PD_FINAL_LRRK2, rs33995883_G == 0)
+PROXY_FINAL_noGS <- subset(PROXY_FINAL_LRRK2, rs34637584_A == 0)
+PROXY_FINAL_norisk <- subset(PROXY_FINAL_LRRK2, rs76904798_T == 0)
+PROXY_FINAL_noND <- subset(PROXY_FINAL_LRRK2, rs33995883_G == 0)
+
 #save dataframes
 write.table(PD_FINAL, file="UKB_PD_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PD_FINAL_norisk_GS, file="UKB_PD_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
@@ -975,12 +989,24 @@ write.table(PD_FINAL_noN2081D_GS, file="UKB_PD_cases_control_over60_noNDGS.txt",
 write.table(PROXY_FINAL, file="UKB_Proxy_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PROXY_FINAL_norisk_GS, file="UKB_Proxy_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PROXY_FINAL_noN2081D_GS, file="UKB_Proxy_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
+
+#saving these to the co-inheritance directory
+write.table(PD_FINAL_noGS, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_noGS.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PD_FINAL_norisk, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_norisk.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PD_FINAL_noND, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_noND.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PROXY_FINAL_noGS, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_noGS.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PROXY_FINAL_norisk, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_norisk.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PROXY_FINAL_noND, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_noND.txt", quote=FALSE,row.names=F,sep="\t")
+
 q()
 n
 
 #organize some files
 mkdir LRRK2_status_prep
 mv LRRK2_area_snps* LRRK2_status_prep
+
+#copy some files to the co-inheritance directory
+cp UKB_P* /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/
 
 ```
 
