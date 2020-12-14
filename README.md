@@ -1203,17 +1203,15 @@ COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.log
 1 binary phenotype loaded (9679 cases, 102931 controls).
 
 ```
-
-                                                   | COV file |          | GWAS log file |          |
+| File                                              | COV file |          | GWAS log file |          |
 |---------------------------------------------------|----------|----------|---------------|----------|
 |                                                   | Cases    | Controls | Cases         | Controls |
-| COV_UKB_PD_cases_control_over60_chr12             | 1530     | 14839    | 1529          | 15271    |
+| COV_UKB_PD_cases_control_over60_chr12             | 1530     | 15300    | 1529          | 15271    |
 | COV_UKB_PD_cases_control_over60_noNDGS_chr12      | 1466     | 14839    | 1466          | 14839    |
 | COV_UKB_PD_cases_control_over60_noriskGS_chr12    | 1063     | 11232    | 1063          | 11232    |
 | COV_UKB_Proxy_cases_control_over60_chr12          | 13430    | 140908   | 13404         | 140663   |
 | COV_UKB_Proxy_cases_control_over60_noNDGS_chr12   | 12942    | 136250   | 12942         | 136250   |
 | COV_UKB_Proxy_cases_control_over60_noriskGS_chr12 | 9679     | 102931   | 9679          | 102931   |
-
 
 
 ### 4.6 Make data ready for meta-analysis
