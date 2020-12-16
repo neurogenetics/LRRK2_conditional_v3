@@ -1116,7 +1116,8 @@ rm pruned_data*
 ```
 module load plink/2.0-dev-20191128
 
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB_GWAS/
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+
 mkdir GWAS_output
 module load plink/2.0-dev-20191128
 
