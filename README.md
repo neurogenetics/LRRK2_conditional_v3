@@ -863,6 +863,7 @@ rs33995883	rs33995883	40740686	A	G	0.0163887	G	1
 ```
 
 #### Subset phenotype info based on LRRK2 status (note this has been updated)
+(note this has been updated to account for the case-control issue)
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -983,10 +984,11 @@ PROXY_FINAL_norisk <- subset(PROXY_FINAL_LRRK2, rs76904798_T == 0)
 PROXY_FINAL_noND <- subset(PROXY_FINAL_LRRK2, rs33995883_G == 0)
 
 #save dataframes
-write.table(PD_FINAL, file="UKB_PD_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
+#note updated to PD_FINAL_LRRK2 and PROXY_FINAL_LRRK2
+write.table(PD_FINAL_LRRK2, file="UKB_PD_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PD_FINAL_norisk_GS, file="UKB_PD_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PD_FINAL_noN2081D_GS, file="UKB_PD_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
-write.table(PROXY_FINAL, file="UKB_Proxy_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PROXY_FINAL_LRRK2, file="UKB_Proxy_cases_control_over60.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PROXY_FINAL_norisk_GS, file="UKB_Proxy_cases_control_over60_noriskGS.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(PROXY_FINAL_noN2081D_GS, file="UKB_Proxy_cases_control_over60_noNDGS.txt", quote=FALSE,row.names=F,sep="\t")
 
