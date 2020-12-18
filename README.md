@@ -72,6 +72,9 @@ Path to IPDGC genetics data: /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCAL
 
 This data is filtered for a lot of things...check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
 
+Create cohort loop over file:
+/data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
+
 ```
 Variants of interest:
 LRRK2 G2019S => hg19 12:40734202:G:A
@@ -127,6 +130,56 @@ scp lakejs@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/ov
 | VANCE_Rsq  | 1  | Genotyped  | 0.99384  | Imputed |
 
 Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/Imputation_quality.xlsx
+
+#### Also check the positive control rs10847864
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+cat cohort_file.txt | while read line
+do 
+	echo "${line}:" "$(zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:123326598 | cut -f7)"
+done
+
+# We can see that MF, SPAIN3, SPAIN4 have imputation qualities below the hardcall threshold of 0.8 
+NEUROX_DBGAP: 0.99841
+MCGILL: 0.99912
+VANCE: 0.90858
+NIA: 0.87344
+GERMANY: 0.87789
+PPMI: 0.99941
+SPAIN3: 0.76704
+HBS: 0.99935
+SHULMAN: 0.84249
+MF: 0.77759
+DUTCH: 0.90051
+PDBP: 0.99906
+SPAIN4: 0.76579
+
+# We will manually add this variant back to the hardcalls for each of these cohorts 
+
+# Making the plink binary files for the variant in each of MF, SPAIN3, SPAIN4
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+module load plink
+
+# pull the variant from the cohorts where it's missing due to low imputation quality
+for cohort in {"MF","SPAIN3","SPAIN4"};
+do
+	plink --vcf /data/LNG/CORNELIS_TEMP/PD_AAO/${cohort}/chr12.dose.vcf.gz --make-bed --out s1 --double-id
+	plink --bfile s1 --snps 12:123326598 --make-bed --out ${cohort}_rs10847864_only
+done
+
+#merge these new files with the HARDCALLS 
+#note this will take a while
+sinteractive --mem=240g --cpus-per-task=20
+module load plink
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --bmerge MF_rs10847864_only --out hardcalls1
+plink --bfile hardcalls1 --bmerge SPAIN3_rs10847864_only --out hardcalls2
+plink --bfile hardcalls2 --bmerge SPAIN4_rs10847864_only --out HARDCALLS_with_rs10847864
+
+# Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
+(note to self replace all instances of the other hardcalls with this file before re-running analysis...then check that it shows up in the final forest plots)
+
+```
 
 ### 1.3 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 ```
@@ -263,9 +316,6 @@ This section goes through:
 		Conditional GWAS: PD vs control (no rs76904798 + no G2019S)
 		Special conditional GWAS: PD vs control (no N2081D + no G2019S)
 	- Total covariate files needed is 13 x 3 = 39
-
-Create cohort loop over file:
-/data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
 
 Create sample inclusion file:
 Using LRRK2_condi_sample_selection.txt from above...
