@@ -1547,6 +1547,12 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/SPECIAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/CONDI_forest
 
+## Make a separate plot for G2019S since it needs different xlim() parameters
+cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots
+Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2_G2019S.R 12:40734202 Gly2019Ser 'NORMAL'
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf /Users/lakejs/Desktop
+
 ```
 
 #### Make combined forest plots with normal, conditional and special conditional GWAS
