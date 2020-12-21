@@ -869,7 +869,7 @@ cd /data/CARD/UKBIOBANK/IMPUTED_DATA/
 #Extract CHR12 SNPs, Europeans only
 plink2 --bgen ukb_imp_chr12_v3.bgen --extract CHR12.SNPS_0_8.txt --geno 0.1 --hwe 1e-6 \
 --keep EUROPEAN.txt --make-pgen --mind 0.1 --sample ukb33601_imp_chr1_v3_s487395.sample \
---out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWASchr12.UKBB.EU.filtered_NEW \
+--out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/chr12.UKBB.EU.filtered_NEW \
 --memory 235000
 
 ```
@@ -1774,7 +1774,7 @@ write.table(combined, file="IPDGC_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t
 
 ```
 
-#### Making case-control tables for files used in GWAS
+#### Make case-control tables for files used in GWAS
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -1795,7 +1795,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/cas
 
 ```
 
-### 6.2 Making freq files for UKB data (note this has been updated)
+### 6.2 Make freq files for UKB data (note this has been updated)
 
 #### Update the subset files 
 
@@ -1944,7 +1944,7 @@ n
 
 ```
 
-#### Making case-control tables for files used in GWAS
+#### Make case-control tables for files used in GWAS
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -1968,6 +1968,189 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/cas
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_condi.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_special.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_special.txt /Users/lakejs/Desktop/
+
+```
+
+### 6.3 Determine a freq or count cutoff for the LRRK2 coding variants
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+# Based on the forest plots, should keep these variants
+grep -e rs76904798 -e Asn2081Asp -e Leu119Pro -e Asn551Lys -e Ile723Val -e Arg1398His -e Arg1514Gln -e Pro1542Ser -e Ser1647Thr -e Met1646Thr -e Met2397Thr -e rs10847864 LRRK2_AA_list.txt > keep_LRRK2_variants.txt
+
+12:40629436 L119P Leu119Pro
+12:40657700 N551K Asn551Lys
+12:40671989 I723V Ile723Val
+12:40702911 R1398H Arg1398His
+12:40707778 R1514Q Arg1514Gln
+12:40707861 P1542S Pro1542Ser
+12:40713899 M1646T Met1646Thr
+12:40713901 S1647T Ser1647Thr
+12:40740686 N2081D Asn2081Asp
+12:40758652 M2397T Met2397Thr
+12:40614434 rs76904798 rs76904798
+12:123326598 rs10847864 rs10847864
+
+```
+
+#### Calculate MAF and minor allele counts for the LRRK2 variants 
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+
+# IPDGC
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq --out IPDGC_freq
+
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out IPDGC_freq
+
+
+# UKB PD
+plink --bfile UKB_PD_cases_control_over60 \
+ --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq --out UKB_PD_freq
+
+plink --bfile UKB_PD_cases_control_over60 \
+ --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out UKB_PD_freq
+
+# UKB Proxy
+plink --bfile UKB_Proxy_cases_control_over60 \
+ --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq --out UKB_Proxy_freq
+
+plink --bfile UKB_Proxy_cases_control_over60 \
+ --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out UKB_Proxy_freq
+
+```
+
+#### Merge the frequency and counts info in R
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load R
+R
+require(dplyr)
+require(data.table)
+
+#import the files
+IPDGC_freq <- fread("IPDGC_freq.frq",header=T)
+IPDGC_counts <- fread("IPDGC_freq.frq.counts",header=T)
+PD_freq <- fread("UKB_PD_freq.frq",header=T)
+PD_counts <- fread("UKB_PD_freq.frq.counts",header=T)
+Proxy_freq <- fread("UKB_Proxy_freq.frq",header=T)
+Proxy_counts <- fread("UKB_Proxy_freq.frq.counts",header=T)
+data <- fread("LRRK2_coding_VOI_rsIDs.txt",header=T)
+keep <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/keep_LRRK2_variants.txt",header=T)
+
+#merge the counts and freqs dataframes
+PD <- merge(PD_freq,PD_counts,by="SNP")
+Proxy <- merge(Proxy_freq,Proxy_counts,by="SNP")
+IPDGC <- merge(IPDGC_freq,IPDGC_counts,by="SNP")
+
+#rename the SNP column to rsID for UKB
+PD <- PD %>% rename(rsID = SNP)
+Proxy <- Proxy %>% rename(rsID = SNP)
+
+#rename the ID column to "SNP"
+data <- data %>% rename(SNP = data.ID)
+
+#add the SNP in CHR:POS format to the UKB data and call this column SNP to match IPDGC
+PD  <- merge(PD, data, by.x="rsID",by.y="data.avsnp142")
+Proxy  <- merge(Proxy, data, by.x="rsID",by.y="data.avsnp142")
+
+#Determine the minor allele count for each of the variants
+#this is either C1 or C2 depending on whether A1.y (from _counts) is the minor allele (it is if it matches A1.x from _freq)
+#returns the count of the minor allele
+f <- function(row) {if (row["A1.x"] == row["A1.y"]) as.numeric(row["C1"]) else as.numeric(row["C2"])}
+
+PD$Minor_allele_count_UKB_PD <- c(apply(PD, 1, f))
+Proxy$Minor_allele_count_UKB_Proxy <- c(apply(Proxy, 1, f))
+IPDGC$Minor_allele_count_IPDGC <- c(apply(IPDGC, 1, f))
+
+#rename the columns 
+IPDGC <- IPDGC %>% rename(MAF_IPDGC = MAF) %>% rename(Allele_count_IPDGC = NCHROBS)
+PD <- PD %>% rename(MAF_UKB_PD = MAF) %>% rename(Allele_count_UKB_PD = NCHROBS)
+Proxy <- Proxy %>% rename(MAF_UKB_Proxy = MAF) %>% rename(Allele_count_UKB_Proxy = NCHROBS)
+
+#merge all of the dataframes
+library(tidyverse)
+data2 <- list(IPDGC, PD, Proxy) %>% reduce(inner_join, by = "SNP")
+
+data2 <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy","Minor_allele_count_IPDGC","Minor_allele_count_UKB_PD","Minor_allele_count_UKB_Proxy","Allele_count_IPDGC", "Allele_count_UKB_PD","Allele_count_UKB_Proxy")
+
+# add a column for total allele count and total minor allele count in both datasets combined
+data2$Total_allele_count<- data2$Allele_count_IPDGC + data2$Allele_count_UKB_PD + data2$Allele_count_UKB_Proxy
+data2$Total_minor_allele_count <- data2$Minor_allele_count_IPDGC + data2$Minor_allele_count_UKB_PD + data2$Minor_allele_count_UKB_Proxy
+
+```
+
+#### Determine a cutoff for which variants to include in final tables
+
+```
+## Investingating MAF cutoffs: 
+MAF_df <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy")
+
+# First see if the variants I want to keep are included if MAF > 0.001 for all three datasets
+MAF_0.01 <- MAF_df %>% filter(MAF_IPDGC > 0.01) %>% filter(MAF_UKB_PD > 0.01) %>% filter(MAF_UKB_Proxy > 0.01) 
+keep$id %in% MAF_0.01$SNP
+ [1] FALSE  TRUE  TRUE  TRUE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
+
+
+# See what the minimum MAF is for the variants I want to keep
+keep_MAF <- MAF_df %>% filter(SNP %in% keep$id)
+
+min(keep_MAF[,2],keep_MAF[,3],keep_MAF[,4])
+[1] 0.002262
+
+# Now try MAF > 0.001 and see what variants are included
+MAF_0.001 <- MAF_df %>% filter(MAF_IPDGC > 0.001) %>% filter(MAF_UKB_PD > 0.001) %>% filter(MAF_UKB_Proxy > 0.001) 
+keep$id %in% MAF_0.001$SNP
+ [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+ 
+# Let's see what amino acid changes these SNPs correspond to 
+AA <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt",header=T)
+
+LRRK2_AA_filtered <- AA %>% filter(id %in% MAF_0.001$SNP)
+             id   AA_short    AA_long
+ 1:  12:40629436      L119P  Leu119Pro
+ 2:  12:40657700      N551K  Asn551Lys
+ 3:  12:40671989      I723V  Ile723Val
+ 4:  12:40702911     R1398H Arg1398His
+ 5:  12:40707778     R1514Q Arg1514Gln
+ 6:  12:40707861     P1542S Pro1542Ser
+ 7:  12:40713899     M1646T Met1646Thr
+ 8:  12:40713901     S1647T Ser1647Thr
+ 9:  12:40740686     N2081D Asn2081Asp
+10:  12:40758652     M2397T Met2397Thr
+11:  12:40614434 rs76904798 rs76904798
+12:  12:46419086  rs7134559  rs7134559
+13: 12:123326598 rs10847864 rs10847864
+14: 12:133063768 rs11610045 rs11610045
+
+# The cutoff MAF > 0.001 seems good...
+write.table(LRRK2_AA_filtered, file="LRRK2_AA_filtered.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+```
+
+### 6.4 Make a table with information for selected variants 
+
+```
+R 
+require(dplyr)
+require(data.table)
+
+data <- fread("LRRK2_HRC_coding_V4.txt",header=T)
+data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_filtered.txt",header=T)
+
+data3 <- merge(data,data2,by.x="ID",by.y="id")
+data4 <- data3 %>% select("avsnp142","Chr","Start","Ref","Alt","AA_long")
+colnames(data4) <- c("rsID","Chr","Position","Ref","Alt","Amino Acid Change")
+
+write.table(data4, file="/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt", quote=FALSE,row.names=F,sep="\t")
+# note the the positive controls we don't use will be removed
 
 ```
 
