@@ -1601,7 +1601,9 @@ This section goes through:
 - LRRK2 rs76904798 with all other coding variants
 - Preparing files for Tables for manuscript
 
-### 6.1 - Assessing frequency of these variants in full data-set
+### 6.1 - Making freq files for IPDGC data
+
+#### Making subset files
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -1659,9 +1661,11 @@ cp /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection.txt .
 
 ```
 
-### 6.2 Run association tests in a loop
+#### Run association tests in a loop
 
 ```
+module load plink
+
 # all data
 # run the normal association tests separately since no file to --keep
 # 21478 are cases and 24388 are controls.
@@ -1705,7 +1709,7 @@ done
 
 ```
 
-### 6.3 Merge files in R
+#### Merge files in R
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -1718,9 +1722,12 @@ require(data.table)
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="^freq")
 
 #pull the prefixes for the output files
-file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique()
+file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique() 
 
-for(file in file.prefixes) {  
+i<-0
+dfs = list()
+for(file in file.prefixes) { 
+ i <- i+1
  data1 <- read.table(paste(file,".assoc",sep=""),header=T)
  data2 <- read.table(paste(file,".assoc.logistic",sep=""),header=T)
  data3 <- read.table(paste(file,".model",sep=""),header=T)
@@ -1731,370 +1738,237 @@ for(file in file.prefixes) {
  MM5 <- merge(MM,MM4,by="SNP")
  MM6 <- merge(MM5,MM2, by="SNP")
  colnames(MM6) <- c("SNP","A1","F_A","F_U","A2","AFF","UNAFF","NMISS","OR","P")
+ #now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
+ filtered <- MM6 %>% select("F_A", "F_U")
+ colnames(filtered) <- paste(file, colnames(filtered), sep = "_")
+ dfs[[i]]<-data.frame(filtered)
  write.table(MM6, file=paste("LRRK2_coding_variants_", file,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
 }
 
-```
+#combine the frequency info for each GWAS
+SNPs <- MM6$SNP
+combined <- bind_cols(SNPs,dfs)
 
-### 6.4 Assess whether there are differences
+colnames(combined) <- c("SNP","Freq_PD_noNDGS","Freq_Control_noNDGS","Freq_PD_noGSRisk","Freq_Control_noGSRisk","Freq_PD_noGS","Freq_Control_noGS","Freq_PD_noND","Freq_Control_noND","Freq_PD_noRisk","Freq_Control_noRisk","Freq_PD_normal","Freq_Control_normal")
 
-```
+#reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+SNP_order <- combined$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
 
-```
-
-
-
-
-
-
-___________________
-THIS IS THE OLD STUFF
+combined <- combined[SNP_order,]
 
 
-### 6.1 - First check which coding variants can be imputed here...?
+#make the header into the first row so it becomes a column with t()
+combined <- rbind(colnames(combined), combined)
+colnames(combined) <- NULL
 
-```
-mkdir HRC_LRRK2
-head -1 /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt > header.txt
-awk '$1 == "12"' /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt | grep LRRK2 | grep exonic | sed 's/ /_/g' | grep nonsynonymous > temp
-cat header.txt temp > LRRK2_HRC_coding.txt
-# manually add in 12:40614434 / rs76904798
-grep rs76904798 /data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt > risk_variant.txt
-cat LRRK2_HRC_coding.txt risk_variant.txt > LRRK2_HRC_coding_V2.txt
-cut -f 1,2 LRRK2_HRC_coding_V2.txt | sed 's/\t/:/g' | sed 's/Chr:Start/ID/g' > first_row.txt
-paste first_row.txt LRRK2_HRC_coding_V2.txt > LRRK2_HRC_coding_V3.txt
-# 45 variants present...
+#switch the SNPs to columns
+combined <- combined %>% t() %>% data.frame() 
+
+#set the header to the SNP names
+colnames(combined) <- as.character(combined[1,])
+
+#remove row that's duplicate of header
+combined <- combined[-1, ]
+
+write.table(combined, file="IPDGC_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
 
 ```
 
-### 6.2 - Assessing frequency of these variants in full data-set...
+#### Making case-control tables for files used in GWAS
 
 ```
-# Create a couple subset files to use....
-# G2019S carriers only
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202 --recodeA --out LRRK2_G2019S_only
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 
-module load R
-R
-data <- read.table("LRRK2_G2019S_only.raw",header=T)
-newdata <- subset(data, X12.40734202_A == 0) 
-dim(newdata) # 33757     7
-# adding some additional sampleinfo
-cov <- read.table("IPDGC_all_samples_covariates.txt",header=T)
-# drop some columns because otherwise merge conflict
-cov$IID <- NULL
-cov$fatid <- NULL
-cov$matid <- NULL
-MM = merge(newdata,cov,by='FID')
-dim(MM) # 33757    43
-write.table(MM, file="LRRK2_G2019S_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
-
-# rs76904798 carriers only
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --snps 12:40614434 --recodeA --out LRRK2_rs76904798_only
-module load R
-R
-data <- read.table("LRRK2_rs76904798_only.raw",header=T)
-newdata <- subset(data, X12.40614434_T == 0) 
-dim(newdata) # 33335     7
-# adding some additional sampleinfo
-cov <- read.table("IPDGC_all_samples_covariates.txt",header=T)
-# drop some columns because otherwise merge conflict
-cov$IID <- NULL
-cov$fatid <- NULL
-cov$matid <- NULL
-MM = merge(newdata,cov,by='FID')
-dim(MM) # 33335    43
-write.table(MM, file="LRRK2_rs76904798_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
-
-# Ecluding all G2019S AND rs76904798 carriers
-LRRK2_condi_sample_selection.txt
-
-# copy back to workingfolder
-scp LRRK2_G2019S_only_with_COV.txt /data/LNG/CORNELIS_TEMP/LRRK2_conditional/HRC_LRRK2/
-scp LRRK2_rs76904798_only_with_COV.txt /data/LNG/CORNELIS_TEMP/LRRK2_conditional/HRC_LRRK2/
-
-```
-
-```
-module load plink
-# all data 
-# 21478 are cases and 24388 are controls.
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --assoc --out freq
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --logistic --out freq
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --model --out freq
-
-# excluding LRRK2 G2019S carriers and NA
-# 16072 are cases and 17685 are controls.
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --assoc --out freq_no_G2019S --keep LRRK2_G2019S_only_with_COV.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --logistic --out freq_no_G2019S --keep LRRK2_G2019S_only_with_COV.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --model --out freq_no_G2019S --keep LRRK2_G2019S_only_with_COV.txt
-
-# excluding '5 risk variant carriers and NA
-# 15318 are cases and 18017 are controls.
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --assoc --out freq_no_rs76904798 --keep LRRK2_rs76904798_only_with_COV.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --logistic --out freq_no_rs76904798 --keep LRRK2_rs76904798_only_with_COV.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --model --out freq_no_rs76904798 --keep LRRK2_rs76904798_only_with_COV.txt
-
-# excluding both...
-# 11441 are cases and 13091 are controls.
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --assoc --out freq_no_G2019S_rs76904798 --keep LRRK2_condi_sample_selection.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --logistic --out freq_no_G2019S_rs76904798 --keep LRRK2_condi_sample_selection.txt
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
---extract LRRK2_HRC_coding_V3.txt --model --out freq_no_G2019S_rs76904798 --keep LRRK2_condi_sample_selection.txt
-```
-
-So many files!! now merge these in R
-
-```
-module load R
-R
-# normal
-data1 <- read.table("freq.assoc",header=T)
-data2 <- read.table("freq.assoc.logistic",header=T)
-data3 <- read.table("freq.model",header=T)
-MM <- data1[,c(2,4,5,6,7)]
-MM2 <- data2[,c(2,6,7,9)]
-MM3 <- subset(data3, TEST=="GENO")
-MM4 <- MM3[,c(2,6,7)]
-MM5 <- merge(MM,MM4,by="SNP")
-normal <- merge(MM5,MM2, by="SNP")
-colnames(normal) <- c("SNP","A1","F_A_normal","F_U_normal","A2","AFF_normal","UNAFF_normal","NMISS_normal","OR_normal","P_normal")
-write.table(normal, file="LRRK2_coding_variants_freq_normal.txt", quote=FALSE,row.names=F,sep="\t")
-
-# no G2019S
-data1 <- read.table("freq_no_G2019S.assoc",header=T)
-data2 <- read.table("freq_no_G2019S.assoc.logistic",header=T)
-data3 <- read.table("freq_no_G2019S.model",header=T)
-MM <- data1[,c(2,4,5,6,7)]
-MM2 <- data2[,c(2,6,7,9)]
-MM3 <- subset(data3, TEST=="GENO")
-MM4 <- MM3[,c(2,6,7)]
-MM5 <- merge(MM,MM4,by="SNP")
-noGS <- merge(MM5,MM2, by="SNP")
-colnames(noGS) <- c("SNP","A1","F_A_noGS","F_U_noGS","A2","AFF_noGS","UNAFF_noGS","NMISS_noGS","OR_noGS","P_noGS")
-write.table(noGS, file="LRRK2_coding_variants_freq_noGS.txt", quote=FALSE,row.names=F,sep="\t")
-
-# no rs76904798
-data1 <- read.table("freq_no_rs76904798.assoc",header=T)
-data2 <- read.table("freq_no_rs76904798.assoc.logistic",header=T)
-data3 <- read.table("freq_no_rs76904798.model",header=T)
-MM <- data1[,c(2,4,5,6,7)]
-MM2 <- data2[,c(2,6,7,9)]
-MM3 <- subset(data3, TEST=="GENO")
-MM4 <- MM3[,c(2,6,7)]
-MM5 <- merge(MM,MM4,by="SNP")
-noRisk <- merge(MM5,MM2, by="SNP")
-colnames(noRisk) <- c("SNP","A1","F_A_noRisk","F_U_noRisk","A2","AFF_noRisk","UNAFF_noRisk","NMISS_noRisk","OR_noRisk","P_noRisk")
-write.table(noRisk, file="LRRK2_coding_variants_freq_noRisk.txt", quote=FALSE,row.names=F,sep="\t")
-
-# no G2019S and rs76904798
-data1 <- read.table("freq_no_G2019S_rs76904798.assoc",header=T)
-data2 <- read.table("freq_no_G2019S_rs76904798.assoc.logistic",header=T)
-data3 <- read.table("freq_no_G2019S_rs76904798.model",header=T)
-MM <- data1[,c(2,4,5,6,7)]
-MM2 <- data2[,c(2,6,7,9)]
-MM3 <- subset(data3, TEST=="GENO")
-MM4 <- MM3[,c(2,6,7)]
-MM5 <- merge(MM,MM4,by="SNP")
-noGSRisk <- merge(MM5,MM2, by="SNP")
-colnames(noGSRisk) <- c("SNP","A1","F_A_noGSRisk","F_U_noGSRisk","A2","AFF_noGSRisk","UNAFF_noGSRisk","NMISS_noGSRisk","OR_noGSRisk","P_noGSRisk")
-write.table(noGSRisk, file="LRRK2_coding_variants_freq_noGSRisk.txt", quote=FALSE,row.names=F,sep="\t")
-
-```
-
-Then inspect closer and assess whether there are differences....
-
-Two variants most affected by removal of risk variants are:
-
-LRRK2:NM_198578:exon42:c.A6241G:p.N2081D
-
-LRRK2:NM_198578:exon32:c.G4541A:p.R1514Q
-
-Table with frequencies below...		
-
-| SNP | 12:40740686/N2081D | 12:40707778/R1514Q |  NOTE |
-| ------------- | ------------- | ------------- | ------------- |
-| Freq_PD_normal | 0.02361 | 0.009172 | |
-| Freq_Control_normal | 0.0189 | 0.008037 | |
-| Freq_PD_noGS | 0.02535 | 0.009115 | |
-| Freq_Control_noGS | 0.02075 | 0.007181 |
-| Freq_PD_noRisk | 0.003101 | 0.0008813 | Big Drop... |
-| Freq_Control_noRisk | 0.002525 | 0.001499 | Big Drop... |
-| Freq_PD_noGSRisk | 0.00354 | 0.0007429 | Big Drop... |
-| Freq_Control_noGSRisk	| 0.002559 | 0.001222 | Big Drop... |
-
-
-### 6.3 - Preparing files for Tables for manuscript
-
-Lets first do this for the IPDGC data....
-
-```
-# IPDGC data (FULL)
-cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
-# note using hardcall imputed data R2>0.8
-module load plink
-# create variant of interest file
-echo 12:40657700 > LRRK2_variants_Nicole.txt
-echo 12:40671989 >> LRRK2_variants_Nicole.txt
-echo 12:40702911 >> LRRK2_variants_Nicole.txt
-echo 12:40707778 >> LRRK2_variants_Nicole.txt
-echo 12:40707861 >> LRRK2_variants_Nicole.txt
-echo 12:40713899 >> LRRK2_variants_Nicole.txt
-echo 12:40734202 >> LRRK2_variants_Nicole.txt
-echo 12:40740686 >> LRRK2_variants_Nicole.txt
-echo 12:40713901 >> LRRK2_variants_Nicole.txt
-echo 12:40758652 >> LRRK2_variants_Nicole.txt
-echo 12:40614434 >> LRRK2_variants_Nicole.txt
-# check model output
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --model --extract LRRK2_variants_Nicole.txt --out LRRK2_variants_Nicole_model
-# extract GENO from model
-grep GENO LRRK2_variants_Nicole_model.model
-# check MAF per disease status
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --assoc --extract LRRK2_variants_Nicole.txt --out LRRK2_variants_Nicole_assoc
 # results including all data (no variant exclusion)
-Variant		Cases		Controls		F_A		F_U
-12:40614434	558/5602/15318	486/5885/18017		0.1564		0.1406
-12:40657700	93/2588/18797	139/3110/21139		0.06458		0.06946
-12:40671989	130/3062/18286	140/3230/21018		0.07733		0.07196
-12:40702911	95/2642/18741	142/3152/21094		0.06593		0.07044
-12:40707778	3/388/21087	1/390/23997		0.009172	0.008037
-12:40707861	15/1167/20296	31/1439/22918		0.02787		0.03077
-12:40713899	12/866/20600	5/820/23563		0.02072		0.01702
-12:40713901	1775/8885/10818	2250/10067/12071	0.2895		0.2987
-12:40734202	1/236/16072	0/20/17685		0.007297	0.0005648
-12:40740686	11/992/20475	13/896/23479		0.02361		0.0189
-12:40758652	2561/9757/9160	2817/10786/10785	0.3464		0.3366
+cat LRRK2_coding_variants_freq.txt | cut -f1,3,4,6,7 > case_control_IPDGC_normal.txt
 
-# IPDGC data (no GS and no '5 carriers)
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --model --extract LRRK2_variants_Nicole.txt --out LRRK2_variants_Nicole_model_no5_noGS --keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/HRC_LRRK2/LRRK2_condi_sample_selection.txt
-# extract GENO from model
-grep GENO LRRK2_variants_Nicole_model_no5_noGS.model
-# check MAF per disease status
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --assoc --extract LRRK2_variants_Nicole.txt --out LRRK2_variants_Nicole_assoc_no5_noGS --keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/HRC_LRRK2/LRRK2_condi_sample_selection.txt
 # results excluding GS and '5 risk variant
-Variant		Cases		Controls		F_A		F_U
-12:40614434	0/0/11441	0/0/13091		0		0
-12:40657700	67/1615/9759	95/1945/11051		0.07644		0.08154
-12:40671989	107/1924/9410	91/2007/10993		0.09344		0.08361
-12:40702911	67/1640/9734	98/1969/11024		0.07753		0.08269
-12:40707778	0/17/11424	0/32/13059		0.0007429	0.001222
-12:40707861	10/678/10753	13/828/12250		0.0305		0.03262
-12:40713899	8/550/10883	4/518/12569		0.02474		0.02009
-12:40713901	1228/5039/5174	1584/5751/5756		0.3276		0.3407
-12:40734202	0/0/11441	0/0/13091		0		0
-12:40740686	0/81/11360	0/67/13024		0.00354		0.002559
-12:40758652	1602/5432/4407	1694/5907/5490		0.3774		0.355
-```
+cat LRRK2_coding_variants_freq_no_G2019S_rs76904798.txt | cut -f1,3,4,6,7 > case_control_IPDGC_condi.txt
 
-```
-Another way of doing this
+# results excluding GS and ND variants
+cat LRRK2_coding_variants_freq_no_G2019S_N2081D.txt | cut -f1,3,4,6,7 > case_control_IPDGC_special.txt
 
-echo 12:40657700 > variants.txt
-echo 12:40671989 >> variants.txt
-echo 12:40702911 >> variants.txt
-echo 12:40707778 >> variants.txt
-echo 12:40707861 >> variants.txt
-echo 12:40713899 >> variants.txt       
-echo 12:40740686 >> variants.txt      
-echo 12:40734202 >> variants.txt
-echo 12:40713901 >> variants.txt
-echo 12:40758652 >> variants.txt
-echo 12:40614434 >> variants.txt
-
-cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
-
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --extract variants.txt --freq
-
-plink --bfile HARDCALLS_PD_september_2018_no_cousins --extract variants.txt \
---assoc --keep /data/LNG/CORNELIS_TEMP/LRRK2_conditional/LRRK2_condi_sample_selection.txt
-
+# export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_normal.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_condi.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_special.txt /Users/lakejs/Desktop/
 
 ```
 
+### 6.2 Making freq files for UKB data (note this has been updated)
 
-OK next lets first do this for the UK Biobank exome data....
+#### Update the subset files 
 
 ```
-# IPDGC data (FULL)
-cd /data/LNG/CORNELIS_TEMP/LRRK2_conditional/UKB/
-module load plink
-# create variant of interest file
-echo 12:40263898:C:G > LRRK2_variants_Nicole.txt
-echo 12:40278187:A:G >> LRRK2_variants_Nicole.txt
-echo 12:40309109:G:A >> LRRK2_variants_Nicole.txt
-echo 12:40313976:G:A >> LRRK2_variants_Nicole.txt
-echo 12:40314059:C:T >> LRRK2_variants_Nicole.txt
-echo 12:40320097:T:C >> LRRK2_variants_Nicole.txt
-echo 12:40340400:G:A >> LRRK2_variants_Nicole.txt
-echo 12:40346884:A:G >> LRRK2_variants_Nicole.txt
-# using LRRK2_ALL_variants_euro_subset_mac10.* from below...
-plink --bfile LRRK2_ALL_variants_euro_subset_mac10 --extract LRRK2_variants_Nicole.txt --freq --out LRRK2_variants_Nicole_freq
-# results europeans not excluding anyone
-SNP		MAF	NCHROBS
-12:40263898:C:G	0.06485	82494
-12:40278187:A:G	0.06611	82498
-12:40309109:G:A	0.06775	82498
-12:40313976:G:A	0.008885	82498
-12:40314059:C:T	0.03159	82498
-12:40320097:T:C	0.01855	82498
-12:40340400:G:A	0.0003152	82498
-12:40346884:A:G	0.01484	82498
-# now check same data excluding '5 carriers and GS carriers
+# Replace PD/CONTROL/PROXY with numbers 
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+ls UKB_P* > UKB_sample_selection.txt
+
+#replace PD/CONTROL/PROXY STATUS with numbers
+cat UKB_sample_selection.txt | while read line
+do 
+  sed -i 's/PD/2/g' $line
+  sed -i 's/PROXY/2/g' $line
+  sed -i 's/CONTROL/1/g' $line
+done
+
+```
+
+#### Convert the pfile into bed files using plink2
+
+```
+# Make separate bed files since there are separate phenotype files
+module load plink/2.3-alpha
+cat UKB_sample_selection.txt | while read line
+do 
+	plink2 --pfile /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/chr12.UKBB.EU.filtered_NEW \
+	--keep $line \
+	--pheno-name STATUS \
+	--pheno $line \
+	--make-bed --out ${line%%.*}
+done
+
+```
+
+#### Make a new file with the rsIDs of the LRRK2 coding variants
+
+```
+# Need the extract file to have the rsIDs to match the UKB data
 module load R
 R
-data <- read.table("LRRK2_ALL_variants_euro_subset_mac10_RECODE.raw",header=T)
-dim(data) # 41249    43
-# '5 risk => rs76904798_T
-# GS => X12.40340400.G.A_A
-newdata <- subset(data, X12.40340400.G.A_A == 0) 
-dim(newdata) # 41223     43
-newdata2 <- subset(newdata, rs76904798_T == 0) 
-dim(newdata2) # 29970    43
-NEW <- data.frame(newdata2$FID,newdata2$IID,newdata2$SEX)
-colnames(NEW) <- c("FID","IID","SEX")
-write.table(NEW, file="LRRK2_exome_euro_no5andGS_carriers.txt", quote=FALSE,row.names=F,sep="\t")
-# check freq in plink
-plink --bfile LRRK2_ALL_variants_euro_subset_mac10 --extract LRRK2_variants_Nicole.txt --freq --out LRRK2_variants_Nicole_freq_no5GS --keep LRRK2_exome_euro_no5andGS_carriers.txt
-# results europeans excluding '5 and G2019S carriers
-SNP		MAF	NCHROBS
-12:40263898:C:G	0.07431	59936
-12:40278187:A:G	0.07608	59940
-12:40309109:G:A	0.07754	59940
-12:40313976:G:A	0.002386	59940
-12:40314059:C:T	0.0373	59940
-12:40320097:T:C	0.02137	59940
-12:40340400:G:A	0	59940
-12:40346884:A:G	0.001835	59940
-```
-Done...
+require(dplyr)
+require(data.table)
+data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt", header=T)
 
+#substitute an rsID which was missing, found on gnomAD
+data[data$avsnp142=="."]$avsnp142 <- "rs768764049"
 
-## 7 - Checking R1441C and R1441G carrier status in AMP-PD....
+write.table(data.frame(data$avsnp142,data$ID), file="LRRK2_coding_VOI_rsIDs.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
 
 ```
-cd /PATH/TO/PD/AMP-PD/VCFs/
 
-chr12:40310434 C  T 	rs33939927 R-C
-chr12:40310434 C  G	rs33939927 R-G
-https://www.snpedia.com/index.php/Rs33939927
+#### Run association tests in a loop
 
-module load vcftools
-module load bcftools
-# extract only R1441 regions from VCF file
-vcftools --gzvcf chr12.vcf.gz --out LRRK2_R1441_status --chr chr12 --from-bp 40310333 --to-bp 40310535 --recode --recode-INFO-all
-# split multiallelics option -m add in - for splitting and add in + for joining
-bcftools norm -m- LRRK2_R1441_status.recode.vcf > LRRK2_R1441_status_split_allele.recode.vcf
+```
+module load plink
+cat UKB_sample_selection.txt | while read line
+do 
+	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --assoc --out ${line%%.*}
+	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --logistic --out ${line%%.*}
+	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --model --out ${line%%.*}
+done
+
+```
+
+#### Merge files in R
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load R
+R
+require(dplyr)
+require(data.table)
+
+#make a list of the output files from the association tests
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="^UKB_P.*cases_control")
+
+#pull the prefixes for the output files
+file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique() 
+
+
+# Use to change SNP from the rsID to the CHR:POS format
+data <- fread("LRRK2_coding_VOI_rsIDs.txt", header=T)
+
+convert_rsID_to_CHR_POS <- function(SNP) {
+ data[data$data.avsnp142 == SNP]$data.ID
+}
+
+i<-0
+dfs = list()
+for(file in file.prefixes) { 
+ i <- i+1
+ data1 <- read.table(paste(file,".assoc",sep=""),header=T)
+ data2 <- read.table(paste(file,".assoc.logistic",sep=""),header=T)
+ data3 <- read.table(paste(file,".model",sep=""),header=T)
+ MM <- data1[,c(2,4,5,6,7)]
+ MM2 <- data2[,c(2,6,7,9)]
+ MM3 <- subset(data3, TEST=="GENO")
+ MM4 <- MM3[,c(2,6,7)]
+ MM5 <- merge(MM,MM4,by="SNP")
+ MM6 <- merge(MM5,MM2, by="SNP")
+ #now change the rsID to CHR:POS
+ SNPs <-sapply(MM6$SNP, convert_rsID_to_CHR_POS,USE.NAMES=FALSE)
+ MM6$SNP <- SNPs
+ #now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
+ filtered <- MM6 %>% select("F_A", "F_U")
+ #use this prefix for the column names to distinguish between groups
+ file.prefix <- file %>% gsub(pattern="UKB_|_cases_control_over60|\\.frq.cc", replacement="")
+ colnames(filtered) <- paste(file.prefix, colnames(filtered), sep = "_")
+ dfs[[i]]<-data.frame(filtered)
+ write.table(MM6, file=paste("LRRK2_coding_variants_", file.prefix,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+
+SNPs <- MM6$SNP
+combined <- bind_cols(SNPs,dfs)
+
+#new column names
+colnames(combined) <- c("SNP","Freq_PD_noGS","Freq_PDControl_noGS","Freq_PD_noND","Freq_PDControl_noND","Freq_PD_noNDGS","Freq_PDControl_noNDGS","Freq_PD_noRisk","Freq_PDControl_noRisk","Freq_PD_noGSRisk","Freq_PDControl_noGSRisk","Freq_PD_normal","Freq_PDControl_normal","Freq_Proxy_noGS","Freq_ProxyControl_noGS","Freq_Proxy_noND","Freq_ProxyControl_noND","Freq_Proxy_noNDGS","Freq_ProxyControl_noNDGS","Freq_Proxy_noRisk","Freq_ProxyControl_noRisk","Freq_Proxy_noGSRisk","Freq_ProxyControl_noGSRisk","Freq_Proxy_normal","Freq_ProxyControl_normal")
+
+#reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+SNP_order <- combined$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+
+combined <- combined[SNP_order,]
+
+#add the header as a row so it's maintained after t()
+combined <- rbind(colnames(combined),combined)
+
+#now delete the header since it's redundant
+colnames(combined) <- NULL
+
+#switch the SNPs to columns
+combined <- combined %>% t() %>% data.frame() 
+
+#set the header to the SNP names
+colnames(combined) <- as.character(combined[1,])
+
+#remove row that's duplicate of header
+combined <- combined[-1, ]
+
+write.table(combined, file="UKB_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+```
+
+#### Making case-control tables for files used in GWAS
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+
+# results including all data (no variant exclusion)
+cat LRRK2_coding_variants_PD.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_normal.txt
+cat LRRK2_coding_variants_Proxy.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_normal.txt
+
+# results excluding GS and '5 risk variant
+cat LRRK2_coding_variants_PD_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_condi.txt
+cat LRRK2_coding_variants_Proxy_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_condi.txt
+
+# results excluding GS and ND variants
+cat LRRK2_coding_variants_P_noNDGSD.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_special.txt
+cat LRRK2_coding_variants_Proxy_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_special.txt
+
+# export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_normal.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_normal.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_condi.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_condi.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_special.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_special.txt /Users/lakejs/Desktop/
+
 ```
 
 ## Done....
