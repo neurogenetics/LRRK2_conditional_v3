@@ -15,7 +15,7 @@ LRRK2 is an important gene for PD and both rare highly damaging missense variant
 ### Motivation/Goals:
 1) Understanding the underlying data and creating an overview of the data...
 2) Perform quick and dirty GWAS excluding risk and G2019S variant...
-3) Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze...
+3) Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze
 
 ### Link to Manuscript:
 TBD
@@ -50,11 +50,10 @@ This section goes through:
 
 ### [6. Check LD co-inheritance of LRRK2 coding variants](#6-Check-LD-co-inheritance-of-LRRK2-coding-variants)
 This section goes through:
-- Checking if LRRK2 variants are typically co-inherited or not?
-- Assessing frequency of these variants in full data-set
-- LRRK2 G2019S with all other coding variants
-- LRRK2 rs76904798 with all other coding variants
-- Preparing files for Tables for manuscript
+- Making frequency files ofr IPDGC and UKB data
+- Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
+- Determining a frequency cutoff for LRRK2 coding variants
+- Preparing tables for manuscript
 
 ---
 ## 1. Understanding the underlying data and creating an overview of the data
@@ -72,162 +71,181 @@ Path to IPDGC genetics data: /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCAL
 
 This data is filtered for a lot of things...check https://github.com/neurogenetics/GWAS-pipeline for more details plus variants are filtered for a very conservative R2 > 0.8 and data is filtered for relatedness in the full dataset for pihat < 0.125
 
-Create cohort loop over file:
-/data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt
-
 ```
-Variants of interest:
-LRRK2 G2019S => hg19 12:40734202:G:A
-rs76904798 => hg19 12:40614434:C:T
-LRRK2 N2081D => 12:40740686:A:G
+# Variants of interest:
+# LRRK2 G2019S => hg19 12:40734202:G:A
+# rs76904798 => hg19 12:40614434:C:T
+# LRRK2 N2081D => 12:40740686:A:G
 
 cd /data/LNG/Julie/Julie_LRRK2_Condi 
 module load plink
 
-# simple test
+# Simple test
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --assoc --out test
 # Among remaining phenotypes, 21478 are cases and 24388 are controls.
  CHR           SNP         BP   A1      F_A      F_U   A2        CHISQ            P           OR 
   12   12:40614434   40614434    T   0.1564   0.1406    C        45.29    1.702e-11        1.133 
   12   12:40734202   40734202    A 0.007297 0.0005648    G        203.6    3.346e-46        13.01 
-# confirming associations, so thats good :)
+# Confirming associations, so thats good :)
 ```
 
 ### 1.2 - Checking the imputation quality of the IPDGC data
 
 ```
-cd /data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/
-grep 12:40614434 info_all.12 > LRRK2_1.txt
-grep 12:40734202 info_all.12 > LRRK2_2.txt
-cat header LRRK2_1.txt LRRK2_2.txt > overview_for_LRRK2_conditional_GWAS.txt
-
-# Copy file home
-scp lakejs@biowulf.nih.gov://data/LNG/CORNELIS_TEMP/PD_AAO/IMPUTATION_QUALITY/overview_for_LRRK2_conditional_GWAS.txt /Users/lakejs/Desktop/
-
-# summary
-12:40614434 -> very well imputed, present in almost all data
-12:40734202 -> also not bad...
-```
-#### IPDGC imputation quality table:
-
-| SNP	| 12:40614434 | How | 12:40734202 | How |
-| ------------- | ------------- | ------------- | ------------- | ------------- |
-| DUTCH_Rsq  | 0.99903  | Imputed  | 0.87355  | Imputed |
-| FINLAND_Rsq  | 0.99972  | Imputed  | **0.00109**  | Imputed |
-| GERMANY_Rsq  | 0.9961  | Imputed  | 0.85943  | Imputed |
-| HBS_Rsq  | 0.99999  | Genotyped  | 0.99982  | Genotyped |
-| MCGILL_Rsq  | 1  | Genotyped  | 0.91193  | Imputed |
-| MF_Rsq  | 0.99897  | Imputed  | **0.67548**  | Imputed |
-| NEUROX_DBGAP_Rsq  | 0.99684  | Imputed  | 0.9629  | Imputed |
-| NIA_Rsq  | 0.99998  | Genotyped  | 0.98795  | Genotyped |
-| OSLO_Rsq  | 0.99775  | Imputed  | 0.93746  | Imputed |
-| PDBP_Rsq  | 0.99942  | Imputed  | **0.75988**  | Imputed |
-| PPMI_Rsq  | 0.99999  | Genotyped  | 0.97688  | Genotyped |
-| SHULMAN_Rsq  | 0.99482  | Imputed  | **0.00335**  | Imputed |
-| SPAIN_Rsq  | 0.99557  | Genotyped  | 0.99997  | Genotyped |
-| SPAIN2_Rsq  | 0.988  | Imputed  | 0.99957  | Genotyped |
-| UK_GWAS_Rsq  | 1  | Genotyped  | 0.99984  | Genotyped |
-| VANCE_Rsq  | 1  | Genotyped  | 0.99384  | Imputed |
-
-Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/Imputation_quality.xlsx
-
-#### Also check the positive control rs10847864
-```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+# Make cohort loop over file
+echo NEUROX_DBGAP > cohort_file.txt
+echo MCGILL >> cohort_file.txt
+echo VANCE >> cohort_file.txt
+echo NIA >> cohort_file.txt
+echo GERMANY >> cohort_file.txt
+echo PPMI >> cohort_file.txt
+echo SPAIN3 >> cohort_file.txt
+echo HBS >> cohort_file.txt
+echo SHULMAN >> cohort_file.txt
+echo MF >> cohort_file.txt
+echo DUTCH >> cohort_file.txt
+echo PDBP >> cohort_file.txt
+echo SPAIN4 >> cohort_file.txt
 
 cat cohort_file.txt | while read line
 do 
-	echo "${line}:" "$(zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:123326598 | cut -f7)"
+	zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:40614434 | cut -f7,8 >> temp1.txt
+	zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:40734202 | cut -f7,8 >> temp2.txt
+	zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:123326598 | cut -f7,8 >> temp3.txt
+	zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep 12:40740686 | cut -f7,8 >> temp4.txt
 done
 
-# We can see that MF, SPAIN3, SPAIN4 have imputation qualities below the hardcall threshold of 0.8 
-NEUROX_DBGAP: 0.99841
-MCGILL: 0.99912
-VANCE: 0.90858
-NIA: 0.87344
-GERMANY: 0.87789
-PPMI: 0.99941
-SPAIN3: 0.76704
-HBS: 0.99935
-SHULMAN: 0.84249
-MF: 0.77759
-DUTCH: 0.90051
-PDBP: 0.99906
-SPAIN4: 0.76579
+module load R
+R
+require(data.table)
+require(dplyr)
 
-# We will manually add this variant back to the hardcalls for each of these cohorts 
+data1 <- fread("temp1.txt",header=F)
+data2 <- fread("temp2.txt",header=F)
+data3 <- fread("temp3.txt",header=F)
+data4 <- fread("temp4.txt",header=F)
 
-# Making the plink binary files for the variant in each of MF, SPAIN3, SPAIN4
+colnames(data1) <- c("12:40614434","How")
+colnames(data2) <- c("12:40734202","How")
+colnames(data3) <- c("12:123326598","How")
+colnames(data4) <- c("12:40740686","How")
+
+cohorts <- fread("cohort_file.txt",header=F)
+colnames(cohorts) <- c("Dataset")
+
+data <- cbind(cohorts,data1,data2,data3,data4)
+write.table(data,file="Imputation_quality.txt",quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+# Copy file home
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Imputation_quality.txt /Users/lakejs/Desktop/
+
+# Summary
+12:40614434 -> very well imputed, present in almost all data
+12:40734202 -> also not bad...
+
+```
+#### IPDGC imputation quality table:
+
+| Dataset      | 12:40614434 | How       | 12:40734202 | How       | 12:123326598 | How       | 12:40740686 | How       |
+|--------------|-------------|-----------|-------------|-----------|--------------|-----------|-------------|-----------|
+| NEUROX_DBGAP | 0.99998     | Genotyped | 0.98795     | Genotyped | 0.99841      | Genotyped | 0.9977      | Genotyped |
+| MCGILL       | 1           | Genotyped | 0.91193     | Imputed   | 0.99912      | Genotyped | 0.94829     | Imputed   |
+| VANCE        | 1           | Genotyped | 0.99384     | Imputed   | 0.90858      | Imputed   | 0.9995      | Imputed   |
+| NIA          | 0.99775     | Imputed   | 0.93746     | Imputed   | 0.87344      | Imputed   | 0.9903      | Imputed   |
+| GERMANY      | 0.9961      | Imputed   | 0.85943     | Imputed   | 0.87789      | Imputed   | 0.99355     | Imputed   |
+| PPMI         | 0.99999     | Genotyped | 0.97352     | Genotyped | 0.99941      | Genotyped | 0.99474     | Genotyped |
+| SPAIN3       | 0.98578     | Imputed   | 0.99945     | Genotyped | **0.76704**      | Imputed   | 0.99982     | Genotyped |
+| HBS          | 0.99999     | Genotyped | 0.99982     | Genotyped | 0.99935      | Genotyped | 0.99999     | Genotyped |
+| SHULMAN      | 0.99557     | Genotyped | 0.99997     | Genotyped | 0.84249      | Imputed   | 0.99989     | Genotyped |
+| MF           | 0.99684     | Imputed   | 0.9629      | Imputed   | **0.77759**      | Imputed   | 0.98894     | Imputed   |
+| DUTCH        | 0.99903     | Imputed   | 0.87355     | Imputed   | 0.90051      | Imputed   | 0.99208     | Imputed   |
+| PDBP         | 0.99999     | Genotyped | 0.97688     | Genotyped | 0.99906      | Genotyped | 0.99999     | Genotyped |
+| SPAIN4       | 0.98652     | Imputed   | 0.99914     | Genotyped | **0.76579**      | Imputed   | 0.99936     | Genotyped |
+
+Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/Imputation_quality.xlsx
+
+#### Add the positive control rs10847864 back to the hardcalls
+
+```
+# See that in MF, SPAIN3 and SPAIN4, rs10847864 has an imputation quality below the hardcall threshold of 0.8 
+# Manually add this variant back to the hardcalls
+
+# Make plink binary files for the variant in each of MF, SPAIN3, SPAIN4 datasets
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 module load plink
 
-# pull the variant from the cohorts where it's missing due to low imputation quality
+# Pull the variant from the cohorts where it's missing due to low imputation quality
 for cohort in {"MF","SPAIN3","SPAIN4"};
 do
 	plink --vcf /data/LNG/CORNELIS_TEMP/PD_AAO/${cohort}/chr12.dose.vcf.gz --make-bed --out s1 --double-id
 	plink --bfile s1 --snps 12:123326598 --make-bed --out ${cohort}_rs10847864_only
 done
 
-#merge these new files with the HARDCALLS 
-#note this will take a while
+# Merge these new files with the HARDCALLS 
+# Note this will take a while
 sinteractive --mem=240g --cpus-per-task=20
 module load plink
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --bmerge MF_rs10847864_only --out hardcalls1
 plink --bfile hardcalls1 --bmerge SPAIN3_rs10847864_only --out hardcalls2
 plink --bfile hardcalls2 --bmerge SPAIN4_rs10847864_only --out HARDCALLS_with_rs10847864
 
+rm hardcalls1*
+rm hardcalls2*
+
 # Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
-(note to self replace all instances of the other hardcalls with this file before re-running analysis...then check that it shows up in the final forest plots)
 
 ```
 
 ### 1.3 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 ```
-# check allelic distribution
+# Check allelic distribution
 cd /data/LNG/Julie/Julie_LRRK2_Condi
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --model --out allelic_dist
+plink --bfile HARDCALLS_with_rs10847864 --snps 12:40734202,12:40614434 --model --out allelic_dist
 
-# allelic distribution:
  CHR           SNP   A1   A2     TEST            AFF          UNAFF        CHISQ   DF            P
   12   12:40614434    T    C     GENO 558/5602/15318 486/5885/18017        46.02    2    1.014e-10
   12   12:40734202    A    G     GENO    1/236/16072     0/20/17685           NA   NA           NA
 
-# so in total to use likely ~25,000 samples because we want homozygous reference for both variants
+# So in total to use likely ~25,000 samples because we want homozygous reference for both variants
 ```
 Also see: LNG G-suite --> users/leonardhl/LRRK2_conditional/allelic_dist.xlsx
 
 ### 1.4 - Overview of the full data and selection of data
 
 ```
-##recode the genotypes of interest as single allele dosage numbers 
+# Recode the genotypes of interest as single allele dosage numbers 
 
-#use for the no rs76904798 + no G2019S dataset
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
+# Use for the no rs76904798 + no G2019S dataset
+plink --bfile HARDCALLS_with_rs10847864 --snps 12:40734202,12:40614434 --recodeA --out LRRK2_condi_variant_selection
 
-#use for the no N2081D + no G2019S dataset
-#call this the "special" conditional GWAS: see if rs76904798 signal remains
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40740686 --recodeA --out LRRK2_condi_special_variant_selection
+# Use for the no N2081D + no G2019S dataset
+# Call this the "special" conditional GWAS: see if rs76904798 signal remains
+plink --bfile HARDCALLS_with_rs10847864 --snps 12:40734202,12:40740686 --recodeA --out LRRK2_condi_special_variant_selection
 ```
 
 ```
-##subset the data to include only homozygous reference carriers of both variants
-
+# Subset the data to include only homozygous reference carriers of both variants
 module load R
 R
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
 data2 <- read.table("LRRK2_condi_special_variant_selection.raw",header=T)
 
-#X12.40614434_T is rs76904798 and X12.40734202_A is G2019S
+# X12.40614434_T is rs76904798 and X12.40734202_A is G2019S
 newdata <- subset(data, X12.40614434_T == 0 & X12.40734202_A == 0) 
 dim(newdata) # 24532     8
 
-#X12:40740686_G is N2081D and X12.40734202_A is G2019S
+# X12:40740686_G is N2081D and X12.40734202_A is G2019S
 newdata2 <- subset(data2, X12.40740686_G == 0 & X12.40734202_A == 0)
 dim(newdata2) # 32227     8
 
-#add some additional sample info
+# Add some additional sample info
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
-# drop some columns because otherwise merge conflict
+
+# Drop some columns because otherwise merge conflict
 cov$IID <- NULL
 cov$fatid <- NULL
 cov$matid <- NULL
@@ -237,16 +255,16 @@ dim(MM) # 24532    44
 MM2 = merge(newdata2,cov,by='FID')
 dim(MM2) # 32227    44
 
-#datasets with good data (the ones with homo-ref carriers):
+# Datasets with good data (the ones with homo-ref carriers):
 # [1] "DUTCH"        "GERMANY"      "HBS"          "MCGILL"       "MF"          
 # [6] "NEUROX_DBGAP" "NIA"          "PDBP"         "PPMI"         "SHULMAN"     
 # [11] "SPAIN3"       "SPAIN4"       "VANCE"       
 
-#create a file for selecting individuals who are homo-ref carriers
+# Create a file for selecting individuals who are homo-ref carriers
 write.table(MM, file="LRRK2_condi_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(MM2, file="LRRK2_condi_special_sample_selection.txt", quote=FALSE,row.names=F,sep="\t")
 
-#display the case-control distribution for each dataset
+# Display the case-control distribution for each dataset
 require(dplyr)
 MM_grouped <- MM %>% group_by(DATASET) %>% summarise(Case = sum(PHENOTYPE == 2), Control = sum(PHENOTYPE == 1), TOTAL = n()) %>% bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "SUM"))
 write.table(MM_grouped, file="LRRK2_condi_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
@@ -256,7 +274,7 @@ write.table(MM2_grouped, file="LRRK2_condi_special_sample_selection_grouped.txt"
 q()
 n
 
-#copy files
+# Copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection_grouped.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection_grouped.txt /Users/lakejs/Desktop/
 
@@ -324,10 +342,9 @@ Also note that most data was already preprocessed according to this https://gith
 and has been used in previous GWAS such as https://pubmed.ncbi.nlm.nih.gov/31701892/ and https://pubmed.ncbi.nlm.nih.gov/30957308/
 
 
-
 ### 2.1 Create new PC's for each cohort
 
-First loop over all cleaned unimputed data to create fresh PC's
+First loop over all cleaned unimputed data to create new PC's
 
 #### PC files without G2019S and rs76904798
 
@@ -1601,15 +1618,14 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combin
 
 ## 6. Check LD co-inheritance of LRRK2 coding variants
 This section goes through:
-- Assessing frequency of these variants in full data-set
-- Checking if LRRK2 variants are typically co-inherited
-- LRRK2 G2019S with all other coding variants
-- LRRK2 rs76904798 with all other coding variants
-- Preparing files for Tables for manuscript
+- Making frequency files ofr IPDGC and UKB data
+- Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
+- Determining a frequency cutoff for LRRK2 coding variants
+- Preparing tables for manuscript
 
-### 6.1 - Making freq files for IPDGC data
+### 6.1 - Make freq files for IPDGC data
 
-#### Making subset files
+#### Make subset files
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2099,24 +2115,24 @@ MAF_df <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy")
 # First see if the variants I want to keep are included if MAF > 0.001 for all three datasets
 MAF_0.01 <- MAF_df %>% filter(MAF_IPDGC > 0.01) %>% filter(MAF_UKB_PD > 0.01) %>% filter(MAF_UKB_Proxy > 0.01) 
 keep$id %in% MAF_0.01$SNP
- [1] FALSE  TRUE  TRUE  TRUE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
-
+# [1] FALSE  TRUE  TRUE  TRUE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
 
 # See what the minimum MAF is for the variants I want to keep
 keep_MAF <- MAF_df %>% filter(SNP %in% keep$id)
 
 min(keep_MAF[,2],keep_MAF[,3],keep_MAF[,4])
-[1] 0.002262
+# [1] 0.002262
 
 # Now try MAF > 0.001 and see what variants are included
 MAF_0.001 <- MAF_df %>% filter(MAF_IPDGC > 0.001) %>% filter(MAF_UKB_PD > 0.001) %>% filter(MAF_UKB_Proxy > 0.001) 
 keep$id %in% MAF_0.001$SNP
- [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
+# [1] TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE TRUE
  
 # Let's see what amino acid changes these SNPs correspond to 
 AA <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt",header=T)
 
 LRRK2_AA_filtered <- AA %>% filter(id %in% MAF_0.001$SNP)
+
              id   AA_short    AA_long
  1:  12:40629436      L119P  Leu119Pro
  2:  12:40657700      N551K  Asn551Lys
@@ -2141,7 +2157,7 @@ n
 
 ```
 
-### 6.4 Make a table with information for selected variants 
+### 6.4 Make table with information for selected variants 
 
 ```
 R 
