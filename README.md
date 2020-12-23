@@ -53,10 +53,14 @@ This section goes through:
 
 ### [6. Check LD co-inheritance of LRRK2 coding variants](#6-Check-LD-co-inheritance-of-LRRK2-coding-variants)
 This section goes through:
-- Making frequency files ofr IPDGC and UKB data
+- Making frequency files for IPDGC and UKB data
 - Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
 - Determining a frequency cutoff for LRRK2 coding variants
+
+### [7. Make final tables and figures](#7-Make-final-tables-and-figures)
+This section goes through:
 - Preparing tables for manuscript
+- Preparing figures for manuscript
 
 ---
 ## 1. Understanding the underlying data and creating an overview of the data
@@ -91,7 +95,6 @@ plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september
 # Confirming associations, so thats good :)
 
 rm test* 
-
 ```
 
 ### 1.2 - Checking the imputation quality of the IPDGC data
@@ -156,8 +159,8 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Imputation_quality
 # LRRK2 G2019S => hg19 12:40734202:G:A -> also not bad...
 # rs10847864 => 12:123326598:G:T (positive control) -> some bad cohorts 
 # LRRK2 N2081D => 12:40740686:A:G -> very well imputed, present in almost all data
-
 ```
+
 #### IPDGC imputation quality table:
 
 | Dataset      | 12:40614434 | How       | 12:40734202 | How       | 12:123326598 | How       | 12:40740686 | How       |
@@ -210,7 +213,6 @@ mv SPAIN4* rs10847864_prep
 mv MF* rs10847864_prep
 
 # Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
-
 ```
 
 ### 1.3 - Assessing frequency of LRRK2 G2019S, rs76904798 and N2081D in the data
@@ -233,7 +235,6 @@ CHR	SNP	A1	A2	TEST	AFF	UNAFF	CHISQ	DF	P
 12	12:40614434	T	C	GENO	558/5602/15318	486/5885/18017	46.02	2	1.014e-10
 12	12:40734202	A	G	GENO	1/236/16072	0/20/17685	NA	NA	NA
 12	12:40740686	G	A	GENO	11/992/20475	13/896/23479	25.83	2	2.46e-06
-
 ```
 
 ### 1.4 - Overview of the full data and selection of data
@@ -311,7 +312,6 @@ n
 # Copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection_grouped.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection_grouped.txt /Users/lakejs/Desktop/
-
 ```
 
 <table>
@@ -356,7 +356,6 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_specia
 
 </td></tr></table>
 
-
 ## 2. Create covariate files for each IPDGC cohort
 
 This section goes through:
@@ -371,7 +370,6 @@ This section goes through:
 
 Also note that most data was already preprocessed according to this https://github.com/neurogenetics/GWAS-pipeline 
 and has been used in previous GWAS such as https://pubmed.ncbi.nlm.nih.gov/31701892/ and https://pubmed.ncbi.nlm.nih.gov/30957308/
-
 
 ### 2.1 Create new PC's for each cohort
 
@@ -399,7 +397,6 @@ do
 	
 	cd ..
 done
-
 ```
 
 #### PC files without G2019S and N2081D
@@ -418,7 +415,6 @@ do
 	scp $line.LRRK2_condi_PCA_SPECIAL.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
 	cd ..
 done
-
 ```
 
 #### PC files with G2019S, N2081D and rs76904798 <= meaning normal files...
@@ -439,7 +435,6 @@ do
 	scp $line.LRRK2_condi_PCA_NORMAL.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi
 	cd ..
 done
-
 ```
 
 ### 2.2 Create covariate files
@@ -451,7 +446,6 @@ done
 cat *NORMAL.eigenvec > NORMAL_PCs.txt
 cat *SPECIAL.eigenvec > SPECIAL_PCs.txt
 cat *CONDI.eigenvec > CONDI_PCs.txt
-
 
 module load R
 R
@@ -557,7 +551,6 @@ grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_CONDI.MF.txt > temp
 mv temp LRRK2_condi_covariates_CONDI.MF.txt
 
 # Fixed…
-
 ```
 
 #### Reorganize the files
@@ -577,9 +570,7 @@ mv LRRK2_condi_covariates_SPECIAL* SPECIAL_COVARIATES
 mkdir CONDI_COVARIATES
 mv *CONDI.eigenvec CONDI_COVARIATES
 mv LRRK2_condi_covariates_CONDI* CONDI_COVARIATES
-
 ```
-
 
 ## 3. Perform cohort-level GWAS on IPDGC data excluding rs76904798 and G2019S
 
@@ -622,7 +613,6 @@ scp LRRK2_HRC_coding_V4_IDs.txt /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_V
 
 wc -l LRRK2_HRC_coding_V4_IDs.txt
 # 48 variants present…
-
 ```
 
 ### 3.2 Perform GWAS of chromosome 12 for each cohort
@@ -727,7 +717,6 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/
 mkdir prep_files
 mv *.log prep_files
 mv *.hybrid prep_files
-
 ```
 
 ```
@@ -804,7 +793,6 @@ mv SPECIAL_GWAS_VOI* LRRK2_coding_VOI
 cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12
 mkdir LRRK2_coding_VOI
 mv CONDI_GWAS_VOI* LRRK2_coding_VOI
-
 ```
 
 ```
@@ -821,11 +809,11 @@ do
   cd /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI
   wc -l CONDI_GWAS_VOI.$line.txt
 done
-
 ```
 
 ## 4. Add in UKBiobank
- This section goes through: 
+ 
+This section goes through: 
 - Subsetting the UK Biobank data
 - Making covariate files
 - Performing GWAS on CHR12
@@ -857,7 +845,6 @@ done
 
 # To create PCs from here:
 /data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cousins.*
-
 ```
 
 ### 4.2 Filter UKB data
@@ -881,12 +868,12 @@ plink2 --bgen ukb_imp_chr12_v3.bgen --extract CHR12.SNPS_0_8.txt --geno 0.1 --hw
 ### 4.3 Subset phenotype data for covariate files
 
 Coviariate files to be made: N=6
-1) PD vs control 
-2) PD vs control (no rs76904798 + no G2019S)
-3) PD vs control (no N2081D + no G2019S)
-4) PD proxy vs control 
-5) PD proxy vs control (no rs76904798 + no G2019S)
-6) PD proxy vs control (no N2081D + no G2019S)
+1. PD vs control 
+2. PD vs control (no rs76904798 + no G2019S)
+3. PD vs control (no N2081D + no G2019S)
+4. PD proxy vs control 
+5. PD proxy vs control (no rs76904798 + no G2019S)
+6. PD proxy vs control (no N2081D + no G2019S)
 
 Working directory: data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 
@@ -916,7 +903,6 @@ NAME		RS		BP		REF	ALT	MAF		ALT	R2
 rs34637584	rs34637584	40734202	G	A	0.000321086	A	1
 rs33995883	rs33995883	40740686	A	G	0.0163887	G	1
 rs10847864	rs10847864	123326598	G	T	0.350165	T	1
-
 ```
 
 #### Subset phenotype info based on LRRK2 status
@@ -1065,7 +1051,6 @@ n
 
 # Copy some files to the co-inheritance directory
 cp UKB_P* /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/
-
 ```
 
 ### 4.4 Calculate PCs
@@ -1085,7 +1070,6 @@ plink --bfile /data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cou
 plink --bfile FILENAME_2 --indep-pairwise 1000 10 0.02 --autosome --out pruned_data
 plink --bfile FILENAME_2 --extract pruned_data.prune.in --make-bed --out FILENAME_3 
 flashpca --bfile FILENAME_3 --suffix _UKB_PD_cases_control_over60.txt --numthreads 19
-
 ```
 
 #### Run flashpca in a loop
@@ -1155,7 +1139,6 @@ for(file in file.names) {
 q()
 n
 
-
 # Replace PD/CONTROL/PROXY STATUS with numbers
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 cat PC_files.txt | while read line
@@ -1165,7 +1148,6 @@ do
   sed -i 's/CONTROL/1/g' COV_$line
 done
 
-
 # Organize and remove some files
 mkdir flashpca_files
 mv eigenvalues_UKB_P* flashpca_files
@@ -1174,7 +1156,6 @@ mv pcs_UKB_P* flashpca_files
 mv pve_UKB_P* flashpca_files
 rm FILENAME_*
 rm pruned_data*
-
 ```
 
 ### 4.5 Start GWAS on CHR 12 (note to self make the loop GWAS a bash script)
@@ -1203,7 +1184,6 @@ plink2 --pfile chr12.UKBB.EU.filtered_NEW \
 --out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_UKB_PD_cases_control_over60_noNDGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 
 sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS.sh PC_files.txt
-
 ```
 
 ```
@@ -1228,7 +1208,7 @@ do
 done
 ```
 
-#### Check the cases and controls included in each GWAS (note I want to ask about this)
+#### Check the cases and controls included in each GWAS
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/
@@ -1248,12 +1228,12 @@ q()
 n
 
 Results: 
-[1] "COV_UKB_PD_cases_control_over60_noNDGS.txt has 1466 cases and 14839 controls"
-[1] "COV_UKB_PD_cases_control_over60_noriskGS.txt has 1063 cases and 11232 controls"
-[1] "COV_UKB_PD_cases_control_over60.txt has 1530 cases and 15300 controls"
-[1] "COV_UKB_Proxy_cases_control_over60_noNDGS.txt has 12942 cases and 136250 controls"
-[1] "COV_UKB_Proxy_cases_control_over60_noriskGS.txt has 9679 cases and 102931 controls"
-[1] "COV_UKB_Proxy_cases_control_over60.txt has 13430 cases and 140908 controls"
+[1] "COV_UKB_PD_cases_control_over60_noNDGS.txt has 1466 cases and 14782 controls"
+[1] "COV_UKB_PD_cases_control_over60_noriskGS.txt has 1063 cases and 11123 controls"
+[1] "COV_UKB_PD_cases_control_over60.txt has 1529 cases and 15279 controls"
+[1] "COV_UKB_Proxy_cases_control_over60_noNDGS.txt has 12942 cases and 136307 controls"
+[1] "COV_UKB_Proxy_cases_control_over60_noriskGS.txt has 9679 cases and 103040 controls"
+[1] "COV_UKB_Proxy_cases_control_over60.txt has 13404 cases and 140655 controls"
 
 # Compare this to the results from the GWAS log files
 ls *.log > log_files.txt
@@ -1266,34 +1246,33 @@ done
 
 Results: 
 COV_UKB_PD_cases_control_over60_chr12.log
-1 binary phenotype loaded (1529 cases, 15271 controls).
+1 binary phenotype loaded (1529 cases, 15279 controls).
 COV_UKB_PD_cases_control_over60_noNDGS_chr12.log
-1 binary phenotype loaded (1466 cases, 14839 controls).
+1 binary phenotype loaded (1466 cases, 14782 controls).
 COV_UKB_PD_cases_control_over60_noriskGS_chr12.log
-1 binary phenotype loaded (1063 cases, 11232 controls).
+1 binary phenotype loaded (1063 cases, 11123 controls).
 COV_UKB_Proxy_cases_control_over60_chr12.log
-1 binary phenotype loaded (13404 cases, 140663 controls).
+1 binary phenotype loaded (13404 cases, 140655 controls).
 COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.log
-1 binary phenotype loaded (12942 cases, 136250 controls).
+1 binary phenotype loaded (12942 cases, 136307 controls).
 COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.log
-1 binary phenotype loaded (9679 cases, 102931 controls).
+1 binary phenotype loaded (9679 cases, 103040 controls).
 
 ```
 | File                                              | COV file |          | GWAS log file |          |
 |---------------------------------------------------|----------|----------|---------------|----------|
 |                                                   | Cases    | Controls | Cases         | Controls |
-| COV_UKB_PD_cases_control_over60_chr12             | 1530     | 15300    | 1529          | 15271    |
-| COV_UKB_PD_cases_control_over60_noNDGS_chr12      | 1466     | 14839    | 1466          | 14839    |
-| COV_UKB_PD_cases_control_over60_noriskGS_chr12    | 1063     | 11232    | 1063          | 11232    |
-| COV_UKB_Proxy_cases_control_over60_chr12          | 13430    | 140908   | 13404         | 140663   |
-| COV_UKB_Proxy_cases_control_over60_noNDGS_chr12   | 12942    | 136250   | 12942         | 136250   |
-| COV_UKB_Proxy_cases_control_over60_noriskGS_chr12 | 9679     | 102931   | 9679          | 102931   |
+| COV_UKB_PD_cases_control_over60_chr12             | 1529     | 15279    | 1529          | 15279    |
+| COV_UKB_PD_cases_control_over60_noNDGS_chr12      | 1466     | 14782    | 1466          | 14782    |
+| COV_UKB_PD_cases_control_over60_noriskGS_chr12    | 1063     | 11123    | 1063          | 11123    |
+| COV_UKB_Proxy_cases_control_over60_chr12          | 13404    | 140655   | 13404         | 140655   |
+| COV_UKB_Proxy_cases_control_over60_noNDGS_chr12   | 12942    | 136307   | 12942         | 136307   |
+| COV_UKB_Proxy_cases_control_over60_noriskGS_chr12 | 9679     | 103040   | 9679          | 103040   |
 
 
 ### 4.6 Make data ready for meta-analysis
 
 These are the files to process:
-
 - COV_UKB_PD_cases_control_over60_chr12.STATUS.glm.logistic.hybrid
 - COV_UKB_PD_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid
 - COV_UKB_PD_cases_control_over60_noriskGS_chr12.STATUS.glm.logistic.hybrid
@@ -1301,19 +1280,18 @@ These are the files to process:
 - COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid
 - COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.STATUS.glm.logistic.hybrid
 
-
 #### Reformat plink2 GWAS output
 ```
 # Check the number of variants in these files…
 wc -l COV_UKB_PD_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid 
 # 1,357,686 variants--in comparison, 439,402 variants in /data/CARD/UKBIOBANK/FILTER_IMPUTED_DATA/chr12.UKBB.EU.filtered.pvar
 
-
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output
-
 ls COV_UKB_P*.hybrid | cat > GWAS_files.txt
 module load python/3.6
-cat GWAS_files.txt  | while read line
+
+# ${line%%.*} gets rid of the file extension
+cat GWAS_files.txt | while read line
 do 
 	# Filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
 	awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
@@ -1331,13 +1309,182 @@ done
 
 ```
 
+```
+# This is reformat_plink2_results.py
+
+# -*- coding: utf-8 -*-
+"""
+# Intro
+ - **Project:** GenoML
+ - **Author(s):** Mary B. Makarious, Mike A. Nalls, Juan Botia, Hampton Leonard
+ - **Date Notebook Started:** 19.09.2019
+    - **Quick Description:** Notebook relating to experimental implementation of networkx for community generation.
+
+---
+### Quick Description: 
+**Problem:** Many software have been used for building networks, within a biological context and in social network and sales analysis. Lets try to do something outside of simple networks.
+
+**Solution:** Lets try to use networkx prioritizing adding Louvain community detection through its widespread application in business https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008. Eventualy we will add decomposition tree based analyses as suggested by https://www.nature.com/articles/s41467-018-03424-4. 
+
+### Motivation/Background:
+Data suggests we can do better than very simple coexpression networks also more flexible for SNPs and clinical in nodes?  
+
+### Concerns/Impact on Related Code: 
+- Depends on switch to detect discrete or continuous workflows.
+
+### Thoughts for Future Development of Code in this Notebook: 
+- Networks could be helpful in partitioning samples and unsupervised learning.
+
+# Imports
+"""
+
+import argparse
+import sys
+import pandas as pd
+import numpy as np
+
+"""
+# Command args
+"""
+
+parser = argparse.ArgumentParser(description='Arguments for training a discrete model')    
+parser.add_argument('--infile', type=str, default='plink_glm_file', help='Your results file needing formatting. Default = plink_glm_file.')
+parser.add_argument('--outfile', type=str, default='plink_glm_reformatted', help='Your output file. Default = plink_glm_reformatted.')
+parser.add_argument('--B-or-C', type=str, default='B', help='B = binary outcome, C = contimuous outcome. Default = B.')
+parser.add_argument('--minimal-output', type=str, default='NOPE', help='YEP or NOPE, output only minimal results set to save space. Default = False.')
+
+
+args = parser.parse_args()
+
+print("")
+print("Here is some basic info on the command you are about to run.")
+print("Python version info...")
+print(sys.version)
+print("CLI argument info...")
+print("Working with tab-delimited input data", args.infile, "from previous GWAS analyses.")
+print("Output file prefix is", args.outfile, "containing your reformatted data in tab delimited format.")
+print("Is your GWAS outcome B (binary) or C (continuous)?", args.B_or_C)
+print("Only output a minimal set of columns in the results?", args.minimal_output)
+
+
+print("")
+
+infile = args.infile
+outfile = args.outfile
+B_or_C = args.B_or_C
+minimal_output = args.minimal_output
+
+"""
+# Read in your data
+
+This the generic PLINK2 output generated using one of the following commands for binary then continuous outcomes.
+
+module load plink/2.0-dev-20191128
+
+for chnum in {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22};
+  do
+plink2 --pfile /data/CARD/UKBIOBANK/FILTER_IMPUTED_DATA/chr$chnum.UKBB.EU.filtered \
+--pheno-name PHENO_PLINK --pheno covariates/FINAL_cov_UKB_PD_cases_control_over60.txt \
+--covar covariates/FINAL_cov_UKB_PD_cases_control_over60.txt --memory 235000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--out RESULTS/UKB_case_control_chr$chnum --covar-name AGE,SEX,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
+done
+
+or
+
+plink2 --pfile /data/CARD/UKBIOBANK/FILTER_IMPUTED_DATA/chr22.UKBB.EU.filtered \
+--pheno-name AGE --pheno covariates/FINAL_cov_UKB_Proxy_cases_control_over60.txt \
+--covar covariates/FINAL_cov_UKB_Proxy_cases_control_over60.txt --memory 235000 \
+--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
+--out MIKE_continues --covar-name TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
+
+Just as an additional note, this doesn't scale the contimuous outcome to Z, so be careful with unit standardization across studies with continuous traits.
+"""
+
+# For testing
+# infile = 'binary.txt'
+# outfile = 'test_B_false.tab'
+# B_or_C = 'B'
+# minimal_output = False
+
+df = pd.read_csv(infile, engine = 'c', sep = '\t')
+
+df.rename(columns = {'#CHROM':'CHROM'}, inplace = True)
+
+print("")
+print("Your data looks like this (showing the first few lines of the left-most and right-most columns) ...")
+print(df.describe())
+print("")
+print("Now lets get to the data processing ...")
+
+"""
+# Define functions to reformat
+"""
+def make_log_OR(o):
+  b_adjusted = np.log(o)
+  return b_adjusted
+
+def reformat_binary_GWAS(x):
+    global df_edited
+    df_editing = df
+    df_editing['markerID'] = df_editing['CHROM'].astype(str) + ":" + df_editing['POS'].astype(str) + ":" + df_editing['REF'].astype(str) + ":" + df_editing['ALT'].astype(str)
+    df_editing['effectAllele'] = df_editing['A1']
+    df_editing['alternateAllele'] = df_editing['ALT'].where(df_editing['A1'] == df_editing['REF'], df_editing['REF'])
+    df_editing['beta']= np.vectorize(make_log_OR)(df_editing['OR'])
+    df_editing.rename(columns={'LOG(OR)_SE':'se', 'P':'P', 'A1_FREQ':'effectAlleleFreq', 'OBS_CT':'N', 'ID':'rsID', 'A1_CASE_FREQ':'effectAlleleFreq_cases', 'A1_CTRL_FREQ':'effectAlleleFreq_controls', 'FIRTH?':'firthUsed', 'ERRCODE':'error'}, inplace=True)
+    df_edited = df_editing[['markerID','effectAllele','alternateAllele','beta','se','P','effectAlleleFreq','N','rsID','effectAlleleFreq_cases','effectAlleleFreq_controls', 'OR', 'firthUsed','error']]
+    del df_editing
+    return df_edited
+
+def reformat_continuous_GWAS(x):
+    global df_edited
+    df_editing = df
+    df_editing['markerID'] = df_editing['CHROM'].astype(str) + ":" + df_editing['POS'].astype(str) + ":" + df_editing['REF'].astype(str) + ":" + df_editing['ALT'].astype(str)
+    df_editing['effectAllele'] = df_editing['A1']
+    df_editing['alternateAllele'] = df_editing['ALT'].where(df_editing['A1'] == df_editing['REF'], df_editing['REF'])
+    df_editing.rename(columns={'BETA':'beta', 'SE':'se', 'P':'P', 'A1_FREQ':'effectAlleleFreq', 'OBS_CT':'N', 'ID':'rsID', 'ERRCODE':'error'}, inplace=True)
+    df_edited = df_editing[['markerID','effectAllele','alternateAllele','beta','se','P','effectAlleleFreq','N','rsID','error']]
+    del df_editing
+    return df_edited
+
+if (B_or_C == "B"):
+    reformat_binary_GWAS(df)
+
+if (B_or_C == "C"):
+    reformat_continuous_GWAS(df)
+
+if (minimal_output == "YEP"):
+    df_out = df_edited[['markerID','effectAllele','alternateAllele','beta','se','P','effectAlleleFreq','N']]
+    del df_edited
+
+if (minimal_output == "NOPE"):
+    df_out = df_edited
+    del df_edited
+
+df_out.to_csv(outfile, index=False, sep = '\t')
+
+print("")
+print("Here is a little preview of your output (showing the first few lines of the left-most and right-most columns) ...")
+print(df_out.describe())
+print("")
+print("Thanks for using GWAS utilities from GenoML.")
+
+"""
+# Quick test
+"""
+# python reformat_plink2_results.py --infile continuous.txt --outfile test_C_NOPE.tab --B-or-C C --minimal-output NOPE
+# python reformat_plink2_results.py --infile continuous.txt --outfile test_C_YEP.tab --B-or-C C --minimal-output YEP
+# python reformat_plink2_results.py --infile binary.txt --outfile test_B_NOPE.tab --B-or-C B --minimal-output NOPE
+# python reformat_plink2_results.py --infile binary.txt --outfile test_B_YEP.tab --B-or-C B --minimal-output YEP
+```
+
 #### Adjust Proxy cases to the same scale as PD cases
 
 ```
 # Make the toProxy files into .csv files
 module load R
 R
-require("data.table")
+require(data.table)
 data1 <- fread("toProxy.COV_UKB_Proxy_cases_control_over60_chr12.txt",header=T)
 data2 <- fread("toProxy.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt",header=T)
 data3 <- fread("toProxy.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt",header=T)
@@ -1363,12 +1510,175 @@ python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxSt
 python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxStyle.py \
 --infile toConvert.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.csv --beta-proxy beta \
 --se-proxy se --p-proxy P --outfile toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.csv
+```
 
+```
+# This is proxy_gwas_gwaxStyle.py
 
+# -*- coding: utf-8 -*-
+"""proxy_GWAS_gwaxStyle.ipynb
+
+Automatically generated by Colaboratory.
+
+Original file is located at
+    https://colab.research.google.com/drive/1x-rk7tQvgMzRnX1Rl7WmRRSPtqaTJTUU
+
+# Intro
+ - **Project:** proxy_GWAS
+ - **Draft author(s):** Mike Nalls and Mary Makarious
+ - **Tester(s):** Hampton Leonard and Hirotaka Iwaki
+ - **Date Notebook Started:** 16.10.2019
+    - **Quick Description:** Notebook to convert proxy GWAS results to GWAS meta-analysis compatible results.
+
+---
+### Quick Description: 
+**Problem:** Biobanks are a major part of our future work. Although summary stats from case proxies such as 1st degree family history reported individuals are not directly comparable to traditional case-control designs.
+
+**Solution:** Lets adjust these summary stats to be scaled for GWAS meta-analyses. 
+
+### Motivation/Background:
+Necessary for GWAS meta-analyses.
+See this paper:
+https://www.ncbi.nlm.nih.gov/pubmed/28092683
+
+### Concerns/Impact on Related Code: 
+- Input summary statistics must be correctly formatted and from a proxy-case analysis.
+
+### Thoughts for Future Development of Code in this Notebook: 
+- Would be great to do this on the fly using HAIL [https://hail.is/].
+
+### Testing notes: 
+- Tested against http://gwas-browser.nygenome.org/downloads/gwas-browser/gwax-readme.
+
+# Imports
+"""
+
+import argparse
+import sys
+import xgboost
+import sklearn
+import h5py
+import pandas as pd
+import numpy as np
+import time
+import math
+import scipy
+
+"""# Insert options for testing in notebook"""
+
+# run_prefix = "test_data.csv"
+# beta_name = 'b'
+# se_name = 'se'
+# p_name = 'p'
+# freq_name = 'Freq'
+# k_prevalence = 0.2
+# scalar = 2
+# outfile = "test_data_outfile.csv"
+
+# import os
+# from google.colab import drive
+# drive.mount('/content/drive/')
+# os.chdir("/content/drive/Shared drives/LNG/projects/proxy_GWAS/")
+# ! pwd
+
+"""# Command args"""
+
+parser = argparse.ArgumentParser(description='Arguments for training a discrete model')    
+parser.add_argument('--infile', type=str, default='GenoML_data', help='Path to your GWAS summary stats data for conversion in comma separated format, should be from logistic regression on family history versus no family history or similar.')
+parser.add_argument('--beta-proxy', type=str, default='b', help='Name of beta column.')
+parser.add_argument('--se-proxy', type=str, default='se', help='Name of stadnard error column.')
+parser.add_argument('--p-proxy', type=str, default='p', help='Name of p vlaue column.')
+parser.add_argument('--outfile', type=str, default=1, help='Output CSV path and intended name.')
+
+args = parser.parse_args()
+
+print("")
+print("Here is some basic info on the command you are about to run.")
+print("Python version info...")
+print(sys.version)
+print("CLI argument info...")
+print("Working with dataset", args.infile, " ... these are youyr GWAS summary stats from the proxy case comparison.")
+print("What's your beta coefficient column named?", args.beta_proxy)
+print("What's your standard error column named?", args.se_proxy)
+print("What's your p value column named?", args.p_proxy)
+print("")
+
+run_prefix = args.infile
+beta_name = args.beta_proxy
+se_name = args.se_proxy
+p_name = args.p_proxy
+outfile = args.outfile
+
+"""# Read in your data, generally a csv file and summarize"""
+
+df = pd.read_csv(run_prefix, engine = "c")
+
+print("Top few lines fo your file...")
+print(df.head())
+
+print("Quick summary of your input data...")
+print(df.describe())
+
+print("Quick summary of your data types...")
+print(df.dtypes)
+
+"""# Rename columns to b, se, p and freq"""
+
+df.rename(columns={beta_name:'b', se_name:'se', p_name:'p'}, inplace=True)
+
+#df.head(3)
+
+"""# Generate adjusted odds ratio and return adjusted beta"""
+
+print("Rescaling beta.")
+
+def fx_se_scaling(x):
+  return x*2
+
+df['b_adjusted'] = np.vectorize(fx_se_scaling)(df['b'])
+
+"""# Generate approximated standard error from adjusted beta and P"""
+
+# Fix floating point errors from small P values in GWAS
+
+print("Now rescaling the SE.")
+
+def fx_b_scaling(x):
+  return x*2
+
+df['se_adjusted'] = np.vectorize(fx_b_scaling)(df['se'])
+
+print("Quick sanity check for P derived from adjusted stats. NOTE: \"we keep it real\" regarding floats, so we are capping estimates at 15 decimal places, so there may be some conservative estiamtes but after p < 1E-15 does that really matter?")
+
+def fx_test_P(b, se):
+  z_derived = b/se
+  p_derived = scipy.special.ndtr(-1 * abs(z_derived)) * 2
+  return p_derived
+
+df['p_derived'] = np.vectorize(fx_test_P)(df['b_adjusted'], df['se_adjusted'])
+
+print("For meta-analysis in METAL and similar, please use *_adjusted columns. These have been adjsuted as per https://www.ncbi.nlm.nih.gov/pubmed/28092683. Taking logistic regression of proxy cases and adjusting to the same scale as actual cases assuming only one parent with disease per proxy case.")
+
+"""# Export same dataset with adjusted beta, SE and OR"""
+
+print("Top few lines of your output file...")
+print(df.head())
+
+print("Quick summary of your out data...")
+print(df.describe())
+
+print("Quick summary of your output data types...")
+print(df.dtypes)
+
+df.to_csv(outfile, index=False)
+```
+
+```
 # Convert the "normalized" proxy .csv files back to .txt files
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output
 module load R
 R
-require("data.table")
+require(data.table)
 data1 <- fread("toMeta.COV_UKB_Proxy_cases_control_over60_chr12.csv",header=T)
 data2 <- fread("toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.csv",header=T)
 data3 <- fread("toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.csv",header=T)
@@ -1377,13 +1687,11 @@ write.table(data2, file="toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.
 write.table(data3, file="toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt",quote=F,row.names=F,sep="\t")
 q()
 n
-
 ```
 
 #### Reformat UKB further and extract LRRK2 coding variants
 
 These are the files to reformat:
-
 - toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
 - toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
 - toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
@@ -1391,22 +1699,30 @@ These are the files to reformat:
 - toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
 - toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
 
-
 ```
-## Copy over the toMeta files for reformatting in a new directory called META
+# Copy over the toMeta files for reformatting in a new directory called META
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
 mkdir META
 cd META
 scp /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/toMeta.*.txt .
 
-### We need the variant names of UKB to match those of IPDGC:
-#EX of UKB case: 
+# We need the variant names of UKB to match those of IPDGC:
+# EX of UKB case: 
 head -2 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
-markerID effectAllele alternateAllele beta se P effectAlleleFreq N rsID effectAlleleFreq_cases effectAlleleFreq_controls OR firthUsed error
-12:87074:T:C T C 0.6356186982531077 0.793412 0.423062 0.00037558199999999996 16800 rs564020348 0.0006897289999999999 0.00034412900000000004 1.88819 N .
-	
-#Get rid of the :N:N off the end of the markerID for the UKB files…
+markerID	effectAllele	alternateAllele	beta	se	P	effectAlleleFreq	N	rsID	effectAlleleFreq_cases	effectAlleleFreq_controls	OR	firthUsed	error
+12:87074:T:C	T	C	0.8871296505311677	0.802529	0.268978	0.00041073300000000004	16808	rs564020348	0.0006897289999999999	0.000382813	2.4281.
+
+# Get rid of the :N:N off the end of the markerID for the UKB files
 ls | grep UKB > list.txt
+
+cat list.txt
+# toMeta.COV_UKB_PD_cases_control_over60_chr12.txt
+# toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt
+# toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt
+# toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt
+# toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt
+# toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt
+
 cat list.txt  | while read line
 do
 	sed -i 's/:A//g' $line
@@ -1415,8 +1731,7 @@ do
 	sed -i 's/:G//g' $line
 done
 
-
-## These are the headers we want
+# These are the headers we want
 HEADER of IPDGC:
 ID REF A1 A1_FREQ beta LOG.OR._SE P
 
@@ -1425,7 +1740,6 @@ markerID alternateAllele effectAllele effectAlleleFreq beta se P
 
 HEADER of UKB proxy:
 markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_derived
-
 ```
 
 ```
@@ -1491,7 +1805,6 @@ markerID alternateAllele effectAllele effectAlleleFreq beta se P
 
 HEADER of UKB proxy:
 markerID alternateAllele effectAllele effectAlleleFreq b_adjusted se_adjusted p_derived
-
 ```
 
 #### Pull the amino acid changes for each variant
@@ -1503,23 +1816,25 @@ module load R
 R
 require(dplyr)
 require(data.table)
+
+# Import some extra info for each of these variants
 var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt",header=T)
 
-#use the function f to pull out the amino acid change…if not a coding variant, use the rsID
+# Use the function f to pull out the amino acid change…if not a coding variant, use the rsID
 f <- function(row) {
 if (row[11] != ".") sub(".*p.", "", row[11]) else row[12]
 }
-#note that these names have the one letter amino acid code
+# Note that these names have the one letter amino acid code
 AA_short <- c(apply(var_df, 1, f))
 id <- var_df$ID
 
-#split the short amino acid names at the number
+# Split the short amino acid names at the number
 split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
 first_AA <- split[,1]
 middle_num <- split[,2]
 last_AA <- split[,3]
 
-#replace the one letter amino acid code with the three letter code
+# Replace the one letter amino acid code with the three letter code
 require(seqinr)
 AA_long <- paste(aaa(first_AA),middle_num,aaa(last_AA)) %>% gsub(pattern="NA", replacement="") %>% gsub(pattern=" ",replacement= "")
 
@@ -1528,14 +1843,15 @@ write.table(df, file="LRRK2_AA_list.txt", quote=FALSE,row.names=F,sep="\t")
 
 q()
 n
-
 ```
 
 #### Make individual forest plots for LRRK2 coding variants
 
 ```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/
+
 make_forest() {
-# create files per variant
+# Create files per variant
 gwas_type=$1
 cd /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/LRRK2_coding_VOI
 head -1 ${gwas_type}_GWAS_VOI.DUTCH.txt > header.txt
@@ -1545,14 +1861,14 @@ cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt | while read line; do
 	sed -e 's/${gwas_type}_GWAS_VOI.//g' header_$line.txt | sed -e 's/.txt:'$line'//g' > header_"$line"v2.txt
 done
 
-#organize the files
+# Organize the files
 mkdir metafor_plots
 mv 12:* metafor_plots
 mv header* metafor_plots
 #need to copy over the forest plot script so that it can pull the files from its current directory
 cp /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2.R metafor_plots
 
-#now make the forest plots
+# Now make the forest plots
 cd metafor_plots
 cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
 	ID=$(echo $line|awk '{print $1}')
@@ -1565,17 +1881,89 @@ make_forest NORMAL
 make_forest CONDI
 make_forest SPECIAL
 
-#copy the files
+# Copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/NORMAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/SPECIAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/CONDI_forest
 
-## Make a separate plot for G2019S since it needs different xlim() parameters
+# Make a separate plot for G2019S since it needs different xlim() parameters
 cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots
 Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2_G2019S.R 12:40734202 Gly2019Ser 'NORMAL'
 
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf /Users/lakejs/Desktop
+```
 
+```
+# This is metafor_LRRK2.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla metafor_LRRK2.R $FILENAME $FILENAME2 $FILENAME3
+# Rscript --vanilla metafor_LRRK2.R 12:40713899 Met1646Thr 'CONDI'
+FILENAME = args[1]
+FILENAME2 = args[2]
+FILENAME3 = args[3]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+print(FILENAME3)
+library(metafor)
+data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
+## data <- read.table("header_12:40614434v2.txt", header = T)
+#pull out the cohort name
+labs <- gsub(".*\\.","", data$ID)
+yi   <- data$beta
+sei  <- data$LOG.OR._SE
+resFe  <- rma(yi=yi, sei=sei, method="FE")
+resRe  <- rma(yi=yi, sei=sei)
+print(summary(resFe))
+print(summary(resRe))
+pdf(file = paste(FILENAME,"_",FILENAME3,"_final.pdf",sep=""), width = 8, height = 6)
+Pvalue <- formatC(resFe$pval, digits=4)
+## pdf(file = "12:40713899_condi_final.pdf", width = 8, height = 6)
+forest(resFe, xlim=c(-2,2), main=paste(FILENAME2," P=",Pvalue ,sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 2, 3)))
+dev.off()
+```
+
+```
+# This is metafor_LRRK2_G2019S.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla metafor_LRRK2_G2019S.R $FILENAME $FILENAME2 $FILENAME3
+# Rscript --vanilla metafor_LRRK2_G2019S.R 12:40734202 Gly2019Ser 'NORMAL'
+FILENAME = args[1]
+FILENAME2 = args[2]
+FILENAME3 = args[3]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+print(FILENAME3)
+library(metafor)
+data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
+## data <- read.table("header_12:40614434v2.txt", header = T)
+# pull out the cohort name
+labs <- gsub(".*\\.","", data$ID)
+labs <- gsub("NEUROX_DBGAP","NEUROX", labs)
+yi   <- data$beta
+sei  <- data$LOG.OR._SE
+resFe  <- rma(yi=yi, sei=sei, method="FE")
+resRe  <- rma(yi=yi, sei=sei)
+print(summary(resFe))
+print(summary(resRe))
+pdf(file = paste(FILENAME,"_",FILENAME3,"_final_GS.pdf",sep=""), width = 7, height = 6)
+## pdf(file = "12:40713899_condi_final.pdf", width = 8, height = 6)
+Pvalue <- formatC(resFe$pval, digits=4)
+forest(resFe, xlim=c(-4,7),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.25, 0.5, 1, 5, 10, 20, 40)))
+mtext(side=3, line = .5, FILENAME2, cex=1.2, font=2)
+mtext(side=3, line = -1, paste("P=",Pvalue,sep=""), cex=1, font=2)
+dev.off()
 ```
 
 #### Make combined forest plots with normal, conditional and special conditional GWAS
@@ -1585,17 +1973,94 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi
 mkdir metafor_combined_plots
 cd metafor_combined_plots
 
-#now make the forest plots
+# Now make the forest plots
 cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
   ID=$(echo $line|awk '{print $1}')
   AA=$(echo $line|awk '{print $3}')
   Rscript --vanilla ../metafor_LRRK2_combined.R $ID $AA
 done
 
-
-#copy the files
+# Copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots/*pdf /Users/lakejs/Desktop/Combined_forest
+```
 
+```
+# This is metafor_LRRK2_combined.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla metafor_LRRK2_combined.R $FILENAME $FILENAME2
+# Rscript --vanilla metafor_LRRK2_combined.R 12:40713899 Met1646Thr
+FILENAME = args[1]
+FILENAME2 = args[2]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+
+library(metafor)
+data_normal <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+data_special <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+data_condi <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+
+labs_normal <- gsub(".*\\.","", data_normal$ID)
+#making the plot look better by changing NEUROX_DBGAP to NEUROX
+labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+yi_normal   <- data_normal$beta
+sei_normal  <- data_normal$LOG.OR._SE
+resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
+resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
+
+labs_special <- gsub(".*\\.","", data_special$ID)
+yi_special   <- data_special$beta
+sei_special  <- data_special$LOG.OR._SE
+resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
+resRe_special  <- rma(yi=yi_special, sei=sei_special)
+
+labs_condi <- gsub(".*\\.","", data_condi$ID)
+yi_condi   <- data_condi$beta
+sei_condi  <- data_condi$LOG.OR._SE
+resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
+resRe_condi  <- rma(yi=yi_condi, sei=sei_condi)
+
+pdf(file = paste(FILENAME,"_combined.pdf",sep=""), width = 8, height = 7)
+Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
+Pvalue_special <- formatC(resFe_special$pval, digits=4)
+Pvalue_condi <- formatC(resFe_condi$pval, digits=4)
+
+#Make it so that all datasets are included even if NA for the variant
+options(na.action = "na.pass")
+
+par(mfrow=c(1,3))
+
+par(mar=c(5,4,1,1))
+forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
+       slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "Normal", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_normal,sep=""), cex=1.2, font=2)
+
+par(mar=c(5,0,1,1))
+forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "No rs76904798 + No G2019S", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_condi,sep=""), cex=1.2, font=2)
+#adding this for the title
+text(0, 18, FILENAME2, cex=1.5, font=2)
+
+par(mar=c(5,0,1,2))
+forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "No N2081D + No G2019S", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
+dev.off()
 ```
 
 #### Make combined forest plots with normal and special conditional GWAS for rs76904798
@@ -1605,9 +2070,72 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 Rscript --vanilla metafor_combined_rs76904798.R 12:40614434 rs76904798
 
-#copy the file
+# Copy the file
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf /Users/lakejs/Desktop/
+```
 
+```
+# This is metafor_combined_rs76904798.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# Start like this
+# Rscript --vanilla metafor_combined_rs76904798.R $FILENAME $FILENAME2
+# Rscript --vanilla metafor_combined_rs76904798.R 12:40614434 rs76904798
+FILENAME = args[1]
+FILENAME2 = args[2]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+
+library(metafor)
+data_normal <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+data_special <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+
+labs_normal <- gsub(".*\\.","", data_normal$ID)
+# Making the plot look better by changing NEUROX_DBGAP to NEUROX
+labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+yi_normal   <- data_normal$beta
+sei_normal  <- data_normal$LOG.OR._SE
+resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
+resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
+
+labs_special <- gsub(".*\\.","", data_special$ID)
+yi_special   <- data_special$beta
+sei_special  <- data_special$LOG.OR._SE
+resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
+resRe_special  <- rma(yi=yi_special, sei=sei_special)
+
+pdf(file = paste(FILENAME,"_combined_no_condi.pdf",sep=""), width = 8, height = 7)
+Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
+Pvalue_special <- formatC(resFe_special$pval, digits=4)
+
+# Make it so that all datasets are included even if NA for the variant
+options(na.action = "na.pass")
+
+par(mfrow=c(1,2), oma=c(0,0,2,0))
+
+par(mar=c(5,4,1,1))
+
+forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
+       slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5, 1, 2, 3)))
+mtext("Normal", line=-1.5, cex=1, font=2)
+mtext(paste("P=",Pvalue_normal,sep=""), line=-2.4, cex=1, font=2)
+
+par(mar=c(5,0,1,2))
+
+forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5, 1, 2, 3)))
+mtext("No N2081D + No G2019S", line=-1.5, cex=1, font=2)
+mtext(paste("P=",Pvalue_special,sep=""), line=-2.4, cex=1, font=2)
+mtext(FILENAME2, line=-1, cex=1.4, font=2, outer=TRUE)
+dev.off()
 ```
 
 #### Make combined forest plots with normal and conditional GWAS for N2081D
@@ -1617,33 +2145,94 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 Rscript --vanilla metafor_combined_N2081D.R 12:40740686 Asn2081Asp
 
-#copy the file
+# Copy the file
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf /Users/lakejs/Desktop/
+```
 
+```
+# This is metafor_combined_N2081D.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla metafor_combined_N2081D.R $FILENAME $FILENAME2
+# Rscript --vanilla metafor_combined_N2081D.R 12:40740686 Asn2081Asp
+FILENAME = args[1]
+FILENAME2 = args[2]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+
+library(metafor)
+data_normal <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+data_condi <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
+
+labs_normal <- gsub(".*\\.","", data_normal$ID)
+# Making the plot look better by changing NEUROX_DBGAP to NEUROX
+labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+yi_normal   <- data_normal$beta
+sei_normal  <- data_normal$LOG.OR._SE
+resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
+resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
+
+labs_condi <- gsub(".*\\.","", data_condi$ID)
+yi_condi   <- data_condi$beta
+sei_condi  <- data_condi$LOG.OR._SE
+resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
+resRe_condi  <- rma(yi=yi_condi, sei=sei_condi)
+
+pdf(file = paste(FILENAME,"_combined_no_special.pdf",sep=""), width = 8, height = 7)
+Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
+Pvalue_condi <- formatC(resFe_condi$pval, digits=4)
+
+# Make it so that all datasets are included even if NA for the variant
+options(na.action = "na.pass")
+
+par(mfrow=c(1,2), oma=c(0,0,2,0))
+
+par(mar=c(5,4,1,1))
+
+forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
+       slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5, 1, 2, 3)))
+mtext("Normal", line=-1.5, cex=1, font=2)
+mtext(paste("P=",Pvalue_normal,sep=""), line=-2.4, cex=1, font=2)
+
+par(mar=c(5,0,1,2))
+forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5, 1, 2, 3)))
+mtext("No rs76904798 + No G2019S", line=-1.5, cex=1, font=2)
+mtext(paste("P=",Pvalue_condi,sep=""), line=-2.4, cex=1, font=2)
+mtext(FILENAME2, line=-1, cex=1.4, font=2, outer=TRUE)
+dev.off()
 ```
 
 ## 6. Check LD co-inheritance of LRRK2 coding variants
+
 This section goes through:
-- Making frequency files ofr IPDGC and UKB data
+- Making frequency files for IPDGC and UKB data
 - Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
 - Determining a frequency cutoff for LRRK2 coding variants
-- Preparing tables for manuscript
 
 ### 6.1 - Make freq files for IPDGC data
 
 #### Make subset files
 
 ```
-cd /data/LNG/Julie/Julie_LRRK2_Condi
-mkdir co_inheritance
-cd co_inheritance
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load plink
 
-### Create a couple subset files to use....
+### Create a couple subset files to use
 
-# recode the genotypes of interest as single allele dosage numbers 
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202 --recodeA --out LRRK2_G2019S_only
-plink --bfile  /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40614434 --recodeA --out LRRK2_rs76904798_only
-plink --bfile  /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40740686 --recodeA --out LRRK2_N2081D_only
+# Recode the genotypes of interest as single allele dosage numbers 
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40734202 --recodeA --out LRRK2_G2019S_only
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40614434 --recodeA --out LRRK2_rs76904798_only
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40740686 --recodeA --out LRRK2_N2081D_only
 
 module load R
 R
@@ -1655,14 +2244,17 @@ newdata_GS <- subset(data_GS, X12.40734202_A == 0)
 newdata_rs <- subset(data_rs, X12.40614434_T == 0) 
 newdata_ND <- subset(data_ND, X12.40740686_G == 0) 
 
-dim(newdata_GS) # 33757     7
-dim(newdata_rs) # 33335     7
-dim(newdata_ND) # 43954     7
+dim(newdata_GS) 
+# 33757     7
+dim(newdata_rs) 
+# 33335     7
+dim(newdata_ND) 
+# 43954     7
 
-# adding some additional sample info
+# Adding some additional sample info
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
 
-# drop some columns because otherwise merge conflict
+# Drop some columns because otherwise merge conflict
 cov$IID <- NULL
 cov$fatid <- NULL
 cov$matid <- NULL
@@ -1671,9 +2263,12 @@ Mrg_GS = merge(newdata_GS,cov,by='FID')
 Mrg_rs = merge(newdata_rs,cov,by='FID')
 Mrg_ND = merge(newdata_ND,cov,by='FID')
 
-dim(Mrg_GS) # 33757    43
-dim(Mrg_rs) # 33335    43
-dim(Mrg_ND) # 43954    43
+dim(Mrg_GS) 
+# 33757    43
+dim(Mrg_rs) 
+# 33335    43
+dim(Mrg_ND) 
+# 43954    43
 
 write.table(Mrg_GS, file="LRRK2_G2019S_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(Mrg_rs, file="LRRK2_rs76904798_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
@@ -1686,34 +2281,34 @@ cp /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection.txt .
 
 # Excluding all G2019S AND N2081D carriers
 cp /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection.txt .
-
 ```
 
 #### Run association tests in a loop
 
 ```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 module load plink
 
-# all data
-# run the normal association tests separately since no file to --keep
-# 21478 are cases and 24388 are controls.
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+# All data
+# Run the normal association tests separately since no file to --keep
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --assoc --out freq
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --logistic --out freq
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --model --out freq
 
-ls *.txt > keep_files.txt
+ls LRRK2*.txt > keep_files.txt
 
-#includes these files, use with --keep
-LRRK2_condi_sample_selection.txt
-LRRK2_condi_special_sample_selection.txt
-LRRK2_G2019S_only_with_COV.txt
-LRRK2_N2081D_only_with_COV.txt
-LRRK2_rs76904798_only_with_COV.txt
+cat keep_files.txt
+# LRRK2_condi_sample_selection.txt
+# LRRK2_condi_special_sample_selection.txt
+# LRRK2_G2019S_only_with_COV.txt
+# LRRK2_N2081D_only_with_COV.txt
+# LRRK2_rs76904798_only_with_COV.txt
 
-#make a bash array with the output filenames for the conditional tests
+# Make a bash array with the output filenames for the conditional tests
+# Note that this order corresponds to the order in keep_files.txt
 outfile=(
  freq_no_G2019S_rs76904798
  freq_no_G2019S_N2081D
@@ -1722,19 +2317,18 @@ outfile=(
  freq_no_rs76904798
 )
 
-# run the rest of the association tests 
+# Run the rest of the association tests 
 index=0
 cat keep_files.txt | while read line
 do
-	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --assoc --out ${outfile[${index}]} --keep $line
-	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --logistic --out ${outfile[${index}]} --keep $line
-	plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins \
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --model --out ${outfile[${index}]} --keep $line
 	index=`expr $index + 1`
 done
-
 ```
 
 #### Merge files in R
@@ -1746,10 +2340,10 @@ R
 require(dplyr)
 require(data.table)
 
-#make a list of the output files from the association tests
+# Make a list of the output files from the association tests
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="^freq")
 
-#pull the prefixes for the output files
+# Pull the prefixes for the output files
 file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique() 
 
 i<-0
@@ -1766,40 +2360,41 @@ for(file in file.prefixes) {
  MM5 <- merge(MM,MM4,by="SNP")
  MM6 <- merge(MM5,MM2, by="SNP")
  colnames(MM6) <- c("SNP","A1","F_A","F_U","A2","AFF","UNAFF","NMISS","OR","P")
- #now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
+ # Now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
  filtered <- MM6 %>% select("F_A", "F_U")
  colnames(filtered) <- paste(file, colnames(filtered), sep = "_")
  dfs[[i]]<-data.frame(filtered)
  write.table(MM6, file=paste("LRRK2_coding_variants_", file,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
 }
 
-#combine the frequency info for each GWAS
+# Combine the frequency info for each GWAS
 SNPs <- MM6$SNP
 combined <- bind_cols(SNPs,dfs)
 
 colnames(combined) <- c("SNP","Freq_PD_noNDGS","Freq_Control_noNDGS","Freq_PD_noGSRisk","Freq_Control_noGSRisk","Freq_PD_noGS","Freq_Control_noGS","Freq_PD_noND","Freq_Control_noND","Freq_PD_noRisk","Freq_Control_noRisk","Freq_PD_normal","Freq_Control_normal")
 
-#reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+# Reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
 SNP_order <- combined$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
 
 combined <- combined[SNP_order,]
 
-
-#make the header into the first row so it becomes a column with t()
+# Make the header into the first row so it becomes a column with t()
 combined <- rbind(colnames(combined), combined)
 colnames(combined) <- NULL
 
-#switch the SNPs to columns
+# Switch the SNPs to columns
 combined <- combined %>% t() %>% data.frame() 
 
-#set the header to the SNP names
+# Set the header to the SNP names
 colnames(combined) <- as.character(combined[1,])
 
-#remove row that's duplicate of header
+# Remove row that's duplicate of header
 combined <- combined[-1, ]
 
 write.table(combined, file="IPDGC_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
 
+q()
+n
 ```
 
 #### Make case-control tables for files used in GWAS
@@ -1807,40 +2402,51 @@ write.table(combined, file="IPDGC_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 
-# results including all data (no variant exclusion)
+# Results including all data (no variant exclusion)
 cat LRRK2_coding_variants_freq.txt | cut -f1,3,4,6,7 > case_control_IPDGC_normal.txt
 
-# results excluding GS and '5 risk variant
+# Results excluding GS and '5 risk variant
 cat LRRK2_coding_variants_freq_no_G2019S_rs76904798.txt | cut -f1,3,4,6,7 > case_control_IPDGC_condi.txt
 
-# results excluding GS and ND variants
+# Results excluding GS and ND variants
 cat LRRK2_coding_variants_freq_no_G2019S_N2081D.txt | cut -f1,3,4,6,7 > case_control_IPDGC_special.txt
 
-# export
+# Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_normal.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_condi.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_IPDGC_special.txt /Users/lakejs/Desktop/
-
 ```
 
-### 6.2 Make freq files for UKB data (note this has been updated)
+### 6.2 Make freq files for UKB data
 
 #### Update the subset files 
 
 ```
 # Replace PD/CONTROL/PROXY with numbers 
-
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 ls UKB_P* > UKB_sample_selection.txt
 
-#replace PD/CONTROL/PROXY STATUS with numbers
+cat UKB_sample_selection.txt
+# UKB_PD_cases_control_over60_noGS.txt
+# UKB_PD_cases_control_over60_noNDGS.txt
+# UKB_PD_cases_control_over60_noND.txt
+# UKB_PD_cases_control_over60_noriskGS.txt
+# UKB_PD_cases_control_over60_norisk.txt
+# UKB_PD_cases_control_over60.txt
+# UKB_Proxy_cases_control_over60_noGS.txt
+# UKB_Proxy_cases_control_over60_noNDGS.txt
+# UKB_Proxy_cases_control_over60_noND.txt
+# UKB_Proxy_cases_control_over60_noriskGS.txt
+# UKB_Proxy_cases_control_over60_norisk.txt
+# UKB_Proxy_cases_control_over60.txt
+
+# Replace PD/CONTROL/PROXY STATUS with numbers
 cat UKB_sample_selection.txt | while read line
 do 
   sed -i 's/PD/2/g' $line
   sed -i 's/PROXY/2/g' $line
   sed -i 's/CONTROL/1/g' $line
 done
-
 ```
 
 #### Convert the pfile into bed files using plink2
@@ -1856,7 +2462,6 @@ do
 	--pheno $line \
 	--make-bed --out ${line%%.*}
 done
-
 ```
 
 #### Make a new file with the rsIDs of the LRRK2 coding variants
@@ -1869,13 +2474,13 @@ require(dplyr)
 require(data.table)
 data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt", header=T)
 
-#substitute an rsID which was missing, found on gnomAD
+# Substitute an rsID which was missing, found on gnomAD
 data[data$avsnp142=="."]$avsnp142 <- "rs768764049"
 
 write.table(data.frame(data$avsnp142,data$ID), file="LRRK2_coding_VOI_rsIDs.txt", quote=FALSE,row.names=F,sep="\t")
+
 q()
 n
-
 ```
 
 #### Run association tests in a loop
@@ -1888,7 +2493,6 @@ do
 	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --logistic --out ${line%%.*}
 	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --model --out ${line%%.*}
 done
-
 ```
 
 #### Merge files in R
@@ -1900,12 +2504,11 @@ R
 require(dplyr)
 require(data.table)
 
-#make a list of the output files from the association tests
+# Make a list of the output files from the association tests
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="^UKB_P.*cases_control")
 
-#pull the prefixes for the output files
+# Pull the prefixes for the output files
 file.prefixes <- file.names %>% gsub(pattern="\\..*", replacement="") %>% unique() 
-
 
 # Use to change SNP from the rsID to the CHR:POS format
 data <- fread("LRRK2_coding_VOI_rsIDs.txt", header=T)
@@ -1927,12 +2530,12 @@ for(file in file.prefixes) {
  MM4 <- MM3[,c(2,6,7)]
  MM5 <- merge(MM,MM4,by="SNP")
  MM6 <- merge(MM5,MM2, by="SNP")
- #now change the rsID to CHR:POS
+ # Now change the rsID to CHR:POS
  SNPs <-sapply(MM6$SNP, convert_rsID_to_CHR_POS,USE.NAMES=FALSE)
  MM6$SNP <- SNPs
- #now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
+ # Now save the F_A and F_U to the list of dataframes (dfs), for co-inheritance analysis
  filtered <- MM6 %>% select("F_A", "F_U")
- #use this prefix for the column names to distinguish between groups
+ # Use this prefix for the column names to distinguish between groups
  file.prefix <- file %>% gsub(pattern="UKB_|_cases_control_over60|\\.frq.cc", replacement="")
  colnames(filtered) <- paste(file.prefix, colnames(filtered), sep = "_")
  dfs[[i]]<-data.frame(filtered)
@@ -1942,34 +2545,33 @@ for(file in file.prefixes) {
 SNPs <- MM6$SNP
 combined <- bind_cols(SNPs,dfs)
 
-#new column names
+# New column names
 colnames(combined) <- c("SNP","Freq_PD_noGS","Freq_PDControl_noGS","Freq_PD_noND","Freq_PDControl_noND","Freq_PD_noNDGS","Freq_PDControl_noNDGS","Freq_PD_noRisk","Freq_PDControl_noRisk","Freq_PD_noGSRisk","Freq_PDControl_noGSRisk","Freq_PD_normal","Freq_PDControl_normal","Freq_Proxy_noGS","Freq_ProxyControl_noGS","Freq_Proxy_noND","Freq_ProxyControl_noND","Freq_Proxy_noNDGS","Freq_ProxyControl_noNDGS","Freq_Proxy_noRisk","Freq_ProxyControl_noRisk","Freq_Proxy_noGSRisk","Freq_ProxyControl_noGSRisk","Freq_Proxy_normal","Freq_ProxyControl_normal")
 
-#reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+# Reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
 SNP_order <- combined$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
 
 combined <- combined[SNP_order,]
 
-#add the header as a row so it's maintained after t()
+# Add the header as a row so it's maintained after t()
 combined <- rbind(colnames(combined),combined)
 
-#now delete the header since it's redundant
+# Now delete the header since it's redundant
 colnames(combined) <- NULL
 
-#switch the SNPs to columns
+# Switch the SNPs to columns
 combined <- combined %>% t() %>% data.frame() 
 
-#set the header to the SNP names
+# Set the header to the SNP names
 colnames(combined) <- as.character(combined[1,])
 
-#remove row that's duplicate of header
+# Remove row that's duplicate of header
 combined <- combined[-1, ]
 
 write.table(combined, file="UKB_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
 
 q()
 n
-
 ```
 
 #### Make case-control tables for files used in GWAS
@@ -1977,26 +2579,25 @@ n
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 
-# results including all data (no variant exclusion)
+# Results including all data (no variant exclusion)
 cat LRRK2_coding_variants_PD.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_normal.txt
 cat LRRK2_coding_variants_Proxy.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_normal.txt
 
-# results excluding GS and '5 risk variant
+# Results excluding GS and '5 risk variant
 cat LRRK2_coding_variants_PD_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_condi.txt
 cat LRRK2_coding_variants_Proxy_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_condi.txt
 
-# results excluding GS and ND variants
+# Results excluding GS and ND variants
 cat LRRK2_coding_variants_P_noNDGSD.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_special.txt
 cat LRRK2_coding_variants_Proxy_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_special.txt
 
-# export
+# Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_normal.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_normal.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_condi.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_condi.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_special.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_special.txt /Users/lakejs/Desktop/
-
 ```
 
 ### 6.3 Determine a freq or count cutoff for the LRRK2 coding variants
@@ -2005,27 +2606,29 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/cas
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 # Based on the forest plots, should keep these variants
-grep -e rs76904798 -e Asn2081Asp -e Leu119Pro -e Asn551Lys -e Ile723Val -e Arg1398His -e Arg1514Gln -e Pro1542Ser -e Ser1647Thr -e Met1646Thr -e Met2397Thr -e rs10847864 LRRK2_AA_list.txt > keep_LRRK2_variants.txt
+grep -e id -e rs76904798 -e Asn2081Asp -e Leu119Pro -e Asn551Lys -e Ile723Val -e Arg1398His -e Arg1514Gln -e Pro1542Ser -e Ser1647Thr -e Met1646Thr -e Met2397Thr -e rs10847864 LRRK2_AA_list.txt > keep_LRRK2_variants.txt
 
-12:40629436 L119P Leu119Pro
-12:40657700 N551K Asn551Lys
-12:40671989 I723V Ile723Val
-12:40702911 R1398H Arg1398His
-12:40707778 R1514Q Arg1514Gln
-12:40707861 P1542S Pro1542Ser
-12:40713899 M1646T Met1646Thr
-12:40713901 S1647T Ser1647Thr
-12:40740686 N2081D Asn2081Asp
-12:40758652 M2397T Met2397Thr
-12:40614434 rs76904798 rs76904798
-12:123326598 rs10847864 rs10847864
-
+cat keep_LRRK2_variants.txt
+# id	AA_short	AA_long
+# 12:40629436	L119P	Leu119Pro
+# 12:40657700	N551K	Asn551Lys
+# 12:40671989	I723V	Ile723Val
+# 12:40702911	R1398H	Arg1398His
+# 12:40707778	R1514Q	Arg1514Gln
+# 12:40707861	P1542S	Pro1542Ser
+# 12:40713899	M1646T	Met1646Thr
+# 12:40713901	S1647T	Ser1647Thr
+# 12:40740686	N2081D	Asn2081Asp
+# 12:40758652	M2397T	Met2397Thr
+# 12:40614434	rs76904798	rs76904798
+# 12:123326598	rs10847864	rs10847864
 ```
 
 #### Calculate MAF and minor allele counts for the LRRK2 variants 
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load plink
 
 # IPDGC
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
@@ -2033,7 +2636,6 @@ plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out IPDGC_freq
-
 
 # UKB PD
 plink --bfile UKB_PD_cases_control_over60 \
@@ -2048,7 +2650,6 @@ plink --bfile UKB_Proxy_cases_control_over60 \
 
 plink --bfile UKB_Proxy_cases_control_over60 \
  --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out UKB_Proxy_freq
-
 ```
 
 #### Merge the frequency and counts info in R
@@ -2060,7 +2661,7 @@ R
 require(dplyr)
 require(data.table)
 
-#import the files
+# Import the files
 IPDGC_freq <- fread("IPDGC_freq.frq",header=T)
 IPDGC_counts <- fread("IPDGC_freq.frq.counts",header=T)
 PD_freq <- fread("UKB_PD_freq.frq",header=T)
@@ -2070,46 +2671,45 @@ Proxy_counts <- fread("UKB_Proxy_freq.frq.counts",header=T)
 data <- fread("LRRK2_coding_VOI_rsIDs.txt",header=T)
 keep <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/keep_LRRK2_variants.txt",header=T)
 
-#merge the counts and freqs dataframes
+# Merge the counts and freqs dataframes
 PD <- merge(PD_freq,PD_counts,by="SNP")
 Proxy <- merge(Proxy_freq,Proxy_counts,by="SNP")
 IPDGC <- merge(IPDGC_freq,IPDGC_counts,by="SNP")
 
-#rename the SNP column to rsID for UKB
+# Rename the SNP column to rsID for UKB
 PD <- PD %>% rename(rsID = SNP)
 Proxy <- Proxy %>% rename(rsID = SNP)
 
-#rename the ID column to "SNP"
+# Rename the ID column to "SNP"
 data <- data %>% rename(SNP = data.ID)
 
-#add the SNP in CHR:POS format to the UKB data and call this column SNP to match IPDGC
+# Add the SNP in CHR:POS format to the UKB data and call this column SNP to match IPDGC
 PD  <- merge(PD, data, by.x="rsID",by.y="data.avsnp142")
 Proxy  <- merge(Proxy, data, by.x="rsID",by.y="data.avsnp142")
 
-#Determine the minor allele count for each of the variants
-#this is either C1 or C2 depending on whether A1.y (from _counts) is the minor allele (it is if it matches A1.x from _freq)
-#returns the count of the minor allele
+# Determine the minor allele count for each of the variants
+# This is either C1 or C2 depending on whether A1.y (from _counts) is the minor allele (it is if it matches A1.x from _freq)
+# Returns the count of the minor allele
 f <- function(row) {if (row["A1.x"] == row["A1.y"]) as.numeric(row["C1"]) else as.numeric(row["C2"])}
 
 PD$Minor_allele_count_UKB_PD <- c(apply(PD, 1, f))
 Proxy$Minor_allele_count_UKB_Proxy <- c(apply(Proxy, 1, f))
 IPDGC$Minor_allele_count_IPDGC <- c(apply(IPDGC, 1, f))
 
-#rename the columns 
+# Rename the columns 
 IPDGC <- IPDGC %>% rename(MAF_IPDGC = MAF) %>% rename(Allele_count_IPDGC = NCHROBS)
 PD <- PD %>% rename(MAF_UKB_PD = MAF) %>% rename(Allele_count_UKB_PD = NCHROBS)
 Proxy <- Proxy %>% rename(MAF_UKB_Proxy = MAF) %>% rename(Allele_count_UKB_Proxy = NCHROBS)
 
-#merge all of the dataframes
+# Merge all of the dataframes
 library(tidyverse)
 data2 <- list(IPDGC, PD, Proxy) %>% reduce(inner_join, by = "SNP")
 
 data2 <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy","Minor_allele_count_IPDGC","Minor_allele_count_UKB_PD","Minor_allele_count_UKB_Proxy","Allele_count_IPDGC", "Allele_count_UKB_PD","Allele_count_UKB_Proxy")
 
-# add a column for total allele count and total minor allele count in both datasets combined
+# Add a column for total allele count and total minor allele count in both datasets combined
 data2$Total_allele_count<- data2$Allele_count_IPDGC + data2$Allele_count_UKB_PD + data2$Allele_count_UKB_Proxy
 data2$Total_minor_allele_count <- data2$Minor_allele_count_IPDGC + data2$Minor_allele_count_UKB_PD + data2$Minor_allele_count_UKB_Proxy
-
 ```
 
 #### Determine a cutoff for which variants to include in final tables
@@ -2127,7 +2727,7 @@ keep$id %in% MAF_0.01$SNP
 keep_MAF <- MAF_df %>% filter(SNP %in% keep$id)
 
 min(keep_MAF[,2],keep_MAF[,3],keep_MAF[,4])
-# [1] 0.002262
+# [1] 0.002434
 
 # Now try MAF > 0.001 and see what variants are included
 MAF_0.001 <- MAF_df %>% filter(MAF_IPDGC > 0.001) %>% filter(MAF_UKB_PD > 0.001) %>% filter(MAF_UKB_Proxy > 0.001) 
@@ -2139,54 +2739,128 @@ AA <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt",header=T)
 
 LRRK2_AA_filtered <- AA %>% filter(id %in% MAF_0.001$SNP)
 
-             id   AA_short    AA_long
- 1:  12:40629436      L119P  Leu119Pro
- 2:  12:40657700      N551K  Asn551Lys
- 3:  12:40671989      I723V  Ile723Val
- 4:  12:40702911     R1398H Arg1398His
- 5:  12:40707778     R1514Q Arg1514Gln
- 6:  12:40707861     P1542S Pro1542Ser
- 7:  12:40713899     M1646T Met1646Thr
- 8:  12:40713901     S1647T Ser1647Thr
- 9:  12:40740686     N2081D Asn2081Asp
-10:  12:40758652     M2397T Met2397Thr
-11:  12:40614434 rs76904798 rs76904798
-12:  12:46419086  rs7134559  rs7134559
-13: 12:123326598 rs10847864 rs10847864
-14: 12:133063768 rs11610045 rs11610045
+LRRK2_AA_filtered
+#              id   AA_short    AA_long
+# 1:  12:40629436      L119P  Leu119Pro
+# 2:  12:40657700      N551K  Asn551Lys
+# 3:  12:40671989      I723V  Ile723Val
+# 4:  12:40702911     R1398H Arg1398His
+# 5:  12:40707778     R1514Q Arg1514Gln
+# 6:  12:40707861     P1542S Pro1542Ser
+# 7:  12:40713899     M1646T Met1646Thr
+# 8:  12:40713901     S1647T Ser1647Thr
+# 9:  12:40740686     N2081D Asn2081Asp
+# 10:  12:40758652     M2397T Met2397Thr
+# 11:  12:40614434 rs76904798 rs76904798
+# 12:  12:46419086  rs7134559  rs7134559
+# 13: 12:123326598 rs10847864 rs10847864
+# 14: 12:133063768 rs11610045 rs11610045
 
 # The cutoff MAF > 0.001 seems good...
-write.table(LRRK2_AA_filtered, file="LRRK2_AA_filtered.txt", quote=FALSE,row.names=F,sep="\t")
+
+# Add back G2019S and get rid of the two positive controls we won't use (rs7134559 and rs11610045)
+GS <- AA[AA$AA_short == "G2019S"]
+LRRK2_AA_final <- LRRK2_AA_filtered %>% subset(AA_short != "rs7134559") %>% subset(AA_short != "rs11610045") %>% rbind(GS)
+
+write.table(LRRK2_AA_final, file="LRRK2_AA_final.txt", quote=FALSE,row.names=F,sep="\t")
 
 q()
 n
-
 ```
 
-### 6.4 Make table with information for selected variants 
+## 7 Make final tables and figures
+
+This section goes through:
+- Preparing tables for manuscript
+- Preparing figures for manuscript
+
+#### Make a final table with variant info
 
 ```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
 R 
 require(dplyr)
 require(data.table)
 
-data <- fread("LRRK2_HRC_coding_V4.txt",header=T)
-data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_filtered.txt",header=T)
-
+data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt",header=T)
+data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
 data3 <- merge(data,data2,by.x="ID",by.y="id")
 data4 <- data3 %>% select("avsnp142","Chr","Start","Ref","Alt","AA_long")
 colnames(data4) <- c("rsID","Chr","Position","Ref","Alt","Amino Acid Change")
+data4 <- data4[order(data4$Position)]
 
-write.table(data4, file="/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt", quote=FALSE,row.names=F,sep="\t")
-# note the the positive controls we don't use will be removed
+# Get rid of the rsIDs in the Amino Acid Change column 
+f <- function(row) {
+if (startsWith(row["Amino Acid Change"], "rs")) sub(".*", "-", row["Amino Acid Change"]) else row["Amino Acid Change"]
+}
 
+AA_change_final <- c(apply(data4, 1, f))
+data4$"Amino Acid Change" <- AA_change_final
+
+write.table(data4, file="LRRK2_variant_info.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+# Copy the file
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
+```
+
+#### Organize the final forest plots into a new directory
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir final_plots
+cd final_plots
+
+module load R 
+R
+require(data.table)
+require(dplyr)
+
+AA_final <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
+
+# Add the three plots that don't have normal, special and combined GWAS results 
+/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf
+/data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf 
+/data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf
+
+/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots
+# ex 12:123326598_combined.pdf
+
+
+# Make a list of the filenames of the combined plots
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots", pattern="^12:")
+file.names <- paste("/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots/", file.names, sep="")
+
+### Now filter that list for the plots we want to keep
+
+# First make a list of the IDs of the combined plots we want to keep
+choices = c("G2019S","N2081D","rs76904798")
+`%notin%` <- Negate(`%in%`)
+IDs <- AA_final %>% subset(AA_short %notin% choices) %>% select(id) %>% c()
+
+# Outputs TRUE or FALSE depending if the ID is in each filename
+require(sjmisc)
+SNPs <- sapply(file.names, str_contains,pattern=IDs,logic="or",USE.NAMES=FALSE)
+
+str_contains(x=ex,pattern=IDs,logic="or")
+str_contains(ex, c("1", "2", "3"),logic="or")
+
+str_contains(ex, c("12:123326598", "7"),logic="or")
+
+# Make a list of all of the pdf files to put into this new directory
+
+
+q()
+n
+
+# Copy the files to the current directory final_plots
+cat /location/file.txt | xargs -i scp {} user@server:/location
 ```
 
 ## Done....
 
-
 ![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
-
-
 
 
