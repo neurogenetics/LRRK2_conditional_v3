@@ -1103,7 +1103,6 @@ ls UKB_P* > PC_files.txt
 # UKB_Proxy_cases_control_over60.txt
 
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 flashpca_UKB.sh PC_files.txt
-
 ```
 
 ```
@@ -1130,35 +1129,36 @@ done
 #### Merge the PCs with phenotype info
 
 ```
-# merge files in R
+# Merge files in R
 module load R
 R
 require(data.table)
 require(dplyr)
 
-#load the full covariates file
+# Load the full covariates file
 cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
-#remove the PC columns from cov so that we can merge with the new PCs
+# Remove the PC columns from cov so that we can merge with the new PCs
 cov2 <- cov %>% select(1:8)
 
-#pull the subset phenptype files from your working directory
+# Pull the subset phenptype files from your working directory
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/", pattern="^UKB_P") 
 for(file in file.names) {  
   pc <- fread(paste("pcs_",file,sep=""),header=T)
   pc$IID <- NULL
   pheno <- fread(file,header=T)
-  #this info will become redundant when merging, keep (PD/CONTROL/PROXY) STATUS and LRRK2 carrier status
+  # This info will become redundant when merging, keep (PD/CONTROL/PROXY) STATUS and LRRK2 carrier status
   pheno$IID <- pheno$SEX <- pheno$AGE <- NULL
-  MM = merge(cov2,pheno,by='FID')
-  MM2 = merge(MM,pc,by='FID')
-  write.table(MM2, file=paste("COV_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+  Mrg = merge(cov2,pheno,by='FID')
+  Mrg2 = merge(Mrg,pc,by='FID')
+  write.table(Mrg2, file=paste("COV_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
 }
 q()
 n
 
 
-#replace PD/CONTROL/PROXY STATUS with numbers
-cat /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/PC_files.txt | while read line
+# Replace PD/CONTROL/PROXY STATUS with numbers
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+cat PC_files.txt | while read line
 do 
   sed -i 's/PD/2/g' COV_$line
   sed -i 's/PROXY/2/g' COV_$line
@@ -1166,7 +1166,7 @@ do
 done
 
 
-#organize/remove some files
+# Organize and remove some files
 mkdir flashpca_files
 mv eigenvalues_UKB_P* flashpca_files
 mv eigenvectors_UKB_P* flashpca_files
@@ -1182,10 +1182,7 @@ rm pruned_data*
 #### Perform GWAS in a loop
 
 ```
-module load plink/2.0-dev-20191128
-
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
-
 mkdir GWAS_output
 module load plink/2.0-dev-20191128
 
@@ -1197,19 +1194,31 @@ module load plink/2.0-dev-20191128
 5. COV_UKB_Proxy_cases_control_over60_noriskGS.txt
 6. COV_UKB_Proxy_cases_control_over60.txt
 
-#test GWAS
+# Test GWAS
 # COV_UKB_PD_cases_control_over60_noNDGS.txt
-# 1 binary phenotype loaded (1466 cases, 14775 controls).
 plink2 --pfile chr12.UKBB.EU.filtered_NEW \
 --pheno-name STATUS --pheno COV_UKB_PD_cases_control_over60_noNDGS.txt \
 --covar COV_UKB_PD_cases_control_over60_noNDGS.txt --memory 235000 \
 --glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
 --out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_UKB_PD_cases_control_over60_noNDGS_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 
+sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS.sh PC_files.txt
 
-###loop for all GWAS chr 12 only
-#${line%%.*} allows you to remove the file extension
-cat PC_files.txt  | while read line
+```
+
+```
+# This is UKB_CHR12_GWAS.sh
+
+#!/bin/bash
+# sh UKB_CHR12_GWAS.sh PC_files.txt
+
+PC_files=$1
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+
+# Loop for all GWAS chr 12 only
+# ${line%%.*} allows you to remove the file extension
+
+cat $PC_files | while read line
 do 
 	plink2 --pfile chr12.UKBB.EU.filtered_NEW \
 	--pheno-name STATUS --pheno COV_$line \
@@ -1217,7 +1226,6 @@ do
 	--glm hide-covar firth-fallback cols=+a1freq,+a1freqcc,+a1count,+totallele,+a1countcc,+totallelecc,+err \
 	--out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/COV_${line%%.*}_chr12 --covar-name AGE_OF_RECRUIT,TOWNSEND,PC1,PC2,PC3,PC4,PC5 --covar-variance-standardize
 done
-
 ```
 
 #### Check the cases and controls included in each GWAS (note I want to ask about this)
@@ -1225,7 +1233,7 @@ done
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output/
 
-### First check the case and control numbers in the covariate files 
+# First check the case and control numbers in the covariate files 
 R
 require(dplyr)
 require(data.table)
@@ -1247,8 +1255,7 @@ Results:
 [1] "COV_UKB_Proxy_cases_control_over60_noriskGS.txt has 9679 cases and 102931 controls"
 [1] "COV_UKB_Proxy_cases_control_over60.txt has 13430 cases and 140908 controls"
 
-
-### Compare this to the results from the GWAS log files
+# Compare this to the results from the GWAS log files
 ls *.log > log_files.txt
 
 cat log_files.txt  | while read line
@@ -1297,7 +1304,7 @@ These are the files to process:
 
 #### Reformat plink2 GWAS output
 ```
-#check the number of variants in these files…
+# Check the number of variants in these files…
 wc -l COV_UKB_PD_cases_control_over60_noNDGS_chr12.STATUS.glm.logistic.hybrid 
 # 1,357,686 variants--in comparison, 439,402 variants in /data/CARD/UKBIOBANK/FILTER_IMPUTED_DATA/chr12.UKBB.EU.filtered.pvar
 
@@ -1308,7 +1315,7 @@ ls COV_UKB_P*.hybrid | cat > GWAS_files.txt
 module load python/3.6
 cat GWAS_files.txt  | while read line
 do 
-	#filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
+	# Filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
 	awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
 	
 	#reformat the plink2 results for meta-analysis using python
@@ -1320,7 +1327,7 @@ do
 		--outfile toProxy.${line%%.*}.txt --B-or-C B; fi
 done
 
-#the PD files are ready for meta-analysis, the proxy files need more reformatting…
+# The PD files are ready for meta-analysis, the proxy files need more reformatting…
 
 ```
 
