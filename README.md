@@ -712,8 +712,6 @@ do
   Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R CONDI_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid
 done
 
-
-
 ## Organize the files 
 cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/
 mkdir prep_files
@@ -929,8 +927,12 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi
 # Make directory for co-inheritance analysis to copy over some files
 mkdir co_inheritance
 
-module load R
+# Organize some files
 cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+mkdir LRRK2_status_prep
+mv LRRK2_area_snps* LRRK2_status_prep
+
+module load R
 R
 require(data.table)
 require(dplyr)
@@ -948,7 +950,7 @@ keep <- fread("/data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_co
 # Not controls: don't use PD cases or proxy cases as controls
 not_control <- fread("/data/CARD/UKBIOBANK/PHENOTYPE_DATA/disease_groups/PD_case_or_PD_parent.txt",header=T)
 # Use LRRK2 status to subset covariate files for separate GWAS
-LRRK2_status <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/LRRK2_area_snps2.raw",header=T)
+LRRK2_status <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/LRRK2_status_prep/LRRK2_area_snps2.raw",header=T)
 
 # Pull the sample IDs for each of the groups
 PDshort <-  data.frame(PD$eid)
@@ -1061,10 +1063,6 @@ write.table(PROXY_FINAL_noND, file="/data/LNG/Julie/Julie_LRRK2_Condi/co_inherit
 q()
 n
 
-#organize some files
-mkdir LRRK2_status_prep
-mv LRRK2_area_snps* LRRK2_status_prep
-
 # Copy some files to the co-inheritance directory
 cp UKB_P* /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/
 
@@ -1093,10 +1091,10 @@ flashpca --bfile FILENAME_3 --suffix _UKB_PD_cases_control_over60.txt --numthrea
 #### Run flashpca in a loop
 
 ```
-#grep the subset filenames
-ls UKB_P*> PC_files.txt
+# Combine the subset filenames
+ls UKB_P* > PC_files.txt
 
-## make sure PC_files.txt contains these phenptype files: 
+# Make sure PC_files.txt contains these phenptype files: 
 # UKB_PD_cases_control_over60_noNDGS.txt
 # UKB_PD_cases_control_over60_noriskGS.txt
 # UKB_PD_cases_control_over60.txt
@@ -1104,9 +1102,20 @@ ls UKB_P*> PC_files.txt
 # UKB_Proxy_cases_control_over60_noriskGS.txt
 # UKB_Proxy_cases_control_over60.txt
 
-#use the phenotype files to subset each GWAS group for flashpca
-#note this may take a few hours…
-cat PC_files.txt  | while read line
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 flashpca_UKB.sh PC_files.txt
+
+```
+
+```
+# This is flashpca_UKB.sh
+
+#!/bin/bash
+# sh flashpca_UKB.sh PC_files.txt
+
+PC_files=$1
+cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS
+
+cat $PC_files  | while read line
 do 
 	plink --bfile /data/CARD/UKBIOBANK/raw_genotypes_no_cousins/UKBB_raw_data_no_cousins \
 	--maf 0.05 --geno 0.01 --hwe 5e-6 --autosome \
@@ -1116,7 +1125,6 @@ do
 	plink --bfile FILENAME_2 --extract pruned_data.prune.in --make-bed --out FILENAME_3 
 	flashpca --bfile FILENAME_3 --suffix _$line --numthreads 19
 done
-
 ```
 
 #### Merge the PCs with phenotype info
