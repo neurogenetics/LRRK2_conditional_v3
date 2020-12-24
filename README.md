@@ -2768,7 +2768,7 @@ q()
 n
 ```
 
-## 7 Make final tables and figures
+## 7. Make final tables and figures
 
 This section goes through:
 - Preparing tables for manuscript
@@ -2820,43 +2820,40 @@ require(dplyr)
 
 AA_final <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
 
-# Add the three plots that don't have normal, special and combined GWAS results 
-/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf
-/data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf 
-/data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf
+# First make a list of the IDs of the combined plots that we want to keep
+dont_keep = c("G2019S","N2081D","rs76904798")
+`%notin%` <- Negate(`%in%`)
+IDs <- AA_final %>% subset(AA_short %notin% dont_keep) %>% select(id) %>% unlist(use.names=FALSE)
 
-/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots
-# ex 12:123326598_combined.pdf
-
-
-# Make a list of the filenames of the combined plots
+# Make a list of the filenames of all of the combined plots
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots", pattern="^12:")
+
+# Add the full path to these filenames
 file.names <- paste("/data/LNG/Julie/Julie_LRRK2_Condi/metafor_combined_plots/", file.names, sep="")
 
-### Now filter that list for the plots we want to keep
-
-# First make a list of the IDs of the combined plots we want to keep
-choices = c("G2019S","N2081D","rs76904798")
-`%notin%` <- Negate(`%in%`)
-IDs <- AA_final %>% subset(AA_short %notin% choices) %>% select(id) %>% c()
-
-# Outputs TRUE or FALSE depending if the ID is in each filename
+# Now filter file.names for the plots we want to keep
 require(sjmisc)
-SNPs <- sapply(file.names, str_contains,pattern=IDs,logic="or",USE.NAMES=FALSE)
+bool <- sapply(file.names, str_contains, pattern=IDs,logic="or",USE.NAMES=FALSE)
+combined_files <- file.names[bool]
 
-str_contains(x=ex,pattern=IDs,logic="or")
-str_contains(ex, c("1", "2", "3"),logic="or")
+# Make a list of all of the pdf files to put into the final_plots directory
+# Add the three plots that don't have normal, special and combined GWAS results 
+other_files = c(
+"/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf",
+"/data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf",
+"/data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf"
+)
 
-str_contains(ex, c("12:123326598", "7"),logic="or")
-
-# Make a list of all of the pdf files to put into this new directory
-
+all_files <- append(combined_files, other_files)
+write.table(all_files, file="forest_plot_filenames.txt", quote=FALSE,row.names=F,sep="\t",col.names = F)
 
 q()
 n
 
 # Copy the files to the current directory final_plots
-cat /location/file.txt | xargs -i scp {} user@server:/location
+cat forest_plot_filenames.txt | xargs -i scp {} .
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf /Users/lakejs/Desktop/final_plots
 ```
 
 ## Done....
