@@ -1257,7 +1257,6 @@ COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.log
 1 binary phenotype loaded (12942 cases, 136307 controls).
 COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.log
 1 binary phenotype loaded (9679 cases, 103040 controls).
-
 ```
 | File                                              | COV file |          | GWAS log file |          |
 |---------------------------------------------------|----------|----------|---------------|----------|
@@ -1306,7 +1305,6 @@ do
 done
 
 # The PD files are ready for meta-analysis, the proxy files need more reformatting…
-
 ```
 
 ```
@@ -1774,7 +1772,6 @@ cat header_proxy.txt temp > CONDI_GWAS_VOI.UKBproxy.txt
 scp NORMAL_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI
 scp SPECIAL_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI
 scp CONDI_GWAS_VOI* /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI
-
 ```
 
 #### UK Biobank files to combine with IPDGC for meta-analysis
