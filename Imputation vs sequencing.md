@@ -90,6 +90,11 @@ plink --bfile LRRK2_area_exome_for_merge --bmerge LRRK2_area_imputed_for_merge -
 
 numbers from excel but Im sure there is a quicker way of doing this...
 
+total => the sum of 0, 1, 2 from MERGED_DATA.raw => rs numbers 
+
+confirmed => concatenation of imputed (0 ,1 , 2) and exome (0 ,1 , 2) and count of 00, 11 and 22
+
+
 | RS-ID  | AA change | total/confirmed REF 0 | total/confirmed HET 1 | total/confirmed ALT 2 |
 | ------------- | ------------- | ------------- | ------------- | ------------- |
 | rs33995463  | L119P | 199057/198998 | 1011/822 | 1/1 | 
