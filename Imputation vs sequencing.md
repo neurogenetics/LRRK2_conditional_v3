@@ -10,6 +10,8 @@
 working dir:
 cd /data/CARD/projects/LRRK2_sandbox/
 
+Tl;dr => Imputation of LRRK2 coding variants is pretty accurate...
+
 ```
 
 ### UK Biobank
