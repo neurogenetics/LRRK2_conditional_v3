@@ -50,6 +50,7 @@ plink2 --bfile LRRK2_area_imputed --extract RS_to_keep.txt --make-bed --out LRRK
 # using exome sequencing data from:
 cd /data/CARD/UKBIOBANK/EXOME_DATA_200K/PLINK_files/
 
+module load plink/2.3-alpha
 plink2 --bed ukb23155_c12_b0_v1.bed --fam ukb23155_c1_b0_v1_s200632.fam \
 --bim UKBexomeOQFE_chr12.bim --chr 12 --from-kb 40210 --to-kb 40375 --out LRRK2_area_exome --make-bed
 # 3692 variants remaining after main filters.
@@ -115,7 +116,42 @@ confirmed => concatenation of imputed (0 ,1 , 2) and exome (0 ,1 , 2) and count 
 IPDGC data and LNG WGS => genotypes vs genome seq
 
 ```
+# done previously a while ago...
+check => OVERLAP_GENOMES_AND_IPDGC_GENOTYPE_DATA.xlsx
+
+ID stored:
+WGS => WGS_overlap_with_IPDGC.txt
+IPDGC => IPDGC_overlap_with_WGS.txt
+
+```
+
+##### Processing imputed genotype data (hg19)
+```
+# using imputed genotyped from:
+cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+HARDCALLS_PD_september_2018_no_cousins.
+
+module load plink/2.3-alpha
+
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --keep /data/CARD/projects/LRRK2_sandbox/IPDGC_overlap_with_WGS.txt \
+--make-bed --out /data/CARD/projects/LRRK2_sandbox/IPDGC_overlap_WGS --mac 1 
+# 1947 samples
 
 
+
+```
+
+
+
+##### Processing genome sequencing data
+```
+# using genome sequencing data from:
+cd /data/CARD/PD/GENOMES/august19/genotypes/
+
+module load plink/2.3-alpha
+plink2 --pfile pd.june2019.chr12.sqc --keep /data/CARD/projects/LRRK2_sandbox/WGS_overlap_with_IPDGC.txt \
+--make-bed --out /data/CARD/projects/LRRK2_sandbox/WGS_overlap_IPDGC --mac 1 
+
+# 1899 samples
 
 ```
