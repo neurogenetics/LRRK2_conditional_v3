@@ -1158,7 +1158,7 @@ rm FILENAME_*
 rm pruned_data*
 ```
 
-### 4.5 Start GWAS on CHR 12 (note to self make the loop GWAS a bash script)
+### 4.5 Start GWAS on CHR 12
 
 #### Perform GWAS in a loop
 
