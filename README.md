@@ -2585,7 +2585,7 @@ cat LRRK2_coding_variants_PD_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_P
 cat LRRK2_coding_variants_Proxy_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_condi.txt
 
 # Results excluding GS and ND variants
-cat LRRK2_coding_variants_P_noNDGSD.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_special.txt
+cat LRRK2_coding_variants_PD_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_special.txt
 cat LRRK2_coding_variants_Proxy_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_special.txt
 
 # Export
