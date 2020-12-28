@@ -2587,14 +2587,6 @@ cat LRRK2_coding_variants_Proxy_noriskGS.txt | cut -f1,3,4,6,7 > case_control_UK
 # Results excluding GS and ND variants
 cat LRRK2_coding_variants_PD_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_special.txt
 cat LRRK2_coding_variants_Proxy_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_special.txt
-
-# Export
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_normal.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_normal.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_condi.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_condi.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_PD_special.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/case_control_UKB_Proxy_special.txt /Users/lakejs/Desktop/
 ```
 
 ### 6.3 Determine a freq or count cutoff for the LRRK2 coding variants
@@ -2801,6 +2793,50 @@ n
 
 # Copy the file
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
+```
+
+#### Make final frequency tables with only the variants in LRRK2_AA_final.txt
+
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+
+module load R
+R
+require(dplyr)
+require(data.table)
+
+keep <- fread("LRRK2_AA_final.txt",header=T)
+
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern="^case_control") 
+for(file in file.names) {  
+  data <- fread(file,header=T)
+  # Filter for variants to keep
+  data2 <- data %>% filter(SNP %in% keep$id)
+  # Reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+  SNP_order <- data2$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+  data2 <- data2[SNP_order,]
+  write.table(data2, file=paste("final_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+
+# Also filter these
+data3 <- fread("IPDGC_freq_tbl.txt",header=T)
+data4 <- fread("UKB_freq_tbl.txt",header=T)
+
+keep_ordered <- keep$id %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+keep <- keep[keep_ordered,]
+
+data3_filtered <- data3 %>% select(SNP,keep$id)
+data4_filtered <- data4 %>% select(SNP,keep$id)
+
+write.table(data3_filtered, file="final_IPDGC_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(data4_filtered, file="final_UKB_freq_tbl.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+# Export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
 
 #### Organize the final forest plots into a new directory
