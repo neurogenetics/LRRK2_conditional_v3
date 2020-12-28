@@ -1862,7 +1862,7 @@ done
 mkdir metafor_plots
 mv 12:* metafor_plots
 mv header* metafor_plots
-#need to copy over the forest plot script so that it can pull the files from its current directory
+# Need to copy over the forest plot script so that it can pull the files from its current directory
 cp /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2.R metafor_plots
 
 # Now make the forest plots
@@ -2715,7 +2715,7 @@ data2$Total_minor_allele_count <- data2$Minor_allele_count_IPDGC + data2$Minor_a
 ## Investingating MAF cutoffs: 
 MAF_df <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy")
 
-# First see if the variants I want to keep are included if MAF > 0.001 for all three datasets
+# First see if the variants I want to keep are included if MAF > 0.01 for all three datasets
 MAF_0.01 <- MAF_df %>% filter(MAF_IPDGC > 0.01) %>% filter(MAF_UKB_PD > 0.01) %>% filter(MAF_UKB_Proxy > 0.01) 
 keep$id %in% MAF_0.01$SNP
 # [1] FALSE  TRUE  TRUE  TRUE FALSE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE  TRUE
@@ -2834,7 +2834,7 @@ bool <- sapply(file.names, str_contains, pattern=IDs,logic="or",USE.NAMES=FALSE)
 combined_files <- file.names[bool]
 
 # Make a list of all of the pdf files to put into the final_plots directory
-# Add the three plots that don't have normal, special and combined GWAS results 
+# Add the three plots that don't have normal, conditional and special GWAS results 
 other_files = c(
 "/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf",
 "/data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf",
