@@ -306,13 +306,42 @@ write.table(Mrg_grouped, file="LRRK2_condi_sample_selection_grouped.txt", quote=
 
 Mrg2_grouped <- Mrg2 %>% group_by(DATASET) %>% summarise(Case = sum(PHENOTYPE == 2), Control = sum(PHENOTYPE == 1), TOTAL = n()) %>% bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "SUM"))
 write.table(Mrg2_grouped, file="LRRK2_condi_special_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
+
+Mrg3 = merge(data,cov,by='FID')
+Mrg3_grouped <- Mrg3 %>% group_by(DATASET) %>% summarise(Case = sum(PHENOTYPE == 2), Control = sum(PHENOTYPE == 1), TOTAL = n()) %>% bind_rows(summarise_all(., ~if(is.numeric(.)) sum(.) else "SUM"))
+write.table(Mrg3_grouped, file="LRRK2_normal_sample_selection_grouped.txt", quote=FALSE,row.names=F,sep="\t")
+
 q()
 n
 
 # Copy files
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_sample_selection_grouped.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_condi_special_sample_selection_grouped.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_normal_sample_selection_grouped.txt /Users/lakejs/Desktop/
 ```
+#### Data for normal GWAS
+| DATASET      | Case  | Control | TOTAL |
+|--------------|-------|---------|-------|
+| DUTCH        | 765   | 1982    | 2747  |
+| FINLAND      | 386   | 492     | 878   |
+| GERMANY      | 712   | 942     | 1654  |
+| HBS          | 527   | 472     | 999   |
+| MCGILL       | 580   | 905     | 1485  |
+| MF           | 750   | 777     | 1527  |
+| NEUROX_DBGAP | 5405  | 5804    | 11209 |
+| NIA          | 841   | 3001    | 3842  |
+| OSLO         | 476   | 462     | 938   |
+| PDBP         | 512   | 280     | 792   |
+| PPMI         | 363   | 165     | 528   |
+| PROBAND      | 1810  | 0       | 1810  |
+| PROPARK      | 230   | 0       | 230   |
+| SHULMAN      | 768   | 195     | 963   |
+| SPAIN3       | 2108  | 1331    | 3439  |
+| SPAIN4       | 2359  | 1553    | 3912  |
+| TUBI         | 658   | 534     | 1192  |
+| UK_GWAS      | 1609  | 5195    | 6804  |
+| VANCE        | 619   | 298     | 917   |
+| SUM          | 21478 | 24388   | 45866 |
 
 <table>
 <tr><th>Data for conditional GWAS (no rs76904798 + no G2019S)</th><th>Data for special conditional GWAS (no N2081D + no G2019S)</th></tr>
