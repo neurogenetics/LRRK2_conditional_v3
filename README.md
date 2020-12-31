@@ -878,12 +878,13 @@ This section goes through:
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 mkdir UKB_GWAS
 
-#filter for CHR12, Europeans only, etc...
-#!/bin/bash
 sbatch --cpus-per-task=20 --mem=240g --mail-type=END --time=24:00:00 make_pfile_UKB.sh
+
+# This is make_pfile_UKB.sh
+#!/bin/bash
 module load plink/2.0-dev-20191128
 cd /data/CARD/UKBIOBANK/IMPUTED_DATA/
-#Extract CHR12 SNPs, Europeans only
+# Extract CHR12 SNPs, Europeans only
 plink2 --bgen ukb_imp_chr12_v3.bgen --extract CHR12.SNPS_0_8.txt --geno 0.1 --hwe 1e-6 \
 --keep EUROPEAN.txt --make-pgen --mind 0.1 --sample ukb33601_imp_chr1_v3_s487395.sample \
 --out /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/chr12.UKBB.EU.filtered_NEW \
