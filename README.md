@@ -2922,19 +2922,14 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf 
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 # Reformat UKB PD files 
- cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBPD.txt
-
+cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBPD.txt
 cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.UKBPD.txt
-
 cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBPD.txt
-
 
 # Reformat UKB proxy files
 # We want to pull the b_adjusted, se_adjusted and p_derived for the proxy cases rather than b, se and p for the PD cases
 cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBproxy.txt
-
 cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.UKBproxy.txt
-
 cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBproxy.txt
 ```
 
