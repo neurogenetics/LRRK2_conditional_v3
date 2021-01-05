@@ -2966,7 +2966,9 @@ Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_head.txt
 
 # Now run all LRRK2 variants
 sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
+```
 
+```
 # This is make_CHR12_ORs.R
 
 #!/usr/bin/env Rscript
