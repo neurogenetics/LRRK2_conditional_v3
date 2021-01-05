@@ -2915,6 +2915,187 @@ cat forest_plot_filenames.txt | xargs -i scp {} .
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf /Users/lakejs/Desktop/final_plots
 ```
 
+#### Make some extra forest plots
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+### First make the CHR12 files for UKB and put them in the same directories as the IPDGC CHR12 files
+
+# Reformat UKB PD files 
+ cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBPD.txt
+
+cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_noNDGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.UKBPD.txt
+
+cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBPD.txt
+
+
+# Reformat UKB proxy files
+# We want to pull the b_adjusted, se_adjusted and p_derived for the proxy cases rather than b, se and p for the PD cases
+cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBproxy.txt
+
+cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noNDGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/SPECIAL_GWAS_CHR12.UKBproxy.txt
+
+cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBproxy.txt
+```
+
+```
+### Next pull the ORs and P-values for all variants in the LRRK2 region to see which are most significant
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+
+module load R
+R
+require(dplyr)
+require(data.table)
+# This may take a bit
+data <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
+CHR_12_only <- data %>% filter(Chr == 12)
+lrrk2 <- CHR_12_only %>% filter(Start %>% between(40590546,40763087))
+lrrk2$ID <- paste(lrrk2$Chr,lrrk2$Start, sep = ":")
+
+LRRK2_SNPs <- lrrk2 %>% select(ID)
+write.table(LRRK2_SNPs,file="LRRK2_vars_all.txt",quote=FALSE,row.names=F,sep="\t")
+# Use this to test
+write.table(LRRK2_SNPs %>% head(),file="LRRK2_vars_head.txt",quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+# Test run 
+Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_head.txt
+
+# Now run all LRRK2 variants
+sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
+
+# This is make_CHR12_ORs.R
+
+#!/usr/bin/env Rscript
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla make_CHR12_ORs.R $FILENAME
+# Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
+FILENAME = args[1]
+print(args[1])
+
+require(dplyr)
+require(data.table)
+library(metafor)
+
+# Define a function that returns the NORMAL, CONDI and SPECIAL OR (OR_lower - OR_upper)
+f <- function(id) {
+i<-0
+dfs = list()
+for(gwas_type in c("NORMAL","CONDI","SPECIAL")) {
+        # Note that the header_ files don't exist for most variants…so need to incorporate making them
+        dirs=paste("/data/LNG/Julie/Julie_LRRK2_Condi/",gwas_type,"_GWAS_CHR12",sep="")
+        patterns=paste("^",gwas_type,"_GWAS_CHR12",sep="")
+        file.names <- dir(dirs, pattern=patterns, full.names=TRUE)
+        data = list()
+        for(file in file.names) {
+                data2 <- fread(file,header=T)
+                colnames(data2) <- c("ID","REF","A1","A1_FREQ","beta","LOG.OR._SE","P")
+                filtered <- data2 %>% filter(ID == id)
+                filtered$ID <- file %>% gsub(pattern=".txt",replacement="") %>% gsub(pattern=".*\\.",replacement="")
+                data <- bind_rows(data,data.frame(filtered))}
+        print(gwas_type)
+        print(data)
+        i <- i+1
+        yi <- data$beta
+        
+        if (all(is.na(yi))) {dfs[[i]]<-data.frame(ORs = NA, Pval = NA)}
+        else {
+                sei  <- data$LOG.OR._SE
+                resFe <- rma(yi=yi, sei=sei, method="FE")
+                summary <- coef(summary(resFe))
+                beta <- summary$estimate
+                se <- summary$se
+                P <- summary$pval %>% formatC(digits=4) %>% as.numeric()
+                OR <- exp(beta) %>% round(digits=2)
+                OR_lower <- exp(beta - 1.96*se) %>% round(digits=2)
+                OR_upper <- exp(beta + 1.96*se) %>% round(digits=2)
+                OR_all <- paste(OR, " (", OR_lower, "-", OR_upper, ")",sep="")
+                dfs[[i]]<-data.frame(ORs = OR_all, Pval = P)
+        }
+}
+combined <- bind_cols(dfs)
+colnames(combined) <- c("OR_NORMAL","P_NORMAL","OR_CONDI","P_CONDI","OR_SPECIAL","P_SPECIAL")
+combined$SNP <- id
+combined
+}
+
+vars <- fread(FILENAME,header=T)
+final_tbl <- bind_rows(apply(vars, 1, f))
+write.table(final_tbl,file="OR_all_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
+```
+
+```
+### See which variants pass the p-value threshold of 1x10^-8 in NORMAL, CONDI and SPECIAL meta-analysis
+
+R
+require(dplyr)
+require(data.table)
+data <- fread("OR_all_LRRK2.txt",header=T)
+ordered_NORMAL <- data[order(data$P_NORMAL)]
+ordered_CONDI <- data[order(data$P_CONDI)]
+
+# Calculate the Bonferroni-corrected P-value
+
+# Filter for the more stringent P=1x10^-8
+ordered_NORMAL %>% filter(P_NORMAL < 1e-8)
+ordered_CONDI %>% filter(P_CONDI < 1e-8)
+```
+
+#### Pulling META5 data for comparison
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir META5_results
+cd META5_results
+
+zcat /data/CARD/PD/summary_stats/META5_all.gz | grep -e MarkerName -f <( cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt) > META5_LRRK2.txt
+
+zcat /data/CARD/PD/summary_stats/META5_no23.tbl.gz | grep -e MarkerName -f <( cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt) > META5_no23.txt
+
+module load R
+R
+require(dplyr)
+require(data.table)
+
+meta5_no23 <- fread("META5_no23.txt",header=T)
+meta5_no23$ID <- meta5_no23$MarkerName %>% gsub(pattern="chr",replacement="")
+
+# Use one of the GWAS files to get the correct REF/ALT
+IPDGC <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/NORMAL_GWAS_VOI.NEUROX_DBGAP.txt",header=T)
+
+# Merge with meta5
+data <- merge(IPDGC,meta5_no23, by="ID")
+
+# Then select certain columns
+data2 <- data %>% select(ID,REF,A1,Allele1,Allele2,Effect,StdErr,"P-value")
+colnames(data2) <- c("ID", "IPDGC_REF", "IPDGC_ALT","META5_REF", "META5_ALT", "Beta", "SE", "P")
+
+# Calculating OR and 95% CI from beta and SE depending if REF and ALT are the same
+f <- function(row) {if (toupper(row["META5_REF"]) == row["IPDGC_REF"]) as.numeric(row["Beta"]) else as.numeric(row["Beta"])*(-1)}
+
+data2$adj_beta <- c(apply(data2, 1, f))
+data2$P_META5 <- data2$P %>% formatC(digits=4) 
+data2$OR <- exp(data2$adj_beta) %>% round(digits=2)
+data2$OR_lower <- exp(data2$adj_beta- 1.96*data2$SE) %>% round(digits=2)
+data2$OR_upper <- exp(data2$adj_beta+ 1.96*data2$SE) %>% round(digits=2)
+data2$OR_META5 <- paste(data2$OR, " (", data2$OR_lower, "-", data2$OR_upper, ")",sep="")
+
+# Merge with the AA change
+AA <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt",header=T)
+data2 <- merge(data2,AA,by.x="ID",by.y="id")
+
+# Now merge with our data
+data <- fread("OR_all_LRRK2.txt",header=T)
+final <- merge(data,data2,by.x="SNP",by.y="ID") %>% select().....
+
+# Change the column names
+colnames(final) <- c("Protein Consequence","Nalls et al Case-Control OR (95 CI)","IPDGC + UK Biobank, Case-Con, OR (95 CI)","IPDGC + UK Biobank Δ 5' SNP Δ Patho Case-Con, OR (95 CI)","IPDGC + UK Biobank Δ 5' SNP Δ N2081D Case-Con, OR (95 CI)")
+```
+
 ## Done....
 
 ![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
