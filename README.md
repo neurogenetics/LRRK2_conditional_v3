@@ -2789,7 +2789,7 @@ This section goes through:
 - Preparing tables for manuscript
 - Preparing figures for manuscript
 
-#### Make a final table with variant info
+### 7.1 Make a final table with variant info
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2821,8 +2821,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
 ```
 
-#### Make final frequency tables with only the variants in LRRK2_AA_final.txt
-
+### 7.2 Make final frequency tables with only the variants in LRRK2_AA_final.txt
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2865,7 +2864,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
 
-#### Organize the final forest plots into a new directory
+### 7.3 Organize the final forest plots into a new directory
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2915,12 +2914,12 @@ cat forest_plot_filenames.txt | xargs -i scp {} .
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf /Users/lakejs/Desktop/final_plots
 ```
 
-#### Make some extra forest plots
+### 7.4 Make some extra forest plots
+
+#### Make the CHR12 files for UKB
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
-
-### First make the CHR12 files for UKB and put them in the same directories as the IPDGC CHR12 files
 
 # Reformat UKB PD files 
  cut -f 1-7 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_PD_cases_control_over60_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.UKBPD.txt
@@ -2939,9 +2938,9 @@ cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.C
 cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBproxy.txt
 ```
 
-```
-### Next pull the ORs and P-values for all variants in the LRRK2 region to see which are most significant
+#### Calculate the ORs and P-values for all variants in the LRRK2 region
 
+```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 
 module load R
@@ -2965,6 +2964,7 @@ n
 Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_head.txt
 
 # Now run all LRRK2 variants
+# This will take a while
 sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
 ```
 
@@ -3046,8 +3046,117 @@ ordered_CONDI <- data[order(data$P_CONDI)]
 ordered_NORMAL %>% filter(P_NORMAL < 1e-8)
 ordered_CONDI %>% filter(P_CONDI < 1e-8)
 ```
+#### Make new forest plots for those variants that seem promising
 
-#### Pulling META5 data for comparison
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir extra_plots
+cd extra_plots
+
+combined_forest_CHR12 () {
+variant=$1
+title=$2
+for gwas_type in {"NORMAL","CONDI","SPECIAL"};
+do
+	head -1 /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/${gwas_type}_GWAS_CHR12.DUTCH.txt > ${gwas_type}_header.txt
+	grep ${variant} /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/${gwas_type}_GWAS_CHR12.*.txt > temp
+	cat ${gwas_type}_header.txt temp > ${gwas_type}_${variant}.txt
+	sed -e 's/.*\/\///g' ${gwas_type}_${variant}.txt | sed -e 's/.txt:'$variant'//g' > temp1
+	grep ${variant} ${gwas_type}_GWAS_CHR12.UKBPD.txt | sed -e 's/'${variant}'/UKBPD/g' > temp2
+	grep ${variant} ${gwas_type}_GWAS_CHR12.UKBproxy.txt | sed -e 's/'${variant}'/UKBproxy/g'  > temp3
+	cat temp1 temp2 temp3 > ${gwas_type}_${variant}v2.txt
+done
+Rscript --vanilla extra_combined.R ${variant} ${title}
+}
+
+# EX
+combined_forest_CHR12 12:40591117 rs1491923
+
+# Export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/12:40591117_combined.pdf /Users/lakejs/Desktop/
+```
+
+```
+# This is extra_combined.R
+
+#!/usr/bin/env Rscript
+require(dplyr)
+args = commandArgs(trailingOnly=TRUE)
+# start like this
+# Rscript --vanilla extra_combined.R $FILENAME $FILENAME2
+# Rscript --vanilla extra_combined.R 12:40702987 K1423K
+FILENAME = args[1]
+FILENAME2 = args[2]
+print(args[1])
+print(args[2])
+print(FILENAME)
+print(FILENAME2)
+
+library(metafor)
+data_normal <- read.table(paste("NORMAL_", FILENAME, "v2.txt",sep=""), header = T)
+data_special <- read.table(paste("SPECIAL_", FILENAME, "v2.txt",sep=""), header = T)
+data_condi <- read.table(paste("CONDI_", FILENAME, "v2.txt",sep=""), header = T)
+
+
+labs_normal <- gsub(".*\\.","", data_normal$ID)
+# Make the plot look better by changing NEUROX_DBGAP to NEUROX
+labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+yi_normal   <- data_normal$beta
+sei_normal  <- data_normal$LOG.OR._SE
+resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
+resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
+
+labs_special <- gsub(".*\\.","", data_special$ID)
+yi_special   <- data_special$beta
+sei_special  <- data_special$LOG.OR._SE
+resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
+resRe_special  <- rma(yi=yi_special, sei=sei_special)
+
+labs_condi <- gsub(".*\\.","", data_condi$ID)
+yi_condi   <- data_condi$beta
+sei_condi  <- data_condi$LOG.OR._SE
+resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
+resRe_condi  <- rma(yi=yi_condi, sei=sei_condi)
+
+pdf(file = paste(FILENAME,"_combined.pdf",sep=""), width = 8, height = 7)
+Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
+Pvalue_special <- formatC(resFe_special$pval, digits=4)
+Pvalue_condi <- formatC(resFe_condi$pval, digits=4)
+
+#Make it so that all datasets are included even if NA for the variant
+options(na.action = "na.pass")
+
+par(mfrow=c(1,3))
+
+par(mar=c(5,4,1,1))
+forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
+       slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "Normal", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_normal,sep=""), cex=1.2, font=2)
+
+par(mar=c(5,0,1,1))
+forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "No rs76904798 + No G2019S", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_condi,sep=""), cex=1.2, font=2)
+#adding this for the title
+text(0, 18, FILENAME2, cex=1.5, font=2)
+
+par(mar=c(5,0,1,2))
+forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
+       atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       cex=.9, at=log(c(0.5,1, 2, 3)))
+text(0, 17.1, "No N2081D + No G2019S", cex=1.2, font=2)
+text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
+dev.off()
+```
+
+### 7.5 Combine with META5 data for comparison table
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
