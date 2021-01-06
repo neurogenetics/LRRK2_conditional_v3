@@ -2873,14 +2873,24 @@ R
 require(dplyr)
 require(data.table)
 
-condi <- fread("LRRK2_condi_sample_selection.txt",header=T)
-special <- fread("LRRK2_condi_special_sample_selection.txt",header=T)
+condi <- fread("LRRK2_condi_sample_selection.txt",header=T) %>% select("AGE", "SEX_COV","PHENOTYPE", "X12.40614434_T", "X12.40734202_A", "DATASET")
+special <- fread("LRRK2_condi_special_sample_selection.txt",header=T) 
 good_datasets <- condi$DATASET %>% unique()
 data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
-normal <- merge(data,cov,by='FID') %>% filter(DATASET %in% good_datasets)
+normal <- merge(data,cov,by='FID') %>% filter(DATASET %in% good_datasets) %>% select("AGE", "SEX_COV","PHENOTYPE", "X12.40614434_T", "X12.40734202_A", "DATASET")
 # Add the X12.40614434_T column to the special dataset
-special <- merge(special, data %>% select(FID, X12.40614434_T), by="FID")
+special <- merge(special, data %>% select(FID, X12.40614434_T), by="FID") %>% select("AGE", "SEX_COV","PHENOTYPE", "X12.40614434_T", "X12.40734202_A", "DATASET")
+
+# Add in the UKB data
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/", pattern="^COV_UKB_P", full.names=TRUE)
+require(sjmisc)
+for(file in file.names) {
+	data <- fread(file, header=T)  %>% select(AGE_OF_RECRUIT, GENETIC_SEX, STATUS, rs76904798_T, rs34637584_A)
+	colnames(data) <- c("AGE", "SEX_COV","PHENOTYPE", "X12.40614434_T", "X12.40734202_A")
+	data$DATASET <- gsub(file, pattern=".*COV_|_cases.*", replacement="")
+	if (str_contains(file, "noNDGS")) {special=bind_rows(special,data)} else if (str_contains(file, "noriskGS")) {condi=bind_rows(condi,data)} else {normal=bind_rows(normal,data)}
+}
 
 # Calculate the number of homo ALT/hetero/homo REF alleles for either G2019S or 5' risk variant
 calc_alleles <- function(col) {
