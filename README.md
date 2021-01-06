@@ -2821,7 +2821,9 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
 ```
 
-### 7.2 Make final frequency tables with only the variants in LRRK2_AA_final.txt
+### 7.2 Make final tables
+
+#### Make final frequency tables with only the variants in LRRK2_AA_final.txt
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2862,6 +2864,47 @@ n
 
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
+```
+#### Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+R
+require(dplyr)
+require(data.table)
+
+condi <- fread("LRRK2_condi_sample_selection.txt",header=T)
+special <- fread("LRRK2_condi_special_sample_selection.txt",header=T)
+good_datasets <- condi$DATASET %>% unique()
+data <- read.table("LRRK2_condi_variant_selection.raw",header=T)
+cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+normal <- merge(data,cov,by='FID') %>% filter(DATASET %in% good_datasets)
+
+
+normal_controls <- normal %>% filter(PHENOTYPE == 1) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+normal_cases <- normal %>% filter(PHENOTYPE == 2) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+normal_combined <- bind_cols(normal_cases,normal_controls) %>% select(-DATASET...5)
+colnames(normal_combined) <- c("Dataset","%Female, cases", "Avg Age, cases", "Total cases","%Female, controls", "Avg Age, controls", "Total controls")
+write.table(normal_combined, file="normal_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
+
+condi_controls <- condi %>% filter(PHENOTYPE == 1) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+condi_cases <- condi%>% filter(PHENOTYPE == 2) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+condi_combined <- bind_cols(condi_cases,condi_controls) %>% select(-DATASET...5)
+colnames(condi_combined) <- c("Dataset","%Female, cases", "Avg Age, cases", "Total cases","%Female, controls", "Avg Age, controls", "Total controls")
+write.table(condi_combined, file="condi_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
+
+special_controls <- special %>% filter(PHENOTYPE == 1) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+special_cases <- special %>% filter(PHENOTYPE == 2) %>%  group_by(DATASET) %>% summarize(Sex = mean(SEX_COV, na.rm=TRUE), AGE = mean(AGE, na.rm=TRUE), TOTAL = n()) 
+special_combined <- bind_cols(special_cases,special_controls) %>% select(-DATASET...5)
+colnames(special_combined) <- c("Dataset","%Female, cases", "Avg Age, cases", "Total cases","%Female, controls", "Avg Age, controls", "Total controls")
+write.table(special_combined, file="special_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/normal_dataset_info.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/condi_dataset_info.txt /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/special_dataset_info.txt /Users/lakejs/Desktop/
 ```
 
 ### 7.3 Organize the final forest plots into a new directory
