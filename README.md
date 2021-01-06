@@ -3092,15 +3092,73 @@ write.table(final_tbl,file="OR_all_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
 R
 require(dplyr)
 require(data.table)
-data <- fread("OR_all_LRRK2.txt",header=T)
-ordered_NORMAL <- data[order(data$P_NORMAL)]
-ordered_CONDI <- data[order(data$P_CONDI)]
+
+# This may take a bit
+data <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
+CHR_12_only <- data %>% filter(Chr == 12)
+# Got the coordinates of LRRK2 on CHR12 HG37 from here: http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000188906;r=12:40590546-40763087
+lrrk2 <- CHR_12_only %>% filter(Start %>% between(40590546,40763087))
+lrrk2$SNP <- paste(lrrk2$Chr,lrrk2$Start, sep = ":")
+lrrk2 <- lrrk2 %>% select("SNP","avsnp142","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene")
+
+ Use the function f to pull out the amino acid change…if not a coding variant, use the rsID
+f <- function(row) {
+if (row[6] != ".") sub(".*p.", "", row[6]) else "."
+}
+# Note that these names have the one letter amino acid code
+AA_short <- c(apply(lrrk2, 1, f))
+
+# Split the short amino acid names at the number
+split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
+first_AA <- split[,1]
+middle_num <- split[,2]
+last_AA <- split[,3]
+
+# Replace the one letter amino acid code with the three letter code
+require(seqinr)
+AA_long <- paste(aaa(first_AA),middle_num,aaa(last_AA)) %>% gsub(pattern="NA", replacement="") %>% gsub(pattern=" ",replacement= "")
+lrrk2$"AAChange.refGene" <- AA_long
+
+data2 <- fread("OR_all_LRRK2.txt",header=T)
+lrrk2_info <- merge(lrrk2, data2, by="SNP")
+colnames(lrrk2_info) <- c("SNP","rsID","Region","Gene","Exonic variant function","Amino Acid Change","IPDGC + UK Biobank, OR (95 CI)","IPDGC + UK Biobank, P-value", "IPDGC + UK Biobank Δ p.G2019S Δ rs76904798, OR (95 CI)","IPDGC + UK Biobank Δ p.G2019S Δ rs76904798, P-value", "IPDGC + UK Biobank Δ p.G2019S Δ p.N2081D, OR (95 CI)","IPDGC + UK Biobank Δ p.G2019S Δ p.N2081D, P-value")
+
+lrrk2_info %>% filter("IPDGC + UK Biobank, P-value" < 1e-8)
+# See how many in the normal meta-analysis pass the strict P-value cutoff of 1-e-8
+test <- lrrk2_info[lrrk2_info$"IPDGC + UK Biobank, P-value" < 1e-8]
+
+write.table(test,file="test.txt",quote=FALSE,row.names=F,sep="\t")
+
+lrrk2_info %>% filter(P_CONDI < 1e-8)
+filtered_condi <- lrrk2_info[order(lrrk2_info$P_CONDI)] %>% filter(P_CONDI < 0.05)
+
+
+ordered_NORMAL <- data2[order(data2$P_NORMAL)]
+ordered_CONDI <- data2[order(data2$P_CONDI)]
 
 # Calculate the Bonferroni-corrected P-value
 
 # Filter for the more stringent P=1x10^-8
 ordered_NORMAL %>% filter(P_NORMAL < 1e-8)
 ordered_CONDI %>% filter(P_CONDI < 1e-8)
+
+
+# I could also add in the META5 data here...
+
+write.table(filtered_condi,file="test.txt",quote=FALSE,row.names=F,sep="\t")
+
+# Make a table of LRRK2 exonic, nonsynonymous variants with P_CONDI < 0.05
+# filter P_CONDI and filter ExonicFunc.refGene for nonsynonymous SNV
+
+| SNP         | avsnp142   | Func.refGene | Gene.refGene | ExonicFunc.refGene | AAChange.refGene                         | OR_NORMAL        | P_NORMAL  | OR_CONDI         | P_CONDI  | OR_SPECIAL       | P_SPECIAL |
+|-------------|------------|--------------|--------------|--------------------|------------------------------------------|------------------|-----------|------------------|----------|------------------|-----------|
+| 12:40713899 | rs35303786 | exonic       | LRRK2        | nonsynonymous SNV  | LRRK2:NM_198578:exon34:c.T4937C:p.M1646T | 1.18 (1.07-1.3)  | 0.001136  | 1.16 (1.04-1.29) | 0.008323 | 1.19 (1.07-1.31) | 0.0007667 |
+| 12:40702911 | rs7133914  | exonic       | LRRK2        | nonsynonymous SNV  | LRRK2:NM_198578:exon30:c.G4193A:p.R1398H | 0.9 (0.86-0.95)  | 0.0001384 | 0.93 (0.87-0.98) | 0.01099  | 0.91 (0.86-0.96) | 0.0007295 |
+| 12:40657700 | rs7308720  | exonic       | LRRK2        | nonsynonymous SNV  | LRRK2:NM_198578:exon14:c.C1653G:p.N551K  | 0.9 (0.85-0.95)  | 0.0001223 | 0.93 (0.88-0.99) | 0.01645  | 0.91 (0.86-0.96) | 0.0004961 |
+| 12:40758652 | rs3761863  | exonic       | LRRK2        | nonsynonymous SNV  | LRRK2:NM_198578:exon49:c.T7190C:p.M2397T | 1.01 (0.98-1.04) | 0.5789    | 1.04 (1-1.07)    | 0.03692  | 1.01 (0.98-1.04) | 0.6956    |
+
+# could also filter by "LRRK2" variants 
+
 ```
 #### Make new forest plots for those variants that seem promising
 
@@ -3127,6 +3185,13 @@ Rscript --vanilla extra_combined.R ${variant} ${title}
 
 # EX
 combined_forest_CHR12 12:40591117 rs1491923
+# These are the ones of interest so far
+12:40591117 rs1491923
+12:40665920 12:40665920
+12:40702987 Lys1423Lys
+
+# What are some other LRRK2 SNPs that have been found to be significant?
+
 
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/12:40591117_combined.pdf /Users/lakejs/Desktop/
