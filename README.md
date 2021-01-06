@@ -2898,16 +2898,24 @@ paste(sum(col == "2"),"/",
 sum(col == "1"),"/", 
 sum(col == "0"),sep="")}
 
-normal_controls <- normal %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = mean(SEX_COV, na.rm=TRUE), AGE_control = mean(AGE, na.rm=TRUE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
-normal_cases <- normal %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= mean(SEX_COV, na.rm=TRUE), AGE_case= mean(AGE, na.rm=TRUE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
+# Calculate the mean AGE (SD) for a column
+get_AGE <- function(col) {
+paste(mean(col, na.rm=TRUE) %>% round(digits=1)," (", 
+sd(col,na.rm=TRUE) %>% round(digits=1),")", sep="")}
+
+percent_Female <- function(col) {
+mean(col, na.rm=TRUE) %>% round(digits=3) * 100}
+
+normal_controls <- normal %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = percent_Female(SEX_COV), AGE_control = get_AGE(AGE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
+normal_cases <- normal %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= percent_Female(SEX_COV), AGE_case= get_AGE(AGE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
 write.table(merge(normal_cases,normal_controls,by="DATASET"), file="normal_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
 
-condi_controls <- condi %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = mean(SEX_COV, na.rm=TRUE), AGE_control = mean(AGE, na.rm=TRUE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
-condi_cases <- condi %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= mean(SEX_COV, na.rm=TRUE), AGE_case= mean(AGE, na.rm=TRUE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
+condi_controls <- condi %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = percent_Female(SEX_COV), AGE_control = get_AGE(AGE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
+condi_cases <- condi %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= percent_Female(SEX_COV), AGE_case= get_AGE(AGE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
 write.table(merge(condi_cases,condi_controls,by="DATASET"), file="condi_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
 
-special_controls <- special %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = mean(SEX_COV, na.rm=TRUE), AGE_control = mean(AGE, na.rm=TRUE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
-special_cases <- special %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= mean(SEX_COV, na.rm=TRUE), AGE_case= mean(AGE, na.rm=TRUE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
+special_controls <- special %>% filter(PHENOTYPE == 1) %>% group_by(DATASET) %>% summarize(Sex_control = percent_Female(SEX_COV), AGE_control = get_AGE(AGE), Num_risk_control = calc_alleles(X12.40614434_T),Num_GS_control = calc_alleles(X12.40734202_A), TOTAL_control = n())
+special_cases <- special %>% filter(PHENOTYPE == 2) %>% group_by(DATASET) %>% summarize(Sex_case= percent_Female(SEX_COV), AGE_case= get_AGE(AGE), Num_risk_case= calc_alleles(X12.40614434_T),Num_GS_case= calc_alleles(X12.40734202_A), TOTAL_case= n())
 write.table(merge(special_cases,special_controls,by="DATASET"), file="special_dataset_info.txt", quote=FALSE,row.names=F,sep="\t")
 q()
 n
