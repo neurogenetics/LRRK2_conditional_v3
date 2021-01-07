@@ -2894,9 +2894,9 @@ for(file in file.names) {
 
 # Calculate the number of homo ALT/hetero/homo REF alleles for either G2019S or 5' risk variant
 calc_alleles <- function(col) {
-paste(sum(col == "2"),"/", 
-sum(col == "1"),"/", 
-sum(col == "0"),sep="")}
+paste(sum(col == "2",na.rm=TRUE),"/", 
+sum(col == "1",na.rm=TRUE),"/", 
+sum(col == "0",na.rm=TRUE),sep="")}
 
 # Calculate the mean AGE (SD) for a column
 get_AGE <- function(col) {
