@@ -3317,17 +3317,14 @@ data2$OR_lower <- exp(data2$adj_beta- 1.96*data2$SE) %>% round(digits=2)
 data2$OR_upper <- exp(data2$adj_beta+ 1.96*data2$SE) %>% round(digits=2)
 data2$OR_META5 <- paste(data2$OR, " (", data2$OR_lower, "-", data2$OR_upper, ")",sep="")
 
-# Merge with the AA change
-AA <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt",header=T)
-data2 <- merge(data2,AA,by.x="ID",by.y="id")
-
 # Now merge with our data
-data <- fread("OR_all_LRRK2.txt",header=T)
-final <- merge(data,data2,by.x="SNP",by.y="ID") %>% select().....
+data3 <- fread("../VOI_OR_all.txt",header=T)
+final <- merge(data3,data2,by.x="SNP",by.y="ID") %>% select("SNP","avsnp142","OR_NORMAL","P_NORMAL","OR_CONDI","P_CONDI","OR_SPECIAL","P_SPECIAL","OR_META5","P_META5")
+write.table(final,file="META5_VOI.txt",quote=FALSE,row.names=F,sep="\t")
+q()
+n
 
-# Change the column names
-colnames(final) <- c("Protein Consequence","Nalls et al Case-Control OR (95 CI)","IPDGC + UK Biobank, Case-Con, OR (95 CI)","IPDGC + UK Biobank Δ 5' SNP Δ Patho Case-Con, OR (95 CI)","IPDGC + UK Biobank Δ 5' SNP Δ N2081D Case-Con, OR (95 CI)")
-```
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/META5_results/META5_VOI.txt /Users/lakejs/Desktop/
 
 ## Done....
 
