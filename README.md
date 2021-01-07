@@ -3124,7 +3124,7 @@ lrrk2_info <- merge(lrrk2, data2, by="SNP")
 
 # See how many in the normal meta-analysis pass the strict P-value cutoff of 1-e-8
 normal_e8 <- lrrk2_info %>% filter(P_NORMAL < 1e-8)
-write.table(normal_e8,file="Normal_LRRK2_e-8.txt",quote=FALSE,row.names=F,sep="\t")
+#write.table(normal_e8,file="Normal_LRRK2_e-8.txt",quote=FALSE,row.names=F,sep="\t")
 
 lrrk2_info %>% filter(P_CONDI < 1e-8)
 # Empty data.table (0 rows and 12 cols)
@@ -3133,18 +3133,30 @@ condi_0.05 <- lrrk2_info[order(lrrk2_info$P_CONDI)] %>% filter(P_CONDI < 0.05)
 
 # Filter condi_0.05 for nonsynonymous variants
 condi_0.05_nonsyn <- condi_0.05 %>% filter(ExonicFunc.refGene == "nonsynonymous SNV")
-write.table(condi_0.05_nonsyn,file="Condi_0.05_nonsyn.txt",quote=FALSE,row.names=F,sep="\t")
+#write.table(condi_0.05_nonsyn,file="Condi_0.05_nonsyn.txt",quote=FALSE,row.names=F,sep="\t")
 
 # Filter condi_0.05 for variants in LRRK2
 condi_0.05_LRRK2 <- condi_0.05 %>% filter(Gene.refGene == "LRRK2" | Gene.refGene == "LINC02471;LRRK2")
-write.table(condi_0.05_LRRK2,file="Condi_0.05_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
+#write.table(condi_0.05_LRRK2,file="Condi_0.05_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
 
 # Also make a table for the variants of interest I pulled out before
 VOI <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
-VOI_OR_all <- merge(VOI %>% select(id),lrrk2_info,by.x="id",by.y="SNP")
-write.table(VOI_OR_all,file="VOI_OR_all.txt",quote=FALSE,row.names=F,sep="\t")
+
+# The positive control rs10847864 isn't in LRRK2_info since it's not in the LRRK2 region
+# Run the function f() above to add its OR and Pval info to LRRK2_info
+library(metafor)
+pos_ctrl <- f("12:123326598")
+pos_ctrl_info <- data %>% filter(Start == 123326598)
+pos_ctrl_info$SNP <- paste(pos_ctrl_info$Chr,pos_ctrl_info$Start, sep = ":")
+pos_ctrl_info <- pos_ctrl_info %>% select("SNP","avsnp142","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene")
+pos_ctrl_Mrg <- merge(pos_ctrl_info, pos_ctrl, by="SNP")
+VOI_OR_all <- merge(VOI %>% select(id) %>% rename(SNP = id),lrrk2_info,by="SNP")
+VOI_OR_w_pos <- bind_rows(VOI_OR_all,pos_ctrl_Mrg)
+
+write.table(VOI_OR_w_pos,file="VOI_OR_all.txt",quote=FALSE,row.names=F,sep="\t")
 # Note that the 5' risk variant has a weird OR in CONDI because there were a few carriers that weren't removed
 # Note that I need to manually add in the positive control since it is not in the LRRK2 region
+# Note that SPAIN4 is absent for pos control
 q()
 n
 
