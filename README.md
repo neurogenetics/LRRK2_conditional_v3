@@ -2250,12 +2250,16 @@ This section goes through:
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 module load plink
 
+# Make a subset file to select only the NORMAL datasets that are included in the GWAS
+# Didn't need this before since each cohort was run separately
+cat /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_COVARIATES/LRRK2_condi_covariates_NORMAL.*.txt > NORMAL_covariates_GWAS.txt
+
 ### Create a couple subset files to use
 
 # Recode the genotypes of interest as single allele dosage numbers 
-plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40734202 --recodeA --out LRRK2_G2019S_only
-plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40614434 --recodeA --out LRRK2_rs76904798_only
-plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40740686 --recodeA --out LRRK2_N2081D_only
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40734202 --recodeA --keep NORMAL_covariates_GWAS.txt --out LRRK2_G2019S_only
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40614434 --recodeA --keep NORMAL_covariates_GWAS.txt --out LRRK2_rs76904798_only
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40740686 --recodeA --keep NORMAL_covariates_GWAS.txt --out LRRK2_N2081D_only
 
 module load R
 R
@@ -2270,9 +2274,9 @@ newdata_ND <- subset(data_ND, X12.40740686_G == 0)
 dim(newdata_GS) 
 # 33757     7
 dim(newdata_rs) 
-# 33335     7
+# 24746     7
 dim(newdata_ND) 
-# 43954     7
+# 32473     7
 
 # Adding some additional sample info
 cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
@@ -2289,9 +2293,9 @@ Mrg_ND = merge(newdata_ND,cov,by='FID')
 dim(Mrg_GS) 
 # 33757    43
 dim(Mrg_rs) 
-# 33335    43
+# 24746    43
 dim(Mrg_ND) 
-# 43954    43
+# 32473    43
 
 write.table(Mrg_GS, file="LRRK2_G2019S_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
 write.table(Mrg_rs, file="LRRK2_rs76904798_only_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
@@ -2313,12 +2317,14 @@ cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
 module load plink
 
 # All data
-# Run the normal association tests separately since no file to --keep
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --assoc --out freq
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --logistic --out freq
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --model --out freq
 
 ls LRRK2*.txt > keep_files.txt
@@ -2647,9 +2653,11 @@ module load plink
 
 # IPDGC
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq --out IPDGC_freq
 
 plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out IPDGC_freq
 
 # UKB PD
@@ -2742,7 +2750,7 @@ keep$id %in% MAF_0.01$SNP
 keep_MAF <- MAF_df %>% filter(SNP %in% keep$id)
 
 min(keep_MAF[,2],keep_MAF[,3],keep_MAF[,4])
-# [1] 0.002434
+# [1] 0.002523
 
 # Now try MAF > 0.001 and see what variants are included
 MAF_0.001 <- MAF_df %>% filter(MAF_IPDGC > 0.001) %>% filter(MAF_UKB_PD > 0.001) %>% filter(MAF_UKB_Proxy > 0.001) 
