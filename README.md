@@ -3225,14 +3225,17 @@ for(file in file.names) {
 	# Merge it with the variant table to filter for variants of interest and add the correct REF and ALT
 	# if UKB is in the filename then merge by rsID instead
 	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="SNP")} else {merge(var_df,data,by="SNP")}
-	SNPs <- filtered %>% select("SNP")
+	#SNPs <- filtered %>% select("SNP")
 	filtered$MAC <- c(apply(filtered, 1, f))
-	filtered <- filtered %>% select("MAC")
-	colnames(filtered) <- paste(file.prefix, "MAC", sep = "_")
+	filtered <- filtered %>% select("SNP","MAC")
+	colnames(filtered) <- c("SNP",paste(file.prefix, "MAC", sep = "_"))
 	dfs[[i]]<-data.frame(filtered)
 }
 
-combined <- bind_cols(SNPs,dfs)
+# Merge all of the dataframes
+library(tidyverse)
+combined <- dfs %>% reduce(inner_join, by = "SNP")
+
 
 combined$normal_total <- combined$IPDGC_freq_MAC + combined$UKB_PD_freq_MAC + combined$UKB_Proxy_freq_MAC
 combined$condi_total <- combined$freq_no_G2019S_rs76904798_MAC + combined$UKB_PD_cases_control_over60_noriskGS_MAC + combined$UKB_Proxy_cases_control_over60_noriskGS_MAC
