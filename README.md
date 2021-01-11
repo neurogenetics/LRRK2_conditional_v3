@@ -2799,8 +2799,12 @@ require(data.table)
 
 data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/HRC_LRRK2/LRRK2_HRC_coding_V4.txt",header=T)
 data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
+
+# Need to make sure Ref and Alt match the .hybrid files 
+ref_alt <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/NORMAL_GWAS_VOI.DUTCH.txt",header=T) %>% select("ID","REF","A1")
+data2 <- merge(data2,ref_alt,by.x="id",by.y="ID")
 data3 <- merge(data,data2,by.x="ID",by.y="id")
-data4 <- data3 %>% select("avsnp142","Chr","Start","Ref","Alt","AA_long")
+data4 <- data3 %>% select("avsnp142","Chr","Start","REF","A1","AA_long")
 colnames(data4) <- c("rsID","Chr","Position","Ref","Alt","Amino Acid Change")
 data4 <- data4[order(data4$Position)]
 
@@ -2808,12 +2812,10 @@ data4 <- data4[order(data4$Position)]
 f <- function(row) {
 if (startsWith(row["Amino Acid Change"], "rs")) sub(".*", "-", row["Amino Acid Change"]) else row["Amino Acid Change"]
 }
-
 AA_change_final <- c(apply(data4, 1, f))
 data4$"Amino Acid Change" <- AA_change_final
 
 write.table(data4, file="LRRK2_variant_info.txt", quote=FALSE,row.names=F,sep="\t")
-
 q()
 n
 
@@ -3165,6 +3167,91 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_nonsyn.
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_LRRK2.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/VOI_OR_all.txt /Users/lakejs/Desktop/
 ```
+#### Calculate the % carriers removed in conditional analysis
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load plink
+# Make a bash array with the output filenames for the conditional tests
+# Note that this order corresponds to the order in keep_files.txt
+outfile=(
+ freq_no_G2019S_rs76904798
+ freq_no_G2019S_N2081D
+ freq_no_G2019S
+ freq_no_N2081D
+ freq_no_rs76904798
+)
+
+index=0
+cat keep_files.txt | while read line
+do
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out ${outfile[${index}]} --keep $line
+	index=`expr $index + 1`
+done
+
+
+# Now get the UKB results
+cat UKB_sample_selection.txt | while read line
+do 
+	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out ${line%%.*}
+done
+
+# Merge data in R
+module load R
+R
+require(dplyr)
+require(data.table)
+require(sjmisc)
+
+# Import the variant table
+var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt",header=T)
+var_df$SNP <- paste(var_df$Chr,var_df$Pos,sep=":")
+
+# Determine the minor allele count for each of the variants
+# This is either C1 or C2 depending on whether A1 is the minor allele (it is if it matches Ref from var_df)
+# Returns the count of the minor allele
+f <- function(row) {if (row["A1"] == row["Alt"]) as.numeric(row["C1"]) else as.numeric(row["C2"])}
+
+# Import the files
+i<-0
+dfs = list()
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern=".*frq.counts", full.names=TRUE) 
+for(file in file.names) { 
+	i <- i+1
+	data <- fread(file,header=T)
+	file.prefix <- file %>% gsub(pattern="\\..*|.*/", replacement="")
+	# Filter for the variants of interest
+	# Merge it with the variant table to filter for variants of interest and add the correct REF and ALT
+	# if UKB is in the filename then merge by rsID instead
+	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="SNP")} else {merge(var_df,data,by="SNP")}
+	SNPs <- filtered %>% select("SNP")
+	filtered$MAC <- c(apply(filtered, 1, f))
+	filtered <- filtered %>% select("MAC")
+	colnames(filtered) <- paste(file.prefix, "MAC", sep = "_")
+	dfs[[i]]<-data.frame(filtered)
+}
+
+combined <- bind_cols(SNPs,dfs)
+
+combined$normal_total <- combined$IPDGC_freq_MAC + combined$UKB_PD_freq_MAC + combined$UKB_Proxy_freq_MAC
+combined$condi_total <- combined$freq_no_G2019S_rs76904798_MAC + combined$UKB_PD_cases_control_over60_noriskGS_MAC + combined$UKB_Proxy_cases_control_over60_noriskGS_MAC
+combined$special_total <- combined$freq_no_G2019S_N2081D_MAC + combined$UKB_PD_cases_control_over60_noNDGS_MAC + combined$UKB_Proxy_cases_control_over60_noNDGS_MAC
+combined$RS_total <- combined$freq_no_rs76904798_MAC + combined$UKB_PD_cases_control_over60_norisk_MAC + combined$UKB_Proxy_cases_control_over60_norisk_MAC
+combined$GS_total <- combined$freq_no_G2019S_MAC + combined$UKB_PD_cases_control_over60_noGS_MAC + combined$UKB_Proxy_cases_control_over60_noGS_MAC
+combined$ND_total <- combined$freq_no_N2081D_MAC + combined$UKB_PD_cases_control_over60_noND_MAC + combined$UKB_Proxy_cases_control_over60_noND_MAC
+
+combined <- combined %>% select(SNP,normal_total,condi_total,special_total,RS_total,GS_total,ND_total)
+
+write.table(combined, file="minor_allele_counts.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/minor_allele_counts.txt /Users/lakejs/Desktop/
+
+```
+
 #### Make new forest plots for those variants that seem promising
 
 ```
