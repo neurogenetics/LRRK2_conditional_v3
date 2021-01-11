@@ -26,7 +26,7 @@ This section goes through:
 - Intro to the IPDGC data
 - Checking the imputation quality of the IPDGC data
 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
-- Overview of the full data and selection of data
+- Overview of the full data and selection of data 
 
 ### [2. Create covariate files for each IPDGC cohort](#2-Create-covariate-files-for-each-IPDGC-cohort)
 This section goes through:
