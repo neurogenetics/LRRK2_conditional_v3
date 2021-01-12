@@ -3403,7 +3403,7 @@ data <- merge(IPDGC,meta5_no23, by="ID")
 
 # Then select certain columns
 data2 <- data %>% select(ID,REF,A1,Allele1,Allele2,Effect,StdErr,"P-value")
-colnames(data2) <- c("ID", "IPDGC_REF", "IPDGC_ALT","META5_REF", "META5_ALT", "Beta", "SE", "P")
+colnames(data2) <- c("ID", "IPDGC_REF", "IPDGC_ALT","META5_ALT", "META5_REF", "Beta", "SE", "P")
 
 # Calculating OR and 95% CI from beta and SE depending if REF and ALT are the same
 f <- function(row) {if (toupper(row["META5_REF"]) == row["IPDGC_REF"]) as.numeric(row["Beta"]) else as.numeric(row["Beta"])*(-1)}
