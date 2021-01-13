@@ -2875,6 +2875,41 @@ n
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
+#### Add in the allele distributions of the datasets not used in GWAS
+```
+# Make final frequency tables with only the variants in LRRK2_AA_final.txt
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load R
+R
+require(dplyr)
+require(data.table)
+keep <- fread("LRRK2_AA_final.txt",header=T)
+file.names <- c(
+"LRRK2_coding_variants_PD_noGS.txt",
+"LRRK2_coding_variants_PD_norisk.txt",
+"LRRK2_coding_variants_PD_noND.txt",
+"LRRK2_coding_variants_Proxy_noGS.txt",
+"LRRK2_coding_variants_Proxy_norisk.txt",
+"LRRK2_coding_variants_Proxy_noND.txt",
+"LRRK2_coding_variants_freq_no_G2019S.txt",
+"LRRK2_coding_variants_freq_no_rs76904798.txt",
+"LRRK2_coding_variants_freq_no_N2081D.txt")
+
+for(file in file.names) {  
+	data <- fread(file,header=T)
+	# Filter for variants to keep and select columns
+data2 <- data %>% filter(SNP %in% keep$id) %>% select("SNP","F_A","F_U","AFF","UNAFF")
+	# Reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
+SNP_order <- data2$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+data2 <- data2[SNP_order,]
+write.table(data2, file=paste("final_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_LRRK2_coding_variants_* /Users/lakejs/Desktop/New_LRRK2_Conditional
+```
+
 #### Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
 
 ```
