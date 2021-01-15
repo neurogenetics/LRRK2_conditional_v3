@@ -189,7 +189,6 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Imputation_quality
 # Make plink binary files for the variant in each of MF, SPAIN3, SPAIN4 datasets
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 module load plink
-
 # Pull the variant from the cohorts where it's missing due to low imputation quality
 for cohort in {"MF","SPAIN3","SPAIN4"};
 do
@@ -197,20 +196,27 @@ do
 	plink --bfile s1 --snps 12:123326598 --make-bed --out ${cohort}_rs10847864_only
 done
 
+# Update the IDs of the SPAIN4 fam file to have the SPAIN4 prefix
+module load R
+R
+require(dplyr)
+require(data.table)
+data <- fread("SPAIN4_rs10847864_only.fam",header=F)
+data$V1 <- paste("SPAIN4",data$V1,sep="_")
+data$V2 <- paste("SPAIN4",data$V2,sep="_")
+write.table(data, file="updated_SPAIN4_rs10847864_only.fam", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+# Remove the header and move to the original filename
+tail -n+2 updated_SPAIN4_rs10847864_only.fam > SPAIN4_rs10847864_only.fam
+
 # Merge these new files with the HARDCALLS 
 # Note this will take a while
-sinteractive --mem=240g --cpus-per-task=20
 module load plink
-plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --bmerge MF_rs10847864_only --out hardcalls1
-plink --bfile hardcalls1 --bmerge SPAIN3_rs10847864_only --out hardcalls2
-plink --bfile hardcalls2 --bmerge SPAIN4_rs10847864_only --out HARDCALLS_with_rs10847864
-
-rm hardcalls1*
-rm hardcalls2*
-mkdir rs10847864_prep
-mv SPAIN3* rs10847864_prep
-mv SPAIN4* rs10847864_prep
-mv MF* rs10847864_prep
+plink --bfile MF_rs10847864_only --bmerge SPAIN3_rs10847864_only --out MF_SPAIN3
+plink --bfile MF_SPAIN3 --bmerge SPAIN4_rs10847864_only --out MF_SPAIN3_SPAIN4
+plink --bfile  MF_SPAIN3_SPAIN4 --bmerge /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --out HARDCALLS_with_rs10847864
 
 # Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
 ```
