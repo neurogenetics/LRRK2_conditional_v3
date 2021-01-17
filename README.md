@@ -213,6 +213,7 @@ tail -n+2 updated_SPAIN4_rs10847864_only.fam > SPAIN4_rs10847864_only.fam
 
 # Merge these new files with the HARDCALLS 
 # Note this will take a while
+sinteractive --mem=240g --cpus-per-task=20
 module load plink
 plink --bfile MF_rs10847864_only --bmerge SPAIN3_rs10847864_only --out MF_SPAIN3
 plink --bfile MF_SPAIN3 --bmerge SPAIN4_rs10847864_only --out MF_SPAIN3_SPAIN4
