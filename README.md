@@ -216,7 +216,9 @@ tail -n+2 updated_SPAIN4_rs10847864_only.fam > SPAIN4_rs10847864_only.fam
 module load plink
 plink --bfile MF_rs10847864_only --bmerge SPAIN3_rs10847864_only --out MF_SPAIN3
 plink --bfile MF_SPAIN3 --bmerge SPAIN4_rs10847864_only --out MF_SPAIN3_SPAIN4
-plink --bfile  MF_SPAIN3_SPAIN4 --bmerge /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --out HARDCALLS_with_rs10847864
+plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --bmerge MF_SPAIN3_SPAIN4 --out HARDCALLS_merged
+plink --bfile HARDCALLS_merged --keep-fam /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.fam --make-bed --out HARDCALLS_with_rs10847864
+
 
 # Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
 ```
