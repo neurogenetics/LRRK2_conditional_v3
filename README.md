@@ -220,7 +220,6 @@ plink --bfile MF_SPAIN3 --bmerge SPAIN4_rs10847864_only --out MF_SPAIN3_SPAIN4
 plink --bfile /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --bmerge MF_SPAIN3_SPAIN4 --out HARDCALLS_merged
 plink --bfile HARDCALLS_merged --keep-fam /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins.fam --make-bed --out HARDCALLS_with_rs10847864
 
-
 # Use HARDCALLS_with_rs10847864.bed/bim/fam for future analysis
 ```
 
@@ -2907,11 +2906,11 @@ file.names <- c(
 for(file in file.names) {  
 	data <- fread(file,header=T)
 	# Filter for variants to keep and select columns
-data2 <- data %>% filter(SNP %in% keep$id) %>% select("SNP","F_A","F_U","AFF","UNAFF")
+	data2 <- data %>% filter(SNP %in% keep$id) %>% select("SNP","F_A","F_U","AFF","UNAFF")
 	# Reorder based on SNP position, need to use gsub to get rid of the 12: so it sorts properly
-SNP_order <- data2$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
-data2 <- data2[SNP_order,]
-write.table(data2, file=paste("final_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+	SNP_order <- data2$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+	data2 <- data2[SNP_order,]
+	write.table(data2, file=paste("final_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
 }
 q()
 n
@@ -3319,15 +3318,12 @@ variant=$1
 title=$2
 for gwas_type in {"NORMAL","CONDI","SPECIAL"};
 do
-	head -1 /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/${gwas_type}_GWAS_CHR12.DUTCH.txt > ${gwas_type}_header.txt
-	grep ${variant} /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12/${gwas_type}_GWAS_CHR12.*.txt > temp
+	head -1 /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12//${gwas_type}_GWAS_CHR12.DUTCH.txt > ${gwas_type}_header.txt
+	grep ${variant} /data/LNG/Julie/Julie_LRRK2_Condi/${gwas_type}_GWAS_CHR12//${gwas_type}_GWAS_CHR12.*.txt > temp
 	cat ${gwas_type}_header.txt temp > ${gwas_type}_${variant}.txt
-	sed -e 's/.*\/\///g' ${gwas_type}_${variant}.txt | sed -e 's/.txt:'$variant'//g' > temp1
-	grep ${variant} ${gwas_type}_GWAS_CHR12.UKBPD.txt | sed -e 's/'${variant}'/UKBPD/g' > temp2
-	grep ${variant} ${gwas_type}_GWAS_CHR12.UKBproxy.txt | sed -e 's/'${variant}'/UKBproxy/g'  > temp3
-	cat temp1 temp2 temp3 > ${gwas_type}_${variant}v2.txt
+	sed -e 's/.*\/\///g' ${gwas_type}_${variant}.txt | sed -e 's/.txt:'$variant'//g' > ${gwas_type}_${variant}v2.txt
 done
-Rscript --vanilla extra_combined.R ${variant} ${title}
+Rscript --vanilla K1423K_combined.R ${variant} ${title}
 }
 
 # EX
