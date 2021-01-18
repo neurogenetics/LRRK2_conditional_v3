@@ -3222,7 +3222,12 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/VOI_OR_all.txt /Us
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
-module load plink
+module load plink/2.0-dev-20191128
+# All data IPDGC
+plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out freq
+
 # Make a bash array with the output filenames for the conditional tests
 # Note that this order corresponds to the order in keep_files.txt
 outfile=(
@@ -3232,20 +3237,19 @@ outfile=(
  freq_no_N2081D
  freq_no_rs76904798
 )
-
+# Run the rest of the association tests 
 index=0
 cat keep_files.txt | while read line
 do
-	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
---extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out ${outfile[${index}]} --keep $line
+	plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out ${outfile[${index}]} --keep $line
 	index=`expr $index + 1`
 done
-
 
 # Now get the UKB results
 cat UKB_sample_selection.txt | while read line
 do 
-	plink --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out ${line%%.*}
+	plink2 --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --geno-counts --out ${line%%.*}
 done
 
 # Merge data in R
@@ -3259,15 +3263,18 @@ require(sjmisc)
 var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt",header=T)
 var_df$SNP <- paste(var_df$Chr,var_df$Pos,sep=":")
 
-# Determine the minor allele count for each of the variants
-# This is either C1 or C2 depending on whether A1 is the minor allele (it is if it matches Ref from var_df)
-# Returns the count of the minor allele
-f <- function(row) {if (row["A1"] == row["Alt"]) as.numeric(row["C1"]) else as.numeric(row["C2"])}
+# Determine the carrier count for each of the variants
+# This is either the sum of hetero and homo alt or hetero and homo ref depending on whether A1 is the minor allele (it is if it matches Ref from var_df)
+f <- function(row) {
+if (row["ALT"] == row["Alt"]) 
+{as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["TWO_ALT_GENO_CTS"])} 
+else {as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["HOM_REF_CT"])}
+}
 
 # Import the files
 i<-0
 dfs = list()
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern=".*frq.counts", full.names=TRUE) 
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern=".*gcount", full.names=TRUE) 
 for(file in file.names) { 
 	i <- i+1
 	data <- fread(file,header=T)
@@ -3275,35 +3282,21 @@ for(file in file.names) {
 	# Filter for the variants of interest
 	# Merge it with the variant table to filter for variants of interest and add the correct REF and ALT
 	# if UKB is in the filename then merge by rsID instead
-	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="SNP")} else {merge(var_df,data,by="SNP")}
-	#SNPs <- filtered %>% select("SNP")
-	filtered$MAC <- c(apply(filtered, 1, f))
-	filtered <- filtered %>% select("SNP","MAC")
-	colnames(filtered) <- c("SNP",paste(file.prefix, "MAC", sep = "_"))
+	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="ID")} else {merge(var_df,data,by.x="SNP",by.y="ID")}
+	filtered$Carriers <- c(apply(filtered, 1, f))
+	filtered <- filtered %>% select("SNP","Carriers")
+	colnames(filtered) <- c("SNP",paste(file.prefix, "carriers", sep = "_"))
 	dfs[[i]]<-data.frame(filtered)
 }
 
 # Merge all of the dataframes
 library(tidyverse)
 combined <- dfs %>% reduce(inner_join, by = "SNP")
-
-
-combined$normal_total <- combined$IPDGC_freq_MAC + combined$UKB_PD_freq_MAC + combined$UKB_Proxy_freq_MAC
-combined$condi_total <- combined$freq_no_G2019S_rs76904798_MAC + combined$UKB_PD_cases_control_over60_noriskGS_MAC + combined$UKB_Proxy_cases_control_over60_noriskGS_MAC
-combined$special_total <- combined$freq_no_G2019S_N2081D_MAC + combined$UKB_PD_cases_control_over60_noNDGS_MAC + combined$UKB_Proxy_cases_control_over60_noNDGS_MAC
-combined$RS_total <- combined$freq_no_rs76904798_MAC + combined$UKB_PD_cases_control_over60_norisk_MAC + combined$UKB_Proxy_cases_control_over60_norisk_MAC
-combined$GS_total <- combined$freq_no_G2019S_MAC + combined$UKB_PD_cases_control_over60_noGS_MAC + combined$UKB_Proxy_cases_control_over60_noGS_MAC
-combined$ND_total <- combined$freq_no_N2081D_MAC + combined$UKB_PD_cases_control_over60_noND_MAC + combined$UKB_Proxy_cases_control_over60_noND_MAC
-
-combined <- combined %>% select(SNP,normal_total,condi_total,special_total,RS_total,GS_total,ND_total)
-
-write.table(combined, file="minor_allele_counts.txt", quote=FALSE,row.names=F,sep="\t")
-
+write.table(combined, file="carrier_counts.txt", quote=FALSE,row.names=F,sep="\t")
 q()
 n
 
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/minor_allele_counts.txt /Users/lakejs/Desktop/
-
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/carrier_counts.txt /Users/lakejs/Desktop
 ```
 
 #### Make new forest plots for those variants that seem promising
