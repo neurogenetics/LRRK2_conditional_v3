@@ -3316,7 +3316,7 @@ do
 	cat ${gwas_type}_header.txt temp > ${gwas_type}_${variant}.txt
 	sed -e 's/.*\/\///g' ${gwas_type}_${variant}.txt | sed -e 's/.txt:'$variant'//g' > ${gwas_type}_${variant}v2.txt
 done
-Rscript --vanilla K1423K_combined.R ${variant} ${title}
+Rscript --vanilla extra_combined.R ${variant} ${title}
 }
 
 # EX
