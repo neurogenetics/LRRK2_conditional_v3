@@ -2839,9 +2839,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
 ```
 
-### 7.2 Make final tables
-
-#### Make final frequency tables with only the variants in LRRK2_AA_final.txt
+### 7.2 Make final frequency tables with only the variants in LRRK2_AA_final.txt
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2883,7 +2881,8 @@ n
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
-#### Add in the allele distributions of the datasets not used in GWAS
+
+### 7.3 Add in the allele distributions of the datasets not used in GWAS
 ```
 # Make final frequency tables with only the variants in LRRK2_AA_final.txt
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2918,7 +2917,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_LRRK2_coding_variants_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
 
-#### Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
+### 7.4 Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2978,7 +2977,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/condi_dataset_info
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/special_dataset_info.txt /Users/lakejs/Desktop/
 ```
 
-### 7.3 Organize the final forest plots into a new directory
+### 7.5 Organize the final forest plots into a new directory
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -3028,7 +3027,91 @@ cat forest_plot_filenames.txt | xargs -i scp {} .
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf /Users/lakejs/Desktop/final_plots
 ```
 
-### 7.4 Make some extra forest plots
+### 7.6 Calculate the % carriers removed in conditional analysis
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
+module load plink/2.0-dev-20191128
+# All data IPDGC
+plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+--keep NORMAL_covariates_GWAS.txt \
+--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out freq
+
+# Make a bash array with the output filenames for the conditional tests
+# Note that this order corresponds to the order in keep_files.txt
+outfile=(
+ freq_no_G2019S_rs76904798
+ freq_no_G2019S_N2081D
+ freq_no_G2019S
+ freq_no_N2081D
+ freq_no_rs76904798
+)
+# Run the rest of the association tests 
+index=0
+cat keep_files.txt | while read line
+do
+	plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
+	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out ${outfile[${index}]} --keep $line
+	index=`expr $index + 1`
+done
+
+# Now get the UKB results
+cat UKB_sample_selection.txt | while read line
+do 
+	plink2 --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --geno-counts --out ${line%%.*}
+done
+
+# Merge data in R
+module load R
+R
+require(dplyr)
+require(data.table)
+require(sjmisc)
+
+# Import the variant table
+var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt",header=T)
+var_df$SNP <- paste(var_df$Chr,var_df$Pos,sep=":")
+
+# Determine the carrier count for each of the variants
+# This is either the sum of hetero and homo alt or hetero and homo ref depending on whether A1 is the minor allele (it is if it matches Ref from var_df)
+f <- function(row) {
+if (row["ALT"] == row["Alt"]) 
+{as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["TWO_ALT_GENO_CTS"])} 
+else {as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["HOM_REF_CT"])}
+}
+
+# Import the files
+i<-0
+dfs = list()
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern=".*gcount", full.names=TRUE) 
+for(file in file.names) { 
+	i <- i+1
+	data <- fread(file,header=T)
+	file.prefix <- file %>% gsub(pattern="\\..*|.*/", replacement="")
+	# Filter for the variants of interest
+	# Merge it with the variant table to filter for variants of interest and add the correct REF and ALT
+	# if UKB is in the filename then merge by rsID instead
+	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="ID")} else {merge(var_df,data,by.x="SNP",by.y="ID")}
+	filtered$Carriers <- c(apply(filtered, 1, f))
+	filtered <- filtered %>% select("SNP","Carriers")
+	colnames(filtered) <- c("SNP",paste(file.prefix, "carriers", sep = "_"))
+	dfs[[i]]<-data.frame(filtered)
+}
+
+# Merge all of the dataframes
+library(tidyverse)
+combined <- dfs %>% reduce(inner_join, by = "SNP")
+write.table(combined, file="carrier_counts.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/carrier_counts.txt /Users/lakejs/Desktop
+```
+### 7.7 Perform GWAS with only G2019S, 5' variant and protective haplotype removed for LocusZoom figure
+```
+```
+
+### 7.8 Make some extra forest plots
 
 #### Make the CHR12 files for UKB
 
@@ -3218,86 +3301,6 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_nonsyn.
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_LRRK2.txt /Users/lakejs/Desktop/
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/VOI_OR_all.txt /Users/lakejs/Desktop/
 ```
-#### Calculate the % carriers removed in conditional analysis
-
-```
-cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
-module load plink/2.0-dev-20191128
-# All data IPDGC
-plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
---keep NORMAL_covariates_GWAS.txt \
---extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out freq
-
-# Make a bash array with the output filenames for the conditional tests
-# Note that this order corresponds to the order in keep_files.txt
-outfile=(
- freq_no_G2019S_rs76904798
- freq_no_G2019S_N2081D
- freq_no_G2019S
- freq_no_N2081D
- freq_no_rs76904798
-)
-# Run the rest of the association tests 
-index=0
-cat keep_files.txt | while read line
-do
-	plink2 --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
-	--extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --geno-counts --out ${outfile[${index}]} --keep $line
-	index=`expr $index + 1`
-done
-
-# Now get the UKB results
-cat UKB_sample_selection.txt | while read line
-do 
-	plink2 --bfile ${line%%.*} --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --geno-counts --out ${line%%.*}
-done
-
-# Merge data in R
-module load R
-R
-require(dplyr)
-require(data.table)
-require(sjmisc)
-
-# Import the variant table
-var_df <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt",header=T)
-var_df$SNP <- paste(var_df$Chr,var_df$Pos,sep=":")
-
-# Determine the carrier count for each of the variants
-# This is either the sum of hetero and homo alt or hetero and homo ref depending on whether A1 is the minor allele (it is if it matches Ref from var_df)
-f <- function(row) {
-if (row["ALT"] == row["Alt"]) 
-{as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["TWO_ALT_GENO_CTS"])} 
-else {as.numeric(row["HET_REF_ALT_CTS"]) + as.numeric(row["HOM_REF_CT"])}
-}
-
-# Import the files
-i<-0
-dfs = list()
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/", pattern=".*gcount", full.names=TRUE) 
-for(file in file.names) { 
-	i <- i+1
-	data <- fread(file,header=T)
-	file.prefix <- file %>% gsub(pattern="\\..*|.*/", replacement="")
-	# Filter for the variants of interest
-	# Merge it with the variant table to filter for variants of interest and add the correct REF and ALT
-	# if UKB is in the filename then merge by rsID instead
-	filtered <- if (grepl("UKB",file)) {merge(var_df,data,by.x="rsID",by.y="ID")} else {merge(var_df,data,by.x="SNP",by.y="ID")}
-	filtered$Carriers <- c(apply(filtered, 1, f))
-	filtered <- filtered %>% select("SNP","Carriers")
-	colnames(filtered) <- c("SNP",paste(file.prefix, "carriers", sep = "_"))
-	dfs[[i]]<-data.frame(filtered)
-}
-
-# Merge all of the dataframes
-library(tidyverse)
-combined <- dfs %>% reduce(inner_join, by = "SNP")
-write.table(combined, file="carrier_counts.txt", quote=FALSE,row.names=F,sep="\t")
-q()
-n
-
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/carrier_counts.txt /Users/lakejs/Desktop
-```
 
 #### Make new forest plots for those variants that seem promising
 
@@ -3409,7 +3412,7 @@ text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
 ```
 
-### 7.5 Combine with META5 data for comparison table
+### 7.9 Combine with META5 data for comparison table
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -3456,6 +3459,7 @@ q()
 n
 
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/META5_results/META5_VOI.txt /Users/lakejs/Desktop/
+```
 
 ## Done....
 
