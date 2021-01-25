@@ -1326,16 +1326,14 @@ module load python/3.6
 # ${line%%.*} gets rid of the file extension
 cat GWAS_files.txt | while read line
 do 
-	# Filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
-	awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
+  # Filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
+  awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
 	
-	#reformat the plink2 results for meta-analysis using python
-	if [[ $line == *"PD"* ]]; then
-		python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
-		--outfile toMeta.${line%%.*}.txt --B-or-C B
-	elif [[ $line == *"Proxy"* ]]; then
-		python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
-		--outfile toProxy.${line%%.*}.txt --B-or-C B; fi
+  #reformat the plink2 results for meta-analysis using python
+  if [[ $line == *"PD"* ]]; then
+    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt --outfile toMeta.${line%%.*}.txt --B-or-C B
+  elif [[ $line == *"Proxy"* ]]; then
+    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt --outfile toProxy.${line%%.*}.txt --B-or-C B; fi
 done
 
 # The PD files are ready for meta-analysis, the proxy files need more reformatting…
@@ -1757,10 +1755,7 @@ cat list.txt
 
 cat list.txt  | while read line
 do
-	sed -i 's/:A//g' $line
-	sed -i 's/:T//g' $line
-	sed -i 's/:C//g' $line
-	sed -i 's/:G//g' $line
+	sed -i -r 's/:[ACGT]+//g' $line
 done
 
 # These are the headers we want
@@ -3106,9 +3101,6 @@ q()
 n
 
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/carrier_counts.txt /Users/lakejs/Desktop
-```
-### 7.7 Perform GWAS with only G2019S, 5' variant and protective haplotype removed for LocusZoom figure
-```
 ```
 
 ### 7.8 Make some extra forest plots
