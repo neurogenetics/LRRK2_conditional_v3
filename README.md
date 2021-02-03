@@ -57,7 +57,13 @@ This section goes through:
 - Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
 - Determining a frequency cutoff for LRRK2 coding variants
 
-### [7. Make final tables and figures](#7-Make-final-tables-and-figures)
+### [7. Add in some other conditional GWAS types](#7-Add-in-some-other-conditional-GWAS-types)
+This section goes through:
+- Adding in GWAS conditioned on G2019S, rs76904798, N2081D individually
+- Adding in GWAS with only carriers of G2019S and rs76904798
+- Adding in GWAS with only carriers of R1398H
+
+### [8. Make final tables and figures](#7-Make-final-tables-and-figures)
 This section goes through:
 - Preparing tables for manuscript
 - Preparing figures for manuscript
@@ -1911,12 +1917,6 @@ make_forest SPECIAL
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/NORMAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/SPECIAL_forest
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/*pdf /Users/lakejs/Desktop/CONDI_forest
-
-# Make a separate plot for G2019S since it needs different xlim() parameters
-cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots
-Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2_G2019S.R 12:40734202 Gly2019Ser 'NORMAL'
-
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf /Users/lakejs/Desktop
 ```
 
 ```
@@ -1955,41 +1955,47 @@ dev.off()
 ```
 
 ```
-# This is metafor_LRRK2_G2019S.R
+# Make a separate plot for G2019S and the 5' variant with different xlim() parameters
+cd /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots
 
-#!/usr/bin/env Rscript
+module load R
+R
 require(dplyr)
-args = commandArgs(trailingOnly=TRUE)
-# start like this
-# Rscript --vanilla metafor_LRRK2_G2019S.R $FILENAME $FILENAME2 $FILENAME3
-# Rscript --vanilla metafor_LRRK2_G2019S.R 12:40734202 Gly2019Ser 'NORMAL'
-FILENAME = args[1]
-FILENAME2 = args[2]
-FILENAME3 = args[3]
-print(args[1])
-print(args[2])
-print(FILENAME)
-print(FILENAME2)
-print(FILENAME3)
+require(data.table)
 library(metafor)
-data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
-## data <- read.table("header_12:40614434v2.txt", header = T)
-# pull out the cohort name
+data <- read.table("header_12:40734202v2.txt", header = T)
 labs <- gsub(".*\\.","", data$ID)
 labs <- gsub("NEUROX_DBGAP","NEUROX", labs)
 yi   <- data$beta
 sei  <- data$LOG.OR._SE
 resFe  <- rma(yi=yi, sei=sei, method="FE")
-resRe  <- rma(yi=yi, sei=sei)
-print(summary(resFe))
-print(summary(resRe))
-pdf(file = paste(FILENAME,"_",FILENAME3,"_final_GS.pdf",sep=""), width = 7, height = 6)
-## pdf(file = "12:40713899_condi_final.pdf", width = 8, height = 6)
+pdf(file = "12:40734202_NORMAL_final_GS.pdf", width = 6, height = 6)
 Pvalue <- formatC(resFe$pval, digits=4)
-forest(resFe, xlim=c(-4,7),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.25, 0.5, 1, 5, 10, 20, 40)))
-mtext(side=3, line = .5, FILENAME2, cex=1.2, font=2)
+
+forest(resFe, annotate=TRUE, xlim=c(-3.75,7.75),width=3,cex.lab=.8, cex.axis=1, atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 5, 10, 20, 40)))
+mtext(side=3, line = .5, "Gly2019Ser", cex=1.2, font=2)
 mtext(side=3, line = -1, paste("P=",Pvalue,sep=""), cex=1, font=2)
 dev.off()
+
+data <- read.table("header_12:40614434v2.txt", header = T)
+labs <- gsub(".*\\.","", data$ID)
+labs <- gsub("NEUROX_DBGAP", "NEUROX", labs)
+yi   <- data$beta
+sei  <- data$LOG.OR._SE
+resFe  <- rma(yi=yi, sei=sei, method="FE")
+pdf(file = "12:40614434_NORMAL_final_RS.pdf", width = 5, height = 6)
+Pvalue <- formatC(resFe$pval, digits=4)
+
+forest(resFe, annotate=TRUE, xlim=c(-2.75,3.5),width=3,cex.lab=.8, cex.axis=1, atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5,1, 2, 3)))
+mtext(side=3, line = .5, "rs76904798", cex=1.2, font=2)
+mtext(side=3, line = -1, paste("P=",Pvalue,sep=""), cex=1, font=2)
+dev.off()
+q()
+n
+
+# Export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf /Users/lakejs/Desktop
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40614434_NORMAL_final_RS.pdf /Users/lakejs/Desktop
 ```
 
 #### Make combined forest plots with normal, conditional and special conditional GWAS
@@ -2624,7 +2630,7 @@ cat LRRK2_coding_variants_PD_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_PD_
 cat LRRK2_coding_variants_Proxy_noNDGS.txt | cut -f1,3,4,6,7 > case_control_UKB_Proxy_special.txt
 ```
 
-### 6.3 Determine a freq or count cutoff for the LRRK2 coding variants
+### 6.3 Determine a freq cutoff for the LRRK2 coding variants
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2648,7 +2654,7 @@ cat keep_LRRK2_variants.txt
 # 12:123326598	rs10847864	rs10847864
 ```
 
-#### Calculate MAF and minor allele counts for the LRRK2 variants 
+#### Calculate MAF for the LRRK2 variants 
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2659,26 +2665,17 @@ plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
 --keep NORMAL_covariates_GWAS.txt \
 --extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq --out IPDGC_freq
 
-plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 \
---keep NORMAL_covariates_GWAS.txt \
---extract /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_coding_VOI.txt --freq counts --out IPDGC_freq
-
 # UKB PD
 plink --bfile UKB_PD_cases_control_over60 \
  --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq --out UKB_PD_freq
-
-plink --bfile UKB_PD_cases_control_over60 \
- --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out UKB_PD_freq
 
 # UKB Proxy
 plink --bfile UKB_Proxy_cases_control_over60 \
  --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq --out UKB_Proxy_freq
 
-plink --bfile UKB_Proxy_cases_control_over60 \
- --extract <(cut -f1 LRRK2_coding_VOI_rsIDs.txt) --freq counts --out UKB_Proxy_freq
 ```
 
-#### Merge the frequency and counts info in R
+#### Merge the frequency info in R
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2688,19 +2685,11 @@ require(dplyr)
 require(data.table)
 
 # Import the files
-IPDGC_freq <- fread("IPDGC_freq.frq",header=T)
-IPDGC_counts <- fread("IPDGC_freq.frq.counts",header=T)
-PD_freq <- fread("UKB_PD_freq.frq",header=T)
-PD_counts <- fread("UKB_PD_freq.frq.counts",header=T)
-Proxy_freq <- fread("UKB_Proxy_freq.frq",header=T)
-Proxy_counts <- fread("UKB_Proxy_freq.frq.counts",header=T)
+IPDGC <- fread("IPDGC_freq.frq",header=T)
+PD <- fread("UKB_PD_freq.frq",header=T)
+Proxy <- fread("UKB_Proxy_freq.frq",header=T)
 data <- fread("LRRK2_coding_VOI_rsIDs.txt",header=T)
 keep <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/keep_LRRK2_variants.txt",header=T)
-
-# Merge the counts and freqs dataframes
-PD <- merge(PD_freq,PD_counts,by="SNP")
-Proxy <- merge(Proxy_freq,Proxy_counts,by="SNP")
-IPDGC <- merge(IPDGC_freq,IPDGC_counts,by="SNP")
 
 # Rename the SNP column to rsID for UKB
 PD <- PD %>% rename(rsID = SNP)
@@ -2713,15 +2702,6 @@ data <- data %>% rename(SNP = data.ID)
 PD  <- merge(PD, data, by.x="rsID",by.y="data.avsnp142")
 Proxy  <- merge(Proxy, data, by.x="rsID",by.y="data.avsnp142")
 
-# Determine the minor allele count for each of the variants
-# This is either C1 or C2 depending on whether A1.y (from _counts) is the minor allele (it is if it matches A1.x from _freq)
-# Returns the count of the minor allele
-f <- function(row) {if (row["A1.x"] == row["A1.y"]) as.numeric(row["C1"]) else as.numeric(row["C2"])}
-
-PD$Minor_allele_count_UKB_PD <- c(apply(PD, 1, f))
-Proxy$Minor_allele_count_UKB_Proxy <- c(apply(Proxy, 1, f))
-IPDGC$Minor_allele_count_IPDGC <- c(apply(IPDGC, 1, f))
-
 # Rename the columns 
 IPDGC <- IPDGC %>% rename(MAF_IPDGC = MAF) %>% rename(Allele_count_IPDGC = NCHROBS)
 PD <- PD %>% rename(MAF_UKB_PD = MAF) %>% rename(Allele_count_UKB_PD = NCHROBS)
@@ -2731,17 +2711,7 @@ Proxy <- Proxy %>% rename(MAF_UKB_Proxy = MAF) %>% rename(Allele_count_UKB_Proxy
 library(tidyverse)
 data2 <- list(IPDGC, PD, Proxy) %>% reduce(inner_join, by = "SNP")
 
-data2 <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy","Minor_allele_count_IPDGC","Minor_allele_count_UKB_PD","Minor_allele_count_UKB_Proxy","Allele_count_IPDGC", "Allele_count_UKB_PD","Allele_count_UKB_Proxy")
-
-# Add a column for total allele count and total minor allele count in both datasets combined
-data2$Total_allele_count<- data2$Allele_count_IPDGC + data2$Allele_count_UKB_PD + data2$Allele_count_UKB_Proxy
-data2$Total_minor_allele_count <- data2$Minor_allele_count_IPDGC + data2$Minor_allele_count_UKB_PD + data2$Minor_allele_count_UKB_Proxy
-```
-
-#### Determine a cutoff for which variants to include in final tables
-
-```
-## Investingating MAF cutoffs: 
+## Determine a MAF cutoff for which variants to include in final tables
 MAF_df <- data2 %>% select("SNP","MAF_IPDGC","MAF_UKB_PD","MAF_UKB_Proxy")
 
 # First see if the variants I want to keep are included if MAF > 0.01 for all three datasets
@@ -2794,13 +2764,421 @@ q()
 n
 ```
 
-## 7. Make final tables and figures
+## 7. Add in some other conditional GWAS types
+
+Note: these sections are the same as above except conditioning on different allele carriers
+
+### 7.1 IPDGC other conditonal GWAS
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir other_GWAS
+cd other_GWAS
+
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_G2019S_only_with_COV.txt .
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_rs76904798_only_with_COV.txt .
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_N2081D_only_with_COV.txt .
+
+# Recode the genotypes of interest as single allele dosage numbers 
+plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40702911,12:40614434,12:40734202 --recodeA --keep /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/NORMAL_covariates_GWAS.txt --out LRRK2_other_GWAS
+
+module load R
+R
+require(dplyr)
+require(data.table)
+data <- read.table("LRRK2_other_GWAS.raw",header=T)
+
+# Has the protective variant Arg1398His
+newdata1 <- subset(data, X12.40702911_A != 0)
+# Has the 5' risk variant
+newdata2 <- subset(data, X12.40614434_T != 0)
+# Has either G2019S or the 5' risk variant
+newdata3 <- subset(data, X12.40614434_T != 0 | X12.40734202_A != 0)
+
+dim(newdata1) 
+# 4546    9
+
+dim(newdata2) 
+# 9268    9
+
+dim(newdata3) 
+# 9482    9
+
+# Adding some additional sample info
+cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+
+# Drop some columns because otherwise merge conflict
+cov$IID <- NULL
+cov$fatid <- NULL
+cov$matid <- NULL
+
+Mrg1 <- merge(newdata1,cov,by='FID')
+Mrg2 <- merge(newdata2,cov,by='FID')
+Mrg3 <- merge(newdata3,cov,by='FID')
+
+write.table(Mrg1, file="LRRK2_carriersR1398H_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Mrg2, file="LRRK2_carriersRS_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Mrg3, file="LRRK2_carriersGSRS_with_COV.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+### Make COV files for IPDGC
+
+PCA_IPDGC() {
+gwas_type=$1
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+mkdir $gwas_type
+cd $gwas_type
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do
+	mkdir $line
+	cd $line
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/${line}/${line} --keep /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/LRRK2_${gwas_type}_with_COV.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
+plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
+plink --bfile prune --pca --out $line.LRRK2_condi_PCA_${gwas_type}
+	
+# Send the .eigenvec files back to the working directory to combine into a new combined PC file
+scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}
+cd ..
+	cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
+done
+}
+
+PCA_IPDGC carriersR1398H
+PCA_IPDGC carriersRS
+PCA_IPDGC carriersGSRS
+PCA_IPDGC G2019S_only
+PCA_IPDGC N2081D_only
+PCA_IPDGC rs76904798_only
+
+### Create covariate files
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+R
+require(data.table)
+require(dplyr)
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS", pattern="LRRK2.*with_COV.txt") 
+for(file in file.names) { 
+  gwas_type <- file %>% gsub(pattern="LRRK2_", replacement="") %>% gsub(pattern="_with_COV.txt", replacement="")
+  cov <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/", file,sep=""),header=T)
+  PC <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/",gwas_type,"/",gwas_type,"_PCs.txt",sep=""),header=F)
+  # Get rid of some columns so that the column numbers match up
+  cov$X12.40614434_T <- NULL
+  cov$X12.40734202_A <- NULL
+  cov$X12.40740686_G <- NULL
+  cov$ X12.40702911_A <- NULL
+  # We want to keep the phenotype information but get rid of the old PCs before merging
+  cov2 <- cov[,c(1:12)]
+  # Now add the new PCs
+  Mrg <- merge(cov2,PC,by.x="FID",by.y="V1") 
+  # Get rid of this column since it is a repeat of "FID"
+  Mrg$V2 <- NULL 
+  # Only keep the first 10 PCs
+  Mrg2 <- Mrg[,c(1:22)]
+  # Change the name of the first 10 PCs
+  colnames(Mrg2)[13]  <- "PC1"
+  colnames(Mrg2)[14]  <- "PC2"
+  colnames(Mrg2)[15]  <- "PC3"
+  colnames(Mrg2)[16]  <- "PC4"
+  colnames(Mrg2)[17]  <- "PC5"
+  colnames(Mrg2)[18]  <- "PC6"
+  colnames(Mrg2)[19]  <- "PC7"
+  colnames(Mrg2)[20]  <- "PC8"
+  colnames(Mrg2)[21]  <- "PC9"
+  colnames(Mrg2)[22]  <- "PC10"
+  # The old sample selection files have an extra column, get rid of it 
+  # Export the final coviariate files
+  write.table(Mrg2, file=paste("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/",gwas_type,"/LRRK2_condi_covariates_",gwas_type,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+
+q()
+n
+
+subset_cohorts() {
+gwas_type=$1
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/$gwas_type
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt  | while read line
+do
+	# Pull out all of the lines that contain the cohort name
+	# Combine these lines with the header
+	grep -e FID -e $line LRRK2_condi_covariates_${gwas_type}.txt > LRRK2_condi_covariates_${gwas_type}.$line.txt
+done
+# Fix MF data...
+grep -v -e HBS -e PDBP -e SPAIN4 LRRK2_condi_covariates_${gwas_type}.MF.txt > temp
+mv temp LRRK2_condi_covariates_${gwas_type}.MF.txt
+# Fixed…
+}
+
+subset_cohorts carriersR1398H
+subset_cohorts carriersRS
+subset_cohorts carriersGSRS
+subset_cohorts G2019S_only
+subset_cohorts N2081D_only
+subset_cohorts rs76904798_only
+
+## Run the GWAS
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh carriersR1398H
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh carriersRS
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh carriersGSRS
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh G2019S_only
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh N2081D_only
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_CHR12_GWAS_other.sh rs76904798_only
+
+### Reformat
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+reformat() {
+gwas_type=$1
+# Loop over to reformat the .hybrid files into .txt files
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}/${gwas_type}_GWAS_CHR12/
+  Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R ${gwas_type}_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid
+done
+}
+
+reformat carriersR1398H
+reformat carriersRS
+reformat carriersGSRS
+reformat G2019S_only
+reformat N2081D_only
+reformat rs76904798_only
+
+## Organize the files 
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+organize() {
+  gwas_type=$1
+  cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}/
+  mkdir ${gwas_type}_COVARIATES
+  mv *${gwas_type}.eigenvec ${gwas_type}_COVARIATES
+  mv LRRK2_condi_covariates_${gwas_type}* ${gwas_type}_COVARIATES
+  cd ${gwas_type}_GWAS_CHR12
+  mkdir prep_files
+  mv *.log prep_files
+  mv *.hybrid prep_files
+}
+
+organize carriersR1398H
+organize carriersRS
+organize carriersGSRS
+organize G2019S_only
+organize N2081D_only
+organize rs76904798_only
+```
+
+### 7.2 UKB other conditonal GWAS
+```
+# Rename the files used in co_inheritance so they match the format of IPDGC
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_noGS.txt ./UKB_PD_cases_control_over60_G2019S_only.txt
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_norisk.txt ./UKB_PD_cases_control_over60_rs76904798_only.txt
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_PD_cases_control_over60_noND.txt ./UKB_PD_cases_control_over60_N2081D_only.txt
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_noGS.txt ./UKB_Proxy_cases_control_over60_G2019S_only.txt
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_norisk.txt ./UKB_Proxy_cases_control_over60_rs76904798_only.txt
+cp /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/UKB_Proxy_cases_control_over60_noND.txt ./UKB_Proxy_cases_control_over60_N2081D_only.txt
+
+## Determine LRRK2 carrier status
+module load plink/2.3-alpha
+plink2 --bgen /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb_imp_chr12_v3.bgen --snps rs7133914, rs76904798, rs34637584 --make-bed --sample /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb33601_imp_chr1_v3_s487395.sample --out LRRK2_other_GWAS_UKB
+module load plink
+plink --bfile LRRK2_other_GWAS_UKB --recodeA --out LRRK2_other_GWAS_UKB2
+
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS
+module load R
+R
+require(data.table)
+require(dplyr)
+PD_normal <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_PD_cases_control_over60.txt",header=T)
+PD_normal <- PD_normal[,c(1:5)]
+Proxy_normal <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_Proxy_cases_control_over60.txt",header=T)
+Proxy_normal <- Proxy_normal[,c(1:5)]
+
+LRRK2_status <- fread("LRRK2_other_GWAS_UKB2.raw",header=T)
+LRRK2_status$IID <- NULL
+LRRK2_status$PAT <- NULL
+LRRK2_status$MAT <- NULL
+LRRK2_status$SEX <- NULL
+LRRK2_status$PHENOTYPE <- NULL
+   
+# Add LRRK2 status to the final PD and Proxy datasets
+PD_normal_LRRK2 <- merge(PD_normal,LRRK2_status,by.x='FID',by.y='FID')
+Proxy_normal_LRRK2 <- merge(Proxy_normal,LRRK2_status,by.x='FID',by.y='FID')
+
+PD_carriersR1398H <- subset(PD_normal_LRRK2, rs7133914_A != 0)
+PD_carriersRS <- subset(PD_normal_LRRK2, rs76904798_T != 0)
+PD_carriersGSRS <- subset(PD_normal_LRRK2, rs76904798_T != 0 | rs34637584_A !=0)
+Proxy_carriersR1398H <- subset(Proxy_normal_LRRK2, rs7133914_A != 0)
+Proxy_carriersRS <- subset(Proxy_normal_LRRK2, rs76904798_T != 0)
+Proxy_carriersGSRS <- subset(Proxy_normal_LRRK2, rs76904798_T != 0 | rs34637584_A !=0)
+
+write.table(PD_carriersR1398H, file="UKB_PD_cases_control_over60_carriersR1398H.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PD_carriersRS, file="UKB_PD_cases_control_over60_carriersRS.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(PD_carriersGSRS, file="UKB_PD_cases_control_over60_carriersGSRS.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Proxy_carriersR1398H, file="UKB_Proxy_cases_control_over60_carriersR1398H.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Proxy_carriersRS, file="UKB_Proxy_cases_control_over60_carriersRS.txt", quote=FALSE,row.names=F,sep="\t")
+write.table(Proxy_carriersGSRS, file="UKB_Proxy_cases_control_over60_carriersGSRS.txt", quote=FALSE,row.names=F,sep="\t")
+q()
+n
+
+## Calculate PCs
+module load flashpca
+module load plink
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/
+mkdir UKB_other_GWAS
+cd UKB_other_GWAS
+
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh carriersR1398H
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh carriersRS
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh carriersGSRS
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh G2019S_only
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh N2081D_only
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/flashpca_UKB_other.sh rs76904798_only
+
+
+# Merge files in R
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS
+module load R
+R
+require(data.table)
+require(dplyr)
+# Load the full covariates file
+cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
+# Remove the PC columns from cov so that we can merge with the new PCs
+cov2 <- cov %>% select(1:8)
+# Pull the subset phenotype files from your working directory
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS", pattern="^UKB_P")
+for(file in file.names) {  
+  pc <- fread(paste("pcs_",file,sep=""),header=T)
+  pc$IID <- NULL
+  pheno <- fread(paste("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/",file,sep=""),header=T)
+  # This info will become redundant when merging, keep (PD/CONTROL/PROXY) STATUS and LRRK2 carrier status
+  pheno$IID <- pheno$SEX <- pheno$AGE <- NULL
+  Mrg = merge(cov2,pheno,by='FID')
+  Mrg2 = merge(Mrg,pc,by='FID')
+  write.table(Mrg2, file=paste("COV_",file,sep=""), quote=FALSE,row.names=F,sep="\t")
+}
+q()
+n
+
+# Replace PD/CONTROL/PROXY STATUS with numbers
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS
+ls COV_UKB_P* > UKB_COV_files.txt
+
+cat UKB_COV_files.txt | while read line
+do 
+  sed -i 's/PD/2/g' $line
+  sed -i 's/PROXY/2/g' $line
+  sed -i 's/CONTROL/1/g' $line
+done
+
+# Organize and remove some files
+mkdir flashpca_files
+mv eigenvalues_UKB_P* flashpca_files
+mv eigenvectors_UKB_P* flashpca_files
+mv pcs_UKB_P* flashpca_files
+mv pve_UKB_P* flashpca_files
+rm *bed
+rm *bim
+rm *fam
+rm *log
+rm pruned_data*
+
+### Perform GWAS
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS
+module load plink/2.0-dev-20191128
+
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh carriersR1398H
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh carriersRS
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh carriersGSRS
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh G2019S_only
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh N2081D_only
+sbatch --cpus-per-task=16 --mem=240g --mail-type=ALL --time=24:00:00 UKB_CHR12_GWAS_other.sh rs76904798_only
+
+###Reformat plink2 GWAS output
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS
+ls COV_UKB_P*.hybrid | cat > GWAS_files.txt
+module load python/3.6
+cat GWAS_files.txt | while read line
+do 
+  # Filter the results by A1_FREQ (minor allele frequency) >=0.0001 --> to input.txt \
+  awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
+  # Reformat the plink2 results for meta-analysis using python
+  if [[ $line == *"PD"* ]]; then
+    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
+    --outfile toMeta.${line%%.*}.txt --B-or-C B
+  elif [[ $line == *"Proxy"* ]]; then
+    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
+    --outfile toProxy.${line%%.*}.txt --B-or-C B; fi
+done
+
+###Adjust Proxy cases to the same scale as PD cases
+# Make the toProxy files into .csv files
+module load R
+R
+require(data.table)
+require(dplyr)
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS", pattern="toProxy") 
+for(file in file.names) {  
+  data <- fread(file,header=T)
+  newname <- file %>% gsub(pattern=".txt", replacement=".csv") %>% gsub(pattern="toProxy",replacement="toConvert")
+  write.table(data, file=newname,quote=F,row.names=F,sep=",")
+}
+q()
+n
+
+# Convert proxies to "normal" files ready for meta-analysis
+ls toConvert* > convert_files.txt
+cat convert_files.txt | while read line
+do
+	pattern="toConvert"
+	replacement="toMeta"
+	newname="${line/$pattern/$replacement}"
+	python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxStyle.py \
+--infile $line --beta-proxy beta --se-proxy se --p-proxy P --outfile $newname
+done
+
+# Convert the "normalized" proxy .csv files back to .txt files
+R
+require(data.table)
+require(dplyr)
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS", pattern="toMeta.COV_UKB_Proxy.*csv") 
+for(file in file.names) {  
+  data <- fread(file,header=T)
+  newname <- file %>% gsub(pattern=".csv", replacement=".txt")
+  write.table(data, file=newname,quote=F,row.names=F,sep="\t")
+}
+q()
+n
+
+# Reformat and move to the same directory as the IPDGC CHR12 files for meta-analysis
+cd /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/UKB_other_GWAS
+
+ls toMeta*.txt > meta_files.txt
+cat meta_files.txt | while read line
+do
+	# Get rid of the :N:N off of the markername so that it matches IPDGC
+	sed -i -r 's/:[ACGT]+//g' $line
+	
+	pattern1="*_over60_"
+	pattern2="_chr12.txt"
+	replacement=""
+	newname1="${line/$pattern1/$replacement}"
+	newname2="${newname1/$pattern2/$replacement}"
+	
+	if [[ $line == *"PD"* ]]; then
+	  cut -f1-7 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBPD.txt
+	elif [[ $line == *"Proxy"* ]]; then
+	  cut -f1,2,3,7,15,16,17 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBproxy.txt; fi
+done
+```
+
+## 8. Make final tables and figures
 
 This section goes through:
 - Preparing tables for manuscript
 - Preparing figures for manuscript
 
-### 7.1 Make a final table with variant info
+### 8.1 Make a final table with variant info
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2834,7 +3212,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_variant_info.txt /Users/lakejs/Desktop/
 ```
 
-### 7.2 Make final frequency tables with only the variants in LRRK2_AA_final.txt
+### 8.2 Make final frequency tables with only the variants in LRRK2_AA_final.txt
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2877,7 +3255,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
 
-### 7.3 Add in the allele distributions of the datasets not used in GWAS
+### 8.3 Add in the allele distributions of the datasets not used in GWAS
 ```
 # Make final frequency tables with only the variants in LRRK2_AA_final.txt
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -2912,7 +3290,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_LRRK2_coding_variants_* /Users/lakejs/Desktop/New_LRRK2_Conditional
 ```
 
-### 7.4 Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
+### 8.4 Update dataset info table to include Avg AGE, % Female, # GS and # 5' risk carriers
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -2972,7 +3350,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/condi_dataset_info
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/special_dataset_info.txt /Users/lakejs/Desktop/
 ```
 
-### 7.5 Organize the final forest plots into a new directory
+### 8.5 Organize the final forest plots into a new directory
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -3022,7 +3400,7 @@ cat forest_plot_filenames.txt | xargs -i scp {} .
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/final_plots/*.pdf /Users/lakejs/Desktop/final_plots
 ```
 
-### 7.6 Calculate the % carriers removed in conditional analysis
+### 8.6 Calculate the % carriers removed in conditional analysis
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance
@@ -3103,9 +3481,9 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/carrier_counts.txt /Users/lakejs/Desktop
 ```
 
-### 7.8 Make some extra forest plots
+### 8.7 Run meta-analysis in METAL
 
-#### Make the CHR12 files for UKB
+#### Make the CHR12 files for UKB NORMAL, CONDI, SPECIAL GWAS
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
@@ -3122,119 +3500,186 @@ cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.C
 cut -f 1,2,3,7,15,16,17 /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/META/toMeta.COV_UKB_Proxy_cases_control_over60_noriskGS_chr12.txt | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/CONDI_GWAS_CHR12.UKBproxy.txt
 ```
 
-#### Calculate the ORs and P-values for all variants in the LRRK2 region
+#### Run meta-analysis in METAL
 
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir METAL
+cd METAL
 
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh carriersR1398H /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/carriersR1398H/carriersR1398H_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh carriersRS /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/carriersRS/carriersRS_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh carriersGSRS /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/carriersGSRS/carriersGSRS_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh G2019S_only /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/G2019S_only/G2019S_only_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh N2081D_only /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/N2081D_only/N2081D_only_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh rs76904798_only /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/rs76904798_only/rs76904798_only_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh NORMAL /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh CONDI /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh SPECIAL /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12
+```
+
+```
+# This is METAL.sh
+
+#!/bin/bash
+
+# sh METAL.sh carriersGSRS /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/carriersGSRS/carriersGSRS_GWAS_CHR12
+GWAS_TYPE=$1
+GWAS_DIR=$2
+
+ls $GWAS_DIR/*GWAS_CHR12*txt > ${GWAS_TYPE}_GWAS_FILES.txt
+
+get_colname () {
+colnumber=$1
+file=$2
+head -1 $file |cut -f$colnumber
+}
+
+
+make_metal_file () {
+echo """
+#../generic-metal/metal metalAll.txt
+#THIS SCRIPT EXECUTES AN ANALYSIS OF seventeen STUDIES
+#THE RESULTS FOR EACH STUDY ARE STORED IN FILES Inputfile1.txt THROUGH Inputfile17.txt
+SCHEME  STDERR
+AVERAGEFREQ ON
+MINMAXFREQ ON
+
+# UNCOMMENT THE NEXT LINE TO ENABLE GenomicControl CORRECTION
+# GENOMICCONTROL ON
+"""
+
+cat ${GWAS_TYPE}_GWAS_FILES.txt | while read line
+do
+	echo ""
+	echo "# === DESCRIBE AND PROCESS INPUT FILE ==="
+	echo MARKER $(get_colname 1 $line)
+	echo ALLELE $(get_colname 3 $line) $(get_colname 2 $line)
+	echo FREQ   $(get_colname 4 $line)
+	echo EFFECT $(get_colname 5 $line)
+	echo STDERR $(get_colname 6 $line)
+	echo PVALUE $(get_colname 7 $line)
+	echo PROCESS $line
+done
+
+echo """
+OUTFILE ${GWAS_TYPE}_metal .tbl
+ANALYZE
+
+QUIT
+"""
+}
+
+module load metal
+make_metal_file > ${GWAS_TYPE}_metal_template.txt
+metal ${GWAS_TYPE}_metal_template.txt
+```
+
+#### Make association tables 
+
+```
+# Remove multi-allelic variants
+# See here: https://github.com/neurogenetics/Autosomal-sex-differences-PD/blob/main/Meta%20analyses%20of%20Results.md
+cd /data/LNG/Julie/Julie_LRRK2_Condi/METAL
+cut -f 1,2 /data/CARD/GENERAL/HRC.r1-1.GRCh37.wgs.mac5.sites.tab | grep '^12' | sort -k2 -n | sed -e 's/\t/:/g' | uniq -u > no_multi_allelics_HRC_CHR12.txt
+
+## Extract CHR12 from META5 results to merge with our results
+zless /data/CARD/PD/summary_stats/META5_no23.tbl.gz | grep -e "MarkerName" -e "chr12" | sed 's/chr//g' > META5_metal1.tbl
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi/METAL
 module load R
 R
 require(dplyr)
 require(data.table)
-# This may take a bit
-data <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
-CHR_12_only <- data %>% filter(Chr == 12)
-lrrk2 <- CHR_12_only %>% filter(Start %>% between(40590546,40763087))
-lrrk2$ID <- paste(lrrk2$Chr,lrrk2$Start, sep = ":")
+# Use this to add the rsIDs for LocusZoom
+info <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
+CHR_12 <- info %>% filter(Chr == 12)
+CHR_12$SNP <- paste(CHR_12$Chr,CHR_12$Start, sep = ":")
+CHR_12 <- CHR_12 %>% select("SNP","avsnp142","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene")
 
-LRRK2_SNPs <- lrrk2 %>% select(ID)
-write.table(LRRK2_SNPs,file="LRRK2_vars_all.txt",quote=FALSE,row.names=F,sep="\t")
-# Use this to test
-write.table(LRRK2_SNPs %>% head(),file="LRRK2_vars_head.txt",quote=FALSE,row.names=F,sep="\t")
-q()
-n
+# Filter CHR_12 for multi-allelics
+HRC <- fread("no_multi_allelics_HRC_CHR12.txt",header=F)
+CHR_12 <- CHR_12 %>% filter(CHR_12$SNP %in% HRC$V1)
 
-# Test run 
-Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_head.txt
+# Return Ref and Alt where Alt is the minor allele
+ref <- function(row) {if (row["Freq1"] < 0.5)  row["Allele2"] else row["Allele1"]}
+alt <- function(row) {if (row["Freq1"] < 0.5)  row["Allele1"] else row["Allele2"]}
 
-# Now run all LRRK2 variants
-# This will take a while
-sbatch --cpus-per-task=20 --mem=240g --mail-type=ALL --time=24:00:00 Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
-```
+# First I need to apply Ref and Alt only to the normal dataset
+# Then merge this with each incoming dataset
+# Then I need to make the adj_beta column based on Alt and Allele1 
+normal <- fread("NORMAL_metal1.tbl",header=T)
+normal$Ref <- c(apply(normal,1,ref))
+normal$Alt <- c(apply(normal,1,alt))
 
-```
-# This is make_CHR12_ORs.R
+# Calculating beta depending on whether Allele1 is the minor allele from the Normal dataset
+# The normal Alt and Ref will be merged with each dataset to check this
+f <- function(row) {if (row["Allele1"] != row["Alt"] & !is.na(row["Allele1"])) as.numeric(row["Effect"])*(-1) else as.numeric(row["Effect"])}
 
-#!/usr/bin/env Rscript
-args = commandArgs(trailingOnly=TRUE)
-# start like this
-# Rscript --vanilla make_CHR12_ORs.R $FILENAME
-# Rscript --vanilla make_CHR12_ORs.R LRRK2_vars_all.txt
-FILENAME = args[1]
-print(args[1])
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/", pattern=".*tbl$")
+for(file in file.names) {
+  data <- fread(file,header=T)
+  # Add in the rsID for LocusZoom
+  data <- merge(data, CHR_12 %>% select("SNP","avsnp142"), by.x="MarkerName",by.y="SNP")
+  SNP_order <- data$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() %>% order()
+  data <- data[SNP_order,]
+  data <- data %>% rename(rsID = avsnp142)
+  # Add in adjusted beta value column so that the Effect is based on the minor allele of the Normal meta-analysis
+  data <- merge(data,normal %>% select("MarkerName","Ref","Alt"),by="MarkerName")
+  data$adj_beta <- c(apply(data,1,f))
+  # Use these files for LocusZoom
+  write.table(data, file=file %>% gsub(pattern=".tbl",replacement=".txt"), quote=FALSE,row.names=F,sep="\t")
+}
 
-require(dplyr)
-require(data.table)
-library(metafor)
-
-# Define a function that returns the NORMAL, CONDI and SPECIAL OR (OR_lower - OR_upper)
-f <- function(id) {
+## Reformat to OR and P-value
 i<-0
 dfs = list()
-for(gwas_type in c("NORMAL","CONDI","SPECIAL")) {
-        # Note that the header_ files don't exist for most variants…so need to incorporate making them
-        dirs=paste("/data/LNG/Julie/Julie_LRRK2_Condi/",gwas_type,"_GWAS_CHR12",sep="")
-        patterns=paste("^",gwas_type,"_GWAS_CHR12",sep="")
-        file.names <- dir(dirs, pattern=patterns, full.names=TRUE)
-        data = list()
-        for(file in file.names) {
-                data2 <- fread(file,header=T)
-                colnames(data2) <- c("ID","REF","A1","A1_FREQ","beta","LOG.OR._SE","P")
-                filtered <- data2 %>% filter(ID == id)
-                filtered$ID <- file %>% gsub(pattern=".txt",replacement="") %>% gsub(pattern=".*\\.",replacement="")
-                data <- bind_rows(data,data.frame(filtered))}
-        print(gwas_type)
-        print(data)
-        i <- i+1
-        yi <- data$beta
-        
-        if (all(is.na(yi))) {dfs[[i]]<-data.frame(ORs = NA, Pval = NA)}
-        else {
-                sei  <- data$LOG.OR._SE
-                resFe <- rma(yi=yi, sei=sei, method="FE")
-                summary <- coef(summary(resFe))
-                beta <- summary$estimate
-                se <- summary$se
-                P <- summary$pval %>% formatC(digits=4) %>% as.numeric()
-                OR <- exp(beta) %>% round(digits=2)
-                OR_lower <- exp(beta - 1.96*se) %>% round(digits=2)
-                OR_upper <- exp(beta + 1.96*se) %>% round(digits=2)
-                OR_all <- paste(OR, " (", OR_lower, "-", OR_upper, ")",sep="")
-                dfs[[i]]<-data.frame(ORs = OR_all, Pval = P)
-        }
-}
-combined <- bind_cols(dfs)
-colnames(combined) <- c("OR_NORMAL","P_NORMAL","OR_CONDI","P_CONDI","OR_SPECIAL","P_SPECIAL")
-combined$SNP <- id
-combined
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/", pattern=".*metal1.txt$")
+for(file in file.names) {
+  i <- i+1
+  data <- fread(file,header=T)
+  beta <- data$adj_beta
+  se <- data$StdErr
+  P <- data$"P-value" %>% formatC(digits=4) %>% as.numeric()
+  OR <- exp(beta) %>% round(digits=2)
+  OR_lower <- exp(beta - 1.96*se) %>% round(digits=2)
+  OR_upper <- exp(beta + 1.96*se) %>% round(digits=2)
+  OR_all <- paste(OR, " (", OR_lower, "-", OR_upper, ")",sep="")
+  df <- data.frame(ORs = OR_all, Pval = P)
+  prefix <- file %>% gsub(pattern="_metal1.txt",replacement="")
+  print(prefix)
+  colnames(df) <- paste(prefix, colnames(df), sep = "_")
+  df$SNP= data$MarkerName
+  dfs[[i]] <- df
 }
 
-vars <- fread(FILENAME,header=T)
-final_tbl <- bind_rows(apply(vars, 1, f))
-write.table(final_tbl,file="OR_all_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
-```
+# Merge all of the dataframes
+library(tidyverse)
+combined <- dfs %>% reduce(full_join, by = "SNP")
 
-```
-### See which variants pass the p-value threshold of 1x10^-8 in NORMAL, CONDI and SPECIAL meta-analysis
+# Make SNP the first column
+combined <- combined %>% relocate("SNP", .before = "carriersGSRS_ORs")
 
-R
-require(dplyr)
-require(data.table)
+write.table(combined, file="METAL_ORs_all.txt", quote=FALSE,row.names=F,sep="\t")
 
-# This may take a bit
-data <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
-CHR_12_only <- data %>% filter(Chr == 12)
-# Got the coordinates of LRRK2 on CHR12 HG37 from here: http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=ENSG00000188906;r=12:40590546-40763087
-lrrk2 <- CHR_12_only %>% filter(Start %>% between(40590546,40763087))
-lrrk2$SNP <- paste(lrrk2$Chr,lrrk2$Start, sep = ":")
-lrrk2 <- lrrk2 %>% select("SNP","avsnp142","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene")
+keep <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
+combined_VOI <- combined %>% filter(combined$SNP %in% keep$id)
 
+write.table(combined_VOI, file="METAL_ORs_VOI.txt", quote=FALSE,row.names=F,sep="\t")
+
+## Add in some other variant identifying info 
 # Use the function f to pull out the amino acid change…if not a coding variant, use the rsID
 f <- function(row) {
 if (row[6] != ".") sub(".*p.", "", row[6]) else "."
 }
+# First filter for variants in the LRRK2 region so it doesn't take forever
+# This was also already filtered for multi-allelic variants
+CHR_12$Pos <- CHR_12$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric()
+LRRK2_area <- CHR_12 %>% filter(CHR_12$Pos %>% between(40490546,40863087))
+
+
 # Note that these names have the one letter amino acid code
-AA_short <- c(apply(lrrk2, 1, f))
+AA_short <- c(apply(LRRK2_area, 1, f))
 
 # Split the short amino acid names at the number
 split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
@@ -3245,53 +3690,128 @@ last_AA <- split[,3]
 # Replace the one letter amino acid code with the three letter code
 require(seqinr)
 AA_long <- paste(aaa(first_AA),middle_num,aaa(last_AA)) %>% gsub(pattern="NA", replacement="") %>% gsub(pattern=" ",replacement= "")
-lrrk2$"AAChange.refGene" <- AA_long
+LRRK2_area$"AAChange.refGene" <- AA_long
 
-data2 <- fread("OR_all_LRRK2.txt",header=T)
-lrrk2_info <- merge(lrrk2, data2, by="SNP")
+LRRK2_area_info <- merge(LRRK2_area, combined, by="SNP")
 
+LRRK2_area_info$Gene.refGene %>% unique()
+[1] "SLC2A13"           "SLC2A13;LINC02471" "LINC02471"        
+[4] "LINC02471;LRRK2"   "LRRK2"             "LRRK2;MUC19"      
+[7] "MUC19"            
+
+LRRK2_area_info <- LRRK2_area_info %>% filter(Gene.refGene == "LRRK2" | Gene.refGene == "LINC02471;LRRK2" | Gene.refGene == "LRRK2;MUC19")
+write.table(LRRK2_area_info, file="METAL_ORs_LRRK2_with_info.txt", quote=FALSE,row.names=F,sep="\t")
+
+## Now investigate the top hits
 # See how many in the normal meta-analysis pass the strict P-value cutoff of 1-e-8
-normal_e8 <- lrrk2_info %>% filter(P_NORMAL < 1e-8)
-#write.table(normal_e8,file="Normal_LRRK2_e-8.txt",quote=FALSE,row.names=F,sep="\t")
+normal_5e8 <- LRRK2_area_info %>% filter(NORMAL_Pval < 5e-8)
+write.table(normal_5e8,file="Normal_LRRK2_5e-8.txt",quote=FALSE,row.names=F,sep="\t")
 
-lrrk2_info %>% filter(P_CONDI < 1e-8)
-# Empty data.table (0 rows and 12 cols)
+# See how many in the condi meta-analysis pass the strict P-value cutoff of 5e-8
+condi_5e8 <- LRRK2_area_info %>% filter(CONDI_Pval < 5e-8)
+# empty
 
-condi_0.05 <- lrrk2_info[order(lrrk2_info$P_CONDI)] %>% filter(P_CONDI < 0.05)
+condi_LRRK2_ordered <- LRRK2_area_info[order(LRRK2_area_info$CONDI_Pval)]
+condi_LRRK2_select <- condi_LRRK2_ordered %>% filter(CONDI_Pval < 0.01)
+write.table(condi_LRRK2_select,file="Condi_LRRK2_0.01.txt",quote=FALSE,row.names=F,sep="\t")
 
-# Filter condi_0.05 for nonsynonymous variants
-condi_0.05_nonsyn <- condi_0.05 %>% filter(ExonicFunc.refGene == "nonsynonymous SNV")
-#write.table(condi_0.05_nonsyn,file="Condi_0.05_nonsyn.txt",quote=FALSE,row.names=F,sep="\t")
+# LRRK2 missense variants
+nonsynon <- LRRK2_area_info %>% filter(ExonicFunc.refGene == "nonsynonymous SNV")
+write.table(nonsynon,file="Nonsynonymous_LRRK2_all.txt",quote=FALSE,row.names=F,sep="\t")
 
-# Filter condi_0.05 for variants in LRRK2
-condi_0.05_LRRK2 <- condi_0.05 %>% filter(Gene.refGene == "LRRK2" | Gene.refGene == "LINC02471;LRRK2")
-#write.table(condi_0.05_LRRK2,file="Condi_0.05_LRRK2.txt",quote=FALSE,row.names=F,sep="\t")
-
-# Also make a table for the variants of interest I pulled out before
-VOI <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
-
-# The positive control rs10847864 isn't in LRRK2_info since it's not in the LRRK2 region
-# Run the function f() above to add its OR and Pval info to LRRK2_info
-library(metafor)
-pos_ctrl <- f("12:123326598")
-pos_ctrl_info <- data %>% filter(Start == 123326598)
-pos_ctrl_info$SNP <- paste(pos_ctrl_info$Chr,pos_ctrl_info$Start, sep = ":")
-pos_ctrl_info <- pos_ctrl_info %>% select("SNP","avsnp142","Func.refGene","Gene.refGene","ExonicFunc.refGene","AAChange.refGene")
-pos_ctrl_Mrg <- merge(pos_ctrl_info, pos_ctrl, by="SNP")
-VOI_OR_all <- merge(VOI %>% select(id) %>% rename(SNP = id),lrrk2_info,by="SNP")
-VOI_OR_w_pos <- bind_rows(VOI_OR_all,pos_ctrl_Mrg)
-
-write.table(VOI_OR_w_pos,file="VOI_OR_all.txt",quote=FALSE,row.names=F,sep="\t")
-# Note that the 5' risk variant has a weird OR in CONDI because there were a few carriers that weren't removed
-# Note that I need to manually add in the positive control since it is not in the LRRK2 region
-# Note that SPAIN4 is absent for pos control
 q()
 n
 
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Normal_LRRK2_e-8.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_nonsyn.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/Condi_0.05_LRRK2.txt /Users/lakejs/Desktop/
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/VOI_OR_all.txt /Users/lakejs/Desktop/
+## Export
+
+# Use these for LocusZoom
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/METAL/*metal1.txt  /Users/lakejs/Desktop/METAL
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/METAL/METAL_ORs_VOI.txt  /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/METAL/Normal_LRRK2_5e-8.txt  /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/METAL/Condi_LRRK2_0.01.txt  /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/METAL/Nonsynonymous_LRRK2_all.txt  /Users/lakejs/Desktop
+```
+
+#### Make locus zoom plots on biowulf
+
+```
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir locuszoom_plots
+cd locuszoom_plots
+
+R
+require(data.table)
+require(dplyr)
+
+data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/NORMAL_metal1.txt",header=T)
+data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/CONDI_metal1.txt",header=T)
+data3 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/rs76904798_only_metal1.txt",header=T)
+data4 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/G2019S_only_metal1.txt",header=T)
+
+data$color="gray"
+data2$color="gray"
+data3$color="gray"
+data4$color="gray"
+
+data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs34637584","rs76904798"), "purple", color)) 
+data2 <- data2 %>% mutate(color = ifelse(data2$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883"), "purple", color)) 
+data3 <- data3 %>% mutate(color = ifelse(data3$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs34637584"), "purple", color)) 
+data4 <- data4 %>% mutate(color = ifelse(data4$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs76904798"), "purple", color)) 
+
+annotations <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
+annotations_LRRK2 <- annotations %>% filter(Chr == 12) %>% filter(Start %>% between(40490546,40863087))
+subset_annot <- annotations_LRRK2 %>% select("avsnp142","Func.refGene")
+subset_annot <- subset_annot %>% rename(rsID = avsnp142)
+
+data$Pos <- data$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+data2$Pos <- data2$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+data3$Pos <- data3$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+data4$Pos <- data4$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+
+data <- data %>% filter(Pos %>% between(40490546,40863087))
+data2 <- data2 %>% filter(Pos %>% between(40490546,40863087))
+data3 <- data3 %>% filter(Pos %>% between(40490546,40863087))
+data4 <- data4 %>% filter(Pos %>% between(40490546,40863087))
+
+data_Mrg <- left_join(data,subset_annot,by="rsID")
+data2_Mrg <- left_join(data2,subset_annot,by="rsID")
+data3_Mrg <- left_join(data3,subset_annot,by="rsID")
+data4_Mrg <- left_join(data4,subset_annot,by="rsID")
+
+write.table(data_Mrg,file="final_NORMAL.txt",quote=FALSE,row.names=F,sep="\t")
+write.table(data2_Mrg,file="final_CONDI.txt",quote=FALSE,row.names=F,sep="\t")
+write.table(data3_Mrg,file="final_RS.txt",quote=FALSE,row.names=F,sep="\t")
+write.table(data4_Mrg,file="final_GS.txt",quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+# Manually make the files with the rsIDs to label on the plots 
+module load locuszoom
+
+locuszoom --meta final_NORMAL.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Unconditioned" theme=black --prefix "normal" --flank 23kb \
+    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
+    --denote-markers-file marker_file_normal.txt signifLineColor="gray" signifLineWidth=1 
+
+locuszoom --meta final_CONDI.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and rs76904798" theme=black --prefix "condi" --flank 23kb \
+    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
+    --denote-markers-file marker_file_condi.txt signifLineColor="gray" signifLineWidth=1 ymax=3 
+
+locuszoom --meta final_GS.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S" theme=black --prefix "GS" --flank 23kb \
+    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 \
+    --denote-markers-file marker_file_GS.txt signifLineColor="gray" signifLineWidth=1 ymax=3
+
+locuszoom --meta final_RS.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on rs76904798" theme=black --prefix "RS" --flank 23kb \
+    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=1 refsnpTextSize=0.7\
+    --denote-markers-file marker_file_RS.txt signifLineColor="gray" signifLineWidth=1
+
+# Export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/locuszoom_plots/*pdf /Users/lakejs/Desktop/locuszoom
 ```
 
 #### Make new forest plots for those variants that seem promising
@@ -3315,13 +3835,10 @@ Rscript --vanilla extra_combined.R ${variant} ${title}
 }
 
 # EX
-combined_forest_CHR12 12:40591117 rs1491923
-# These are the ones of interest so far
-12:40591117 rs1491923
-12:40665920 12:40665920
-12:40702987 Lys1423Lys
+combined_forest_CHR12 12:40702987 Lys1423Lys 
 
 # Export
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/12:40702987_combined.pdf /Users/lakejs/Desktop/
 ```
 
 ```
@@ -3402,55 +3919,6 @@ forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex
 text(0, 17.1, "No N2081D + No G2019S", cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
-```
-
-### 7.9 Combine with META5 data for comparison table
-
-```
-cd /data/LNG/Julie/Julie_LRRK2_Condi
-mkdir META5_results
-cd META5_results
-
-zcat /data/CARD/PD/summary_stats/META5_all.gz | grep -e MarkerName -f <( cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt) > META5_LRRK2.txt
-
-zcat /data/CARD/PD/summary_stats/META5_no23.tbl.gz | grep -e MarkerName -f <( cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt) > META5_no23.txt
-
-module load R
-R
-require(dplyr)
-require(data.table)
-
-meta5_no23 <- fread("META5_no23.txt",header=T)
-meta5_no23$ID <- meta5_no23$MarkerName %>% gsub(pattern="chr",replacement="")
-
-# Use one of the GWAS files to get the correct REF/ALT
-IPDGC <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/NORMAL_GWAS_VOI.NEUROX_DBGAP.txt",header=T)
-
-# Merge with meta5
-data <- merge(IPDGC,meta5_no23, by="ID")
-
-# Then select certain columns
-data2 <- data %>% select(ID,REF,A1,Allele1,Allele2,Effect,StdErr,"P-value")
-colnames(data2) <- c("ID", "IPDGC_REF", "IPDGC_ALT","META5_ALT", "META5_REF", "Beta", "SE", "P")
-
-# Calculating OR and 95% CI from beta and SE depending if REF and ALT are the same
-f <- function(row) {if (toupper(row["META5_REF"]) == row["IPDGC_REF"]) as.numeric(row["Beta"]) else as.numeric(row["Beta"])*(-1)}
-
-data2$adj_beta <- c(apply(data2, 1, f))
-data2$P_META5 <- data2$P %>% formatC(digits=4) 
-data2$OR <- exp(data2$adj_beta) %>% round(digits=2)
-data2$OR_lower <- exp(data2$adj_beta- 1.96*data2$SE) %>% round(digits=2)
-data2$OR_upper <- exp(data2$adj_beta+ 1.96*data2$SE) %>% round(digits=2)
-data2$OR_META5 <- paste(data2$OR, " (", data2$OR_lower, "-", data2$OR_upper, ")",sep="")
-
-# Now merge with our data
-data3 <- fread("../VOI_OR_all.txt",header=T)
-final <- merge(data3,data2,by.x="SNP",by.y="ID") %>% select("SNP","avsnp142","OR_NORMAL","P_NORMAL","OR_CONDI","P_CONDI","OR_SPECIAL","P_SPECIAL","OR_META5","P_META5")
-write.table(final,file="META5_VOI.txt",quote=FALSE,row.names=F,sep="\t")
-q()
-n
-
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/META5_results/META5_VOI.txt /Users/lakejs/Desktop/
 ```
 
 ## Done....
