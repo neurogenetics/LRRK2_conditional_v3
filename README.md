@@ -3384,6 +3384,7 @@ combined_files <- file.names[bool]
 # Add the three plots that don't have normal, conditional and special GWAS results 
 other_files = c(
 "/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40734202_NORMAL_final_GS.pdf",
+"/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/12:40614434_NORMAL_final_RS.pdf",
 "/data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combined_no_condi.pdf",
 "/data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf"
 )
@@ -3517,7 +3518,6 @@ sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh NO
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh CONDI /data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 METAL.sh SPECIAL /data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12
 ```
-
 ```
 # This is METAL.sh
 
