@@ -3920,11 +3920,9 @@ text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
 ```
 
-## 8.8 Make a final imputation quality table with all the LRRK2 coding variants
+### 8.8 Make a final imputation quality table with all the LRRK2 coding variants
 
 ```
-10:37 AM
-
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 mkdir imputation_quality
 cd imputation_quality
