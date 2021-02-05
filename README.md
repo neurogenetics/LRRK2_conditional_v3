@@ -2836,11 +2836,10 @@ do
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
 	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_${gwas_type}
-	
-# Send the .eigenvec files back to the working directory to combine into a new combined PC file
-scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}
-cd ..
-	cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
+	# Send the .eigenvec files back to the working directory to combine into a new combined PC file
+	scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}
+	cd ..
+		cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
 done
 }
 
