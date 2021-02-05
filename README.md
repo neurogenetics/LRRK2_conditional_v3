@@ -3920,6 +3920,69 @@ text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
 ```
 
+## 8.8 Make a final imputation quality table with all the LRRK2 coding variants
+
+```
+10:37 AM
+
+cd /data/LNG/Julie/Julie_LRRK2_Condi
+mkdir imputation_quality
+cd imputation_quality
+
+cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+do
+	zless /data/LNG/CORNELIS_TEMP/PD_AAO/${line}/chr12.info.gz | grep -f <(cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt) -e SNP | cut -f1,7,8 > ${line}_imputation.txt
+done
+
+grep -f <(cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt | sed 's/12://g') /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb_mfi_chr12_v3.txt | grep -v rs140702911  > UKB_imputation_quality.txt
+
+# If the SNP is here, it was genotyped
+grep -f <(cut -f1 /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt | sed 's/12://g') /data/CARD/UKBIOBANK/GENOTYPE_DATA/ukb_snp_chr12_v2.bim | cut -f4 > UKB_genotyped_SNPs.txt
+
+R
+require(dplyr)
+require(data.table)
+
+i<-0
+dfs = list()
+file.names <- dir("/data/LNG/Julie/scratch_work/", pattern="imputation.txt$") 
+for(file in file.names) {
+  i <- i+1
+  data <- fread(file,header=T)
+  cohort <- file %>% gsub(pattern="_imputation.txt", replacement="")
+  colnames(data) <- c("SNP", paste(cohort,"Rsq",sep="_"),paste(cohort,"Genotyped",sep="_"))
+  dfs[[i]]<- data
+}
+
+# Merge all of the dataframes
+library(tidyverse)
+combined <- dfs %>% reduce(inner_join, by = "SNP")
+
+UKB_imputation <- fread("UKB_imputation_quality.txt",header=F)
+UKB_genotyped <- fread("UKB_genotyped_SNPs.txt",header=F)
+
+# Add a SNP column to UKB
+UKB_imputation$SNP <- paste("12:", UKB_imputation$V3,sep="")
+UKB_genotyped$SNP <- paste("12:", UKB_genotyped$V1,sep="")
+
+# Use this function to say if a variant was genotyped or imputed in UKB
+f <- function(row) {if (row["SNP"] %in% UKB_genotyped$SNP) "Genotyped" else "Imputed"}
+
+UKB_imputation$Genotyped <- c(apply(UKB_imputation, 1, f))
+UKB <- UKB_imputation %>% select("SNP","V8","Genotyped")
+colnames(UKB) <- c("SNP","UKB_Rsq","UKB_Genotyped")
+
+# Add UKB to the imputation quality table
+combined <- merge(combined,UKB,by="SNP")
+
+write.table(combined, file="imputation_quality.txt", quote=FALSE,row.names=F,sep="\t")
+
+q()
+n
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/imputation_quality/imputation_quality.txt /Users/lakejs/Desktop/
+```
+
 ## Done....
 
 ![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
