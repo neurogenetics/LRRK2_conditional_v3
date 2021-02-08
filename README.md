@@ -3538,7 +3538,6 @@ head -1 $file |cut -f$colnumber
 make_metal_file () {
 echo """
 #../generic-metal/metal metalAll.txt
-#THIS SCRIPT EXECUTES AN ANALYSIS OF seventeen STUDIES
 #THE RESULTS FOR EACH STUDY ARE STORED IN FILES Inputfile1.txt THROUGH Inputfile17.txt
 SCHEME  STDERR
 AVERAGEFREQ ON
@@ -3649,6 +3648,7 @@ for(file in file.names) {
   print(prefix)
   colnames(df) <- paste(prefix, colnames(df), sep = "_")
   df$SNP= data$MarkerName
+  df$SNP_REFALT= paste(data$MarkerName,toupper(data$Ref),toupper(data$Alt),sep=":")
   dfs[[i]] <- df
 }
 
@@ -3656,6 +3656,11 @@ for(file in file.names) {
 library(tidyverse)
 combined <- dfs %>% reduce(full_join, by = "SNP")
 
+# See which column has all the SNP:REF:ALT info
+combined %>% summarise_all(funs(sum(is.na(.))))
+combined$SNP_final<- combined$SNP_REFALT.y.y.y.y
+# Drop all of the other SNPREF columns
+combined <- combined %>% select(-contains("REFALT"))
 # Make SNP the first column
 combined <- combined %>% relocate("SNP", .before = "carriersGSRS_ORs")
 
@@ -3663,7 +3668,6 @@ write.table(combined, file="METAL_ORs_all.txt", quote=FALSE,row.names=F,sep="\t"
 
 keep <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/LRRK2_AA_final.txt",header=T)
 combined_VOI <- combined %>% filter(combined$SNP %in% keep$id)
-
 write.table(combined_VOI, file="METAL_ORs_VOI.txt", quote=FALSE,row.names=F,sep="\t")
 
 ## Add in some other variant identifying info 
@@ -3673,15 +3677,15 @@ if (row[6] != ".") sub(".*p.", "", row[6]) else "."
 }
 # First filter for variants in the LRRK2 region so it doesn't take forever
 # This was also already filtered for multi-allelic variants
-CHR_12$Pos <- CHR_12$SNP %>% gsub(pattern="12:", replacement="") %>% as.numeric()
+CHR_12$Pos <- CHR_12$SNP %>% gsub(pattern="12:", replacement="")  %>% gsub(pattern=":.*", replacement="") %>% as.numeric()
 LRRK2_area <- CHR_12 %>% filter(CHR_12$Pos %>% between(40490546,40863087))
-
+LRRK2_area$Pos <- NULL
 
 # Note that these names have the one letter amino acid code
 AA_short <- c(apply(LRRK2_area, 1, f))
 
 # Split the short amino acid names at the number
-split <- do.call(rbind, strsplit(AA_short, "(?<=[A-Z])(?=[0-9])|(?<=[0-9])(?=[A-Z])", perl = TRUE))
+split <- do.call(rbind, strsplit(AA_short, "(?<=[a-zA-Z])(?=[0-9])|(?<=[0-9])(?=[a-zA-Z])", perl = TRUE))
 first_AA <- split[,1]
 middle_num <- split[,2]
 last_AA <- split[,3]
