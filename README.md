@@ -3989,7 +3989,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/imputation_quality
 
 ![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
 
-## For Hampton: fisher test of differences in allele distribution between normal and conditional datasets
+### For Hampton: fisher tests 
 
 ```
 cd /data/LNG/Julie/scratch_work 
@@ -4013,15 +4013,8 @@ data_SNP$SNP <- normal_SNP$SNP <- NULL
   
 # Pull out the allele distribution counts into separate columns and combine case and control values
 data_cases <- str_split_fixed(data_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
-#data_controls <-  str_split_fixed(data_SNP$UNAFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
 normal_cases <- str_split_fixed(normal_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
-#normal_controls <-  str_split_fixed(normal_SNP$UNAFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
-#final_data <- data.frame(data_cases$V1 + data_controls$V1, data_cases$V2 + data_controls$V2, data_cases$V3 + data_controls$V3)
-#final_normal <- data.frame(normal_cases$V1 + normal_controls$V1, normal_cases$V2 + normal_controls$V2, normal_cases$V3 + normal_controls$V3)
-#colnames(final_data) <- colnames(final_normal) <- c("HomoAlt","Hetero","HomoRef")
-#result <-  chisq.test(rbind(final_data, final_normal))
 colnames(data_cases) <- colnames(normal_cases) <- c("HomoAlt","Hetero","HomoRef")
-#result <-  fisher.test(rbind(final_data, final_normal), workspace=2e8)
 result <-  fisher.test(rbind(data_cases, normal_cases), workspace=2e8)
 p_vals <- c(p_vals, result$p.value)
 ### Adjust the p-values
