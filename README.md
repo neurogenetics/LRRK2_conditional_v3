@@ -4011,7 +4011,7 @@ data_SNP <- subset(data, SNP == variant)
 normal_SNP <- subset(normal, SNP == variant)
 data_SNP$SNP <- normal_SNP$SNP <- NULL
   
-# Pull out the allele distribution counts into separate columns and combine case and control values
+# Pull out the allele distribution counts into separate columns
 data_cases <- str_split_fixed(data_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
 normal_cases <- str_split_fixed(normal_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
 colnames(data_cases) <- colnames(normal_cases) <- c("HomoAlt","Hetero","HomoRef")
