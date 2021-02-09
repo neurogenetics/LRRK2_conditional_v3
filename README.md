@@ -3989,4 +3989,88 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/imputation_quality
 
 ![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
 
+## For Hampton: fisher test of differences in allele distribution between normal and conditional datasets
+
+```
+cd /data/LNG/Julie/scratch_work 
+
+R
+require(dplyr)
+require(data.table)
+library(tidyverse)
+
+# Define a function that takes in two dataframes, one with the normal dataset and one with the dataset to compare to (e.g. condi)
+# Calculate fisher's exact test comparing the allele distribution of these dataframes for each SNP
+# Prefix argument adjusts the column names 
+get_Pvals <- function(data,normal,prefix) {
+p_vals <- c()
+data <- fread(data,header=T)
+normal <- fread(normal,header=T)
+for (variant in normal$SNP) {
+data_SNP <- subset(data, SNP == variant)
+normal_SNP <- subset(normal, SNP == variant)
+data_SNP$SNP <- normal_SNP$SNP <- NULL
+  
+# Pull out the allele distribution counts into separate columns and combine case and control values
+data_cases <- str_split_fixed(data_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
+#data_controls <-  str_split_fixed(data_SNP$UNAFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
+normal_cases <- str_split_fixed(normal_SNP$AFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
+#normal_controls <-  str_split_fixed(normal_SNP$UNAFF, "/", 3) %>% as.data.frame() %>% mutate_all(function(x) as.numeric(x))
+#final_data <- data.frame(data_cases$V1 + data_controls$V1, data_cases$V2 + data_controls$V2, data_cases$V3 + data_controls$V3)
+#final_normal <- data.frame(normal_cases$V1 + normal_controls$V1, normal_cases$V2 + normal_controls$V2, normal_cases$V3 + normal_controls$V3)
+#colnames(final_data) <- colnames(final_normal) <- c("HomoAlt","Hetero","HomoRef")
+#result <-  chisq.test(rbind(final_data, final_normal))
+colnames(data_cases) <- colnames(normal_cases) <- c("HomoAlt","Hetero","HomoRef")
+#result <-  fisher.test(rbind(final_data, final_normal), workspace=2e8)
+result <-  fisher.test(rbind(data_cases, normal_cases), workspace=2e8)
+p_vals <- c(p_vals, result$p.value)
+### Adjust the p-values
+p_adjusted <- p.adjust(p_vals, method = "bonferroni") %>% formatC(digits=4)
+}
+final <- data.frame(SNP=normal$SNP,Pval=p_adjusted)
+colnames(final) <- c("SNP",paste(prefix,"Pval",sep="_"))
+final
+}
+
+# All filenames
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance", pattern="final_(LRRK2|case).*",full.names=TRUE)
+
+# Normal datasets
+IPDGC_normal <- "/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_case_control_IPDGC_normal.txt"
+UKBPD_normal <- "/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_case_control_UKB_PD_normal.txt"
+UKBproxy_normal <- "/data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/final_case_control_UKB_Proxy_normal.txt"
+
+require(sjmisc)
+# Filenames in each dataset
+IPDGC_files1 <- file.names[sapply(file.names, str_contains, pattern="IPDGC",USE.NAMES=FALSE)]
+IPDGC_files2 <- file.names[sapply(file.names, str_contains, pattern="freq",USE.NAMES=FALSE)]
+IPDGC_files <- c(IPDGC_files1,IPDGC_files2)
+UKBPD_files <- file.names[sapply(file.names, str_contains, pattern="PD_",USE.NAMES=FALSE)]
+UKBproxy_files <- file.names[sapply(file.names, str_contains, pattern="Proxy",USE.NAMES=FALSE)]
+
+### Make the combined dataframes with the P-values
+combined_Pval_dfs <- function(list_files,normal) {
+i<-0
+dfs = list()
+for (file in list_files) {
+prefix <- file %>% gsub(pattern=".*case_control_", replacement="") %>% gsub(pattern=".*variants_", replacement="") %>% gsub(pattern="freq", replacement="IPDGC") %>% gsub(pattern=".txt", replacement="")
+i <- i+1
+dfs[[i]]<-get_Pvals(file,normal,prefix)}
+# Merge all of the dataframes
+combined <- dfs %>% reduce(inner_join, by = "SNP")
+combined
+}
+
+IPDGC <- combined_Pval_dfs(IPDGC_files,IPDGC_normal)
+UKBPD <- combined_Pval_dfs(UKBPD_files,UKBPD_normal)
+UKBproxy <- combined_Pval_dfs(UKBproxy_files,UKBproxy_normal)
+
+# These are the ones that have just the cases
+write.table(IPDGC,file="IPDGC_case_allele_dist_fisher.txt",quote=FALSE,row.names=F,sep="\t")
+write.table(UKBPD,file="UKBPD_case_allele_dist_fisher.txt",quote=FALSE,row.names=F,sep="\t")
+write.table(UKBproxy,file="UKBproxy_case_allele_dist_fisher.txt",quote=FALSE,row.names=F,sep="\t")
+
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/*allele_dist_fisher.txt /Users/lakejs/Desktop/fisher_results
+```
+
 
