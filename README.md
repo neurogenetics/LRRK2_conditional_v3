@@ -3845,7 +3845,7 @@ Rscript --vanilla extra_combined.R ${variant} ${title}
 combined_forest_CHR12 12:40702987 Lys1423Lys 
 
 # Export
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/12:40702987_combined.pdf /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/extra_plots/12:40702987_combined.pdf /Users/lakejs/Desktop/
 ```
 
 ```
@@ -3869,22 +3869,20 @@ data_normal <- read.table(paste("NORMAL_", FILENAME, "v2.txt",sep=""), header = 
 data_special <- read.table(paste("SPECIAL_", FILENAME, "v2.txt",sep=""), header = T)
 data_condi <- read.table(paste("CONDI_", FILENAME, "v2.txt",sep=""), header = T)
 
-
 labs_normal <- gsub(".*\\.","", data_normal$ID)
-# Make the plot look better by changing NEUROX_DBGAP to NEUROX
 labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+labs_normal <- gsub("UKBPD", "UKBIO_case", labs_normal)
+labs_normal <- gsub("UKBproxy", "UKBIO_proxy", labs_normal)
 yi_normal   <- data_normal$beta
 sei_normal  <- data_normal$LOG.OR._SE
 resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
 resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
 
-labs_special <- gsub(".*\\.","", data_special$ID)
 yi_special   <- data_special$beta
 sei_special  <- data_special$LOG.OR._SE
 resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
 resRe_special  <- rma(yi=yi_special, sei=sei_special)
 
-labs_condi <- gsub(".*\\.","", data_condi$ID)
 yi_condi   <- data_condi$beta
 sei_condi  <- data_condi$LOG.OR._SE
 resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
@@ -3905,25 +3903,25 @@ forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.a
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
        slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "Normal", cex=1.2, font=2)
+text(0, 17.1, "Unconditioned", cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_normal,sep=""), cex=1.2, font=2)
 
 par(mar=c(5,0,1,1))
 forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "No rs76904798 + No G2019S", cex=1.2, font=2)
+text(0, 17.1, expression(bold(paste(Delta, " p.G2019S ", Delta, " rs76904798 "))), cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_condi,sep=""), cex=1.2, font=2)
 #adding this for the title
-text(0, 18, FILENAME2, cex=1.5, font=2)
+text(0, 18, ifelse(grepl('^rs', FILENAME2), FILENAME2, paste("p.",FILENAME2,sep="")), cex=1.5, font=2)
 
 par(mar=c(5,0,1,2))
 forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "No N2081D + No G2019S", cex=1.2, font=2)
+text(0, 17.1, expression(bold(paste(Delta, " p.G2019S ", Delta, " p.N2081D "))), cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
 ```
