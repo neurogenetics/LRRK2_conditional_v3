@@ -1936,11 +1936,14 @@ print(args[2])
 print(FILENAME)
 print(FILENAME2)
 print(FILENAME3)
+
 library(metafor)
 data <- read.table(paste("header_",FILENAME,"v2.txt",sep=""), header = T)
-## data <- read.table("header_12:40614434v2.txt", header = T)
-#pull out the cohort name
 labs <- gsub(".*\\.","", data$ID)
+labs <- gsub("NEUROX_DBGAP", "NEUROX", labs)
+labs <- gsub("UKBPD", "UKBIO_case", labs)
+labs <- gsub("UKBproxy", "UKBIO_proxy", labs)
+
 yi   <- data$beta
 sei  <- data$LOG.OR._SE
 resFe  <- rma(yi=yi, sei=sei, method="FE")
@@ -1949,8 +1952,9 @@ print(summary(resFe))
 print(summary(resRe))
 pdf(file = paste(FILENAME,"_",FILENAME3,"_final.pdf",sep=""), width = 8, height = 6)
 Pvalue <- formatC(resFe$pval, digits=4)
-## pdf(file = "12:40713899_condi_final.pdf", width = 8, height = 6)
-forest(resFe, xlim=c(-2,2), main=paste(FILENAME2," P=",Pvalue ,sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 2, 3)))
+forest(resFe, xlim=c(-2,2), main=paste(ifelse(grepl('^rs', FILENAME2), FILENAME2, paste("p.",FILENAME2,sep="")),
+      " P=",Pvalue ,sep=""),atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
+      slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 2, 3)))
 dev.off()
 ```
 
@@ -1965,7 +1969,9 @@ require(data.table)
 library(metafor)
 data <- read.table("header_12:40734202v2.txt", header = T)
 labs <- gsub(".*\\.","", data$ID)
-labs <- gsub("NEUROX_DBGAP","NEUROX", labs)
+labs <- gsub("NEUROX_DBGAP", "NEUROX", labs)
+labs <- gsub("UKBPD", "UKBIO_case", labs)
+labs <- gsub("UKBproxy", "UKBIO_proxy", labs)
 yi   <- data$beta
 sei  <- data$LOG.OR._SE
 resFe  <- rma(yi=yi, sei=sei, method="FE")
@@ -1973,13 +1979,11 @@ pdf(file = "12:40734202_NORMAL_final_GS.pdf", width = 6, height = 6)
 Pvalue <- formatC(resFe$pval, digits=4)
 
 forest(resFe, annotate=TRUE, xlim=c(-3.75,7.75),width=3,cex.lab=.8, cex.axis=1, atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 5, 10, 20, 40)))
-mtext(side=3, line = .5, "Gly2019Ser", cex=1.2, font=2)
+mtext(side=3, line = .5, "p.Gly2019Ser", cex=1.2, font=2)
 mtext(side=3, line = -1, paste("P=",Pvalue,sep=""), cex=1, font=2)
 dev.off()
 
 data <- read.table("header_12:40614434v2.txt", header = T)
-labs <- gsub(".*\\.","", data$ID)
-labs <- gsub("NEUROX_DBGAP", "NEUROX", labs)
 yi   <- data$beta
 sei  <- data$LOG.OR._SE
 resFe  <- rma(yi=yi, sei=sei, method="FE")
@@ -2038,26 +2042,25 @@ data_special <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS
 data_condi <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
 
 labs_normal <- gsub(".*\\.","", data_normal$ID)
-#making the plot look better by changing NEUROX_DBGAP to NEUROX
 labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+labs_normal <- gsub("UKBPD", "UKBIO_case", labs_normal)
+labs_normal <- gsub("UKBproxy", "UKBIO_proxy", labs_normal)
 yi_normal   <- data_normal$beta
 sei_normal  <- data_normal$LOG.OR._SE
 resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
 resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
 
-labs_special <- gsub(".*\\.","", data_special$ID)
 yi_special   <- data_special$beta
 sei_special  <- data_special$LOG.OR._SE
 resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
 resRe_special  <- rma(yi=yi_special, sei=sei_special)
 
-labs_condi <- gsub(".*\\.","", data_condi$ID)
 yi_condi   <- data_condi$beta
 sei_condi  <- data_condi$LOG.OR._SE
 resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
 resRe_condi  <- rma(yi=yi_condi, sei=sei_condi)
 
-pdf(file = paste(FILENAME,"_combined.pdf",sep=""), width = 8, height = 7)
+pdf(file = paste(FILENAME,"_combined.pdf",sep=""), width=8, height=7)
 Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
 Pvalue_special <- formatC(resFe_special$pval, digits=4)
 Pvalue_condi <- formatC(resFe_condi$pval, digits=4)
@@ -2072,25 +2075,25 @@ forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.a
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
        slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "Normal", cex=1.2, font=2)
+text(0, 17.1, "Unconditioned", cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_normal,sep=""), cex=1.2, font=2)
 
 par(mar=c(5,0,1,1))
 forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "No rs76904798 + No G2019S", cex=1.2, font=2)
+text(0, 17.1, expression(bold(paste(Delta, " p.G2019S ", Delta, " rs76904798 "))), cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_condi,sep=""), cex=1.2, font=2)
 #adding this for the title
-text(0, 18, FILENAME2, cex=1.5, font=2)
+text(0, 18, ifelse(grepl('^rs', FILENAME2), FILENAME2, paste("p.",FILENAME2,sep="")), cex=1.5, font=2)
 
 par(mar=c(5,0,1,2))
 forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5,1, 2, 3)))
-text(0, 17.1, "No N2081D + No G2019S", cex=1.2, font=2)
+text(0, 17.1, expression(bold(paste(Delta, " p.G2019S ", Delta, " p.N2081D "))), cex=1.2, font=2)
 text(0, 16.5, paste("P=",Pvalue_special,sep=""), cex=1.2, font=2)
 dev.off()
 ```
@@ -2112,7 +2115,7 @@ scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40614434_combin
 #!/usr/bin/env Rscript
 require(dplyr)
 args = commandArgs(trailingOnly=TRUE)
-# Start like this
+# start like this
 # Rscript --vanilla metafor_combined_rs76904798.R $FILENAME $FILENAME2
 # Rscript --vanilla metafor_combined_rs76904798.R 12:40614434 rs76904798
 FILENAME = args[1]
@@ -2127,14 +2130,14 @@ data_normal <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_C
 data_special <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/SPECIAL_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
 
 labs_normal <- gsub(".*\\.","", data_normal$ID)
-# Making the plot look better by changing NEUROX_DBGAP to NEUROX
 labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+labs_normal <- gsub("UKBPD", "UKBIO_case", labs_normal)
+labs_normal <- gsub("UKBproxy", "UKBIO_proxy", labs_normal)
 yi_normal   <- data_normal$beta
 sei_normal  <- data_normal$LOG.OR._SE
 resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
 resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
 
-labs_special <- gsub(".*\\.","", data_special$ID)
 yi_special   <- data_special$beta
 sei_special  <- data_special$LOG.OR._SE
 resFe_special  <- rma(yi=yi_special, sei=sei_special, method="FE")
@@ -2144,7 +2147,7 @@ pdf(file = paste(FILENAME,"_combined_no_condi.pdf",sep=""), width = 8, height = 
 Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
 Pvalue_special <- formatC(resFe_special$pval, digits=4)
 
-# Make it so that all datasets are included even if NA for the variant
+#Make it so that all datasets are included even if NA for the variant
 options(na.action = "na.pass")
 
 par(mfrow=c(1,2), oma=c(0,0,2,0))
@@ -2155,18 +2158,18 @@ forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.a
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
        slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
        cex=.9, at=log(c(0.5, 1, 2, 3)))
-mtext("Normal", line=-1.5, cex=1, font=2)
+mtext("Unconditioned", line=-1.3, cex=1, font=2)
 mtext(paste("P=",Pvalue_normal,sep=""), line=-2.4, cex=1, font=2)
 
 par(mar=c(5,0,1,2))
 
 forest(resFe_special, annotate=TRUE, xlim=c(-2.25,3.25), width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_special)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5, 1, 2, 3)))
-mtext("No N2081D + No G2019S", line=-1.5, cex=1, font=2)
+mtext(expression(bold(paste(Delta, " p.G2019S ", Delta, " p.N2081D "))), line=-1.3, cex=1, font=2)
 mtext(paste("P=",Pvalue_special,sep=""), line=-2.4, cex=1, font=2)
-mtext(FILENAME2, line=-1, cex=1.4, font=2, outer=TRUE)
+mtext(ifelse(grepl('^rs', FILENAME2), FILENAME2, paste("p.",FILENAME2,sep="")), line=-.6, cex=1.4, font=2, outer=TRUE)
 dev.off()
 ```
 
@@ -2202,14 +2205,14 @@ data_normal <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_C
 data_condi <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/CONDI_GWAS_CHR12/LRRK2_coding_VOI/metafor_plots/header_",FILENAME,"v2.txt",sep=""), header = T)
 
 labs_normal <- gsub(".*\\.","", data_normal$ID)
-# Making the plot look better by changing NEUROX_DBGAP to NEUROX
 labs_normal <- gsub("NEUROX_DBGAP", "NEUROX", labs_normal)
+labs_normal <- gsub("UKBPD", "UKBIO_case", labs_normal)
+labs_normal <- gsub("UKBproxy", "UKBIO_proxy", labs_normal)
 yi_normal   <- data_normal$beta
 sei_normal  <- data_normal$LOG.OR._SE
 resFe_normal  <- rma(yi=yi_normal, sei=sei_normal, method="FE")
 resRe_normal  <- rma(yi=yi_normal, sei=sei_normal)
 
-labs_condi <- gsub(".*\\.","", data_condi$ID)
 yi_condi   <- data_condi$beta
 sei_condi  <- data_condi$LOG.OR._SE
 resFe_condi  <- rma(yi=yi_condi, sei=sei_condi, method="FE")
@@ -2219,7 +2222,7 @@ pdf(file = paste(FILENAME,"_combined_no_special.pdf",sep=""), width = 8, height 
 Pvalue_normal <- formatC(resFe_normal$pval, digits=4)
 Pvalue_condi <- formatC(resFe_condi$pval, digits=4)
 
-# Make it so that all datasets are included even if NA for the variant
+#Make it so that all datasets are included even if NA for the variant
 options(na.action = "na.pass")
 
 par(mfrow=c(1,2), oma=c(0,0,2,0))
@@ -2230,17 +2233,18 @@ forest(resFe_normal, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.a
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""),
        slab=labs_normal, mlab="Fixed Effects", col = "red", border = "red", 
        cex=.9, at=log(c(0.5, 1, 2, 3)))
-mtext("Normal", line=-1.5, cex=1, font=2)
+mtext("Unconditioned", line=-1.3, cex=1, font=2)
 mtext(paste("P=",Pvalue_normal,sep=""), line=-2.4, cex=1, font=2)
 
 par(mar=c(5,0,1,2))
 forest(resFe_condi, annotate=TRUE, xlim=c(-2.25,3.25),width=3,cex.lab=.8, cex.axis=1,
        atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), 
-       slab=rep("",length(labs_condi)), mlab="", col = "red", border = "red", 
+       slab=NA, mlab="", col = "red", border = "red", 
        cex=.9, at=log(c(0.5, 1, 2, 3)))
-mtext("No rs76904798 + No G2019S", line=-1.5, cex=1, font=2)
+mtext(expression(bold(paste(Delta, " p.G2019S ", Delta, " rs76904798 "))), line=-1.3, cex=1, font=2)
 mtext(paste("P=",Pvalue_condi,sep=""), line=-2.4, cex=1, font=2)
-mtext(FILENAME2, line=-1, cex=1.4, font=2, outer=TRUE)
+mtext(ifelse(grepl('^rs', FILENAME2), FILENAME2, paste("p.",FILENAME2,sep="")), line=-.6, cex=1.4, font=2, outer=TRUE)
+
 dev.off()
 ```
 
