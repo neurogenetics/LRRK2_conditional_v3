@@ -3748,74 +3748,80 @@ mkdir locuszoom_plots
 cd locuszoom_plots
 
 R
-require(data.table)
 require(dplyr)
-
-data <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/NORMAL_metal1.txt",header=T)
-data2 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/CONDI_metal1.txt",header=T)
-data3 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/rs76904798_only_metal1.txt",header=T)
-data4 <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/G2019S_only_metal1.txt",header=T)
-
-data$color="gray"
-data2$color="gray"
-data3$color="gray"
-data4$color="gray"
-
-data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs34637584","rs76904798"), "purple", color)) 
-data2 <- data2 %>% mutate(color = ifelse(data2$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883"), "purple", color)) 
-data3 <- data3 %>% mutate(color = ifelse(data3$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs34637584"), "purple", color)) 
-data4 <- data4 %>% mutate(color = ifelse(data4$rsID %in% c("rs7308720","rs7133914","rs35303786","rs33995883","rs76904798"), "purple", color)) 
+require(data.table)
+require(sjmisc)
 
 annotations <- fread("/data/CARD/GENERAL/HRC_ouput_annovar_ALL.txt",header=T)
 annotations_LRRK2 <- annotations %>% filter(Chr == 12) %>% filter(Start %>% between(40490546,40863087))
 subset_annot <- annotations_LRRK2 %>% select("avsnp142","Func.refGene")
 subset_annot <- subset_annot %>% rename(rsID = avsnp142)
 
-data$Pos <- data$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
-data2$Pos <- data2$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
-data3$Pos <- data3$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
-data4$Pos <- data4$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/METAL/", pattern="metal1.txt", full.names=TRUE) 
+# remove the carriers gwas for these plots
+file.names <- file.names[sapply(file.names, str_contains, pattern="carriers",logic="not",USE.NAMES=FALSE)]
 
-data <- data %>% filter(Pos %>% between(40490546,40863087))
-data2 <- data2 %>% filter(Pos %>% between(40490546,40863087))
-data3 <- data3 %>% filter(Pos %>% between(40490546,40863087))
-data4 <- data4 %>% filter(Pos %>% between(40490546,40863087))
-
-data_Mrg <- left_join(data,subset_annot,by="rsID")
-data2_Mrg <- left_join(data2,subset_annot,by="rsID")
-data3_Mrg <- left_join(data3,subset_annot,by="rsID")
-data4_Mrg <- left_join(data4,subset_annot,by="rsID")
-
-write.table(data_Mrg,file="final_NORMAL.txt",quote=FALSE,row.names=F,sep="\t")
-write.table(data2_Mrg,file="final_CONDI.txt",quote=FALSE,row.names=F,sep="\t")
-write.table(data3_Mrg,file="final_RS.txt",quote=FALSE,row.names=F,sep="\t")
-write.table(data4_Mrg,file="final_GS.txt",quote=FALSE,row.names=F,sep="\t")
+for(file in file.names) {
+  prefix <- file %>% gsub(pattern="/data/LNG/Julie/Julie_LRRK2_Condi/METAL//",replacement="") %>% gsub(pattern="_metal1.txt", replacement="")
+  data <-  fread(file,header=T)
+  data$color="gray"
+  # These variants will be annotated in each dataset
+  data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs7308720","rs7133914","rs35303786"), "red", color)) 
+  # Annotate extra variants depending on the dataset
+  if (str_contains(file, c("NORMAL","META5"),logic="or")) 
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs33995883","rs34637584","rs76904798"), "red", color))}
+  else if (str_contains(file, "CONDI"))
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs33995883"), "red", color))}
+  else if (str_contains(file, "G2019S_only")) 
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs33995883","rs76904798"), "red", color))}
+  else if (str_contains(file, "rs76904798_only")) 
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs33995883","rs34637584"), "red", color))}
+  else if (str_contains(file, "N2081D_only")) 
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs34637584","rs76904798"), "red", color))}
+  else if (str_contains(file, "SPECIAL")) 
+    {data <- data %>% mutate(color = ifelse(data$rsID %in% c("rs76904798"), "red", color))}
+  data$Pos <- data$MarkerName %>% gsub(pattern="12:", replacement="") %>% as.numeric() 
+  data <- data %>% filter(Pos %>% between(40490546,40863087))
+  data_Mrg <- left_join(data,subset_annot,by="rsID")
+  write.table(data_Mrg,file=paste("final_", prefix, ".txt",sep=""),quote=FALSE,row.names=F,sep="\t")
+}
 
 q()
 n
+
 
 # Manually make the files with the rsIDs to label on the plots 
 module load locuszoom
 
 locuszoom --meta final_NORMAL.txt \
     --no-ld --build hg19 --refgene LRRK2 title="Unconditioned" theme=black --prefix "normal" --flank 23kb \
-    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
     --denote-markers-file marker_file_normal.txt signifLineColor="gray" signifLineWidth=1 
 
 locuszoom --meta final_CONDI.txt \
     --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and rs76904798" theme=black --prefix "condi" --flank 23kb \
-    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
     --denote-markers-file marker_file_condi.txt signifLineColor="gray" signifLineWidth=1 ymax=3 
 
-locuszoom --meta final_GS.txt \
+locuszoom --meta final_G2019S_only.txt \
     --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S" theme=black --prefix "GS" --flank 23kb \
-    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 \
     --denote-markers-file marker_file_GS.txt signifLineColor="gray" signifLineWidth=1 ymax=3
 
-locuszoom --meta final_RS.txt \
+locuszoom --meta final_rs76904798_only.txt \
     --no-ld --build hg19 --refgene LRRK2 title="Conditioned on rs76904798" theme=black --prefix "RS" --flank 23kb \
-    width=8 height=6 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=1 refsnpTextSize=0.7\
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 refsnpTextSize=0.7\
     --denote-markers-file marker_file_RS.txt signifLineColor="gray" signifLineWidth=1
+
+locuszoom --meta final_N2081D_only.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.N2081D" theme=black --prefix "N2081D_only" --flank 23kb \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7  \
+    --denote-markers-file marker_file_ND.txt signifLineColor="gray" signifLineWidth=1 
+
+locuszoom --meta final_SPECIAL.txt \
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and p.N2081D" theme=black --prefix "SPECIAL" --flank 23kb \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 ymax=8 \
+    --denote-markers-file marker_file_special.txt signifLineColor="gray" signifLineWidth=1 
 
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/locuszoom_plots/*pdf /Users/lakejs/Desktop/locuszoom
@@ -3987,11 +3993,7 @@ n
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/imputation_quality/imputation_quality.txt /Users/lakejs/Desktop/
 ```
 
-## Done....
-
-![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
-
-### For Hampton: fisher tests 
+### 8.9 Fisher's exact tests to compare allele distributions
 
 ```
 cd /data/LNG/Julie/scratch_work 
@@ -4067,5 +4069,9 @@ write.table(UKBproxy,file="UKBproxy_case_allele_dist_fisher.txt",quote=FALSE,row
 
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/scratch_work/*allele_dist_fisher.txt /Users/lakejs/Desktop/fisher_results
 ```
+
+## Done....
+
+![myImage](https://media.giphy.com/media/XRB1uf2F9bGOA/giphy.gif)
 
 
