@@ -2178,7 +2178,7 @@ dev.off()
 ```
 cd /data/LNG/Julie/Julie_LRRK2_Condi
 
-Rscript --vanilla metafor_combined_N2081D.R 12:40740686 Asn2081Asp
+Rscript --vanilla metafor_combined_N2081D.R 12:40740686 N2081D
 
 # Copy the file
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/12:40740686_combined_no_special.pdf /Users/lakejs/Desktop/
