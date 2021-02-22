@@ -1904,7 +1904,7 @@ cp /data/LNG/Julie/Julie_LRRK2_Condi/metafor_LRRK2.R metafor_plots
 cd metafor_plots
 cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
 	ID=$(echo $line|awk '{print $1}')
-	AA=$(echo $line|awk '{print $3}')
+	AA=$(echo $line|awk '{print $2}')
 	Rscript --vanilla metafor_LRRK2.R $ID $AA ${gwas_type}
 done
 }
@@ -1979,7 +1979,7 @@ pdf(file = "12:40734202_NORMAL_final_GS.pdf", width = 6, height = 6)
 Pvalue <- formatC(resFe$pval, digits=4)
 
 forest(resFe, annotate=TRUE, xlim=c(-3.75,7.75),width=3,cex.lab=.8, cex.axis=1, atransf=exp, xlab=paste("Odds Ratio (95%CI) for SNP",sep=""), slab=labs, mlab="Fixed Effects", col = "red", border = "red", cex=.9, at=log(c(0.5, 1, 5, 10, 20, 40)))
-mtext(side=3, line = .5, "p.Gly2019Ser", cex=1.2, font=2)
+mtext(side=3, line = .5, "p.G2019S", cex=1.2, font=2)
 mtext(side=3, line = -1, paste("P=",Pvalue,sep=""), cex=1, font=2)
 dev.off()
 
@@ -2012,7 +2012,7 @@ cd metafor_combined_plots
 # Now make the forest plots
 cat /data/LNG/Julie/Julie_LRRK2_Condi/LRRK2_AA_list.txt | tail -n+2 | while read line; do
   ID=$(echo $line|awk '{print $1}')
-  AA=$(echo $line|awk '{print $3}')
+  AA=$(echo $line|awk '{print $2}')
   Rscript --vanilla ../metafor_LRRK2_combined.R $ID $AA
 done
 
