@@ -3848,7 +3848,7 @@ Rscript --vanilla extra_combined.R ${variant} ${title}
 }
 
 # EX
-combined_forest_CHR12 12:40702987 Lys1423Lys 
+combined_forest_CHR12 12:40702987 K1423K
 
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/extra_plots/12:40702987_combined.pdf /Users/lakejs/Desktop/
