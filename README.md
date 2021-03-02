@@ -3688,16 +3688,7 @@ LRRK2_area$Pos <- NULL
 # Note that these names have the one letter amino acid code
 AA_short <- c(apply(LRRK2_area, 1, f))
 
-# Split the short amino acid names at the number
-split <- do.call(rbind, strsplit(AA_short, "(?<=[a-zA-Z])(?=[0-9])|(?<=[0-9])(?=[a-zA-Z])", perl = TRUE))
-first_AA <- split[,1]
-middle_num <- split[,2]
-last_AA <- split[,3]
-
-# Replace the one letter amino acid code with the three letter code
-require(seqinr)
-AA_long <- paste(aaa(first_AA),middle_num,aaa(last_AA)) %>% gsub(pattern="NA", replacement="") %>% gsub(pattern=" ",replacement= "")
-LRRK2_area$"AAChange.refGene" <- AA_long
+LRRK2_area$"AAChange.refGene" <- AA_short
 
 LRRK2_area_info <- merge(LRRK2_area, combined, by="SNP")
 
