@@ -22,49 +22,49 @@ TBD
 
 ## Structure of README:
 
-### [1. Understanding the underlying data and creating an overview of the data](https://github.com/neurogenetics/LRRK2_conditional_v3/blob/main/README.md#L73)
+### [1. Understanding the underlying data and creating an overview of the data](#1-understanding-the-underlying-data-and-creating-an-overview-of-the-data-1)
 This section goes through:
 - Intro to the IPDGC data
 - Checking the imputation quality of the IPDGC data
 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 - Overview of the full data and selection of data 
 
-### [2. Create covariate files for each IPDGC cohort](#2-create-covariate-files-for-each-ipdgc-cohort)
+### [2. Create covariate files for each IPDGC cohort](#2-create-covariate-files-for-each-ipdgc-cohort-1)
 This section goes through:
 - Creating new PC's for each cohort
 - Creating covariate files
 
-### [3. Perform cohort level GWAS on IPDGC data excluding rs76904798 and G2019S](#3-perform-cohort-level-gwas-on-ipdgc-data-excluding-rs76904798-and-g2019s)
+### [3. Perform cohort level GWAS on IPDGC data excluding rs76904798 and G2019S](#3-perform-cohort-level-gwas-on-ipdgc-data-excluding-rs76904798-and-g2019s-1)
 This section goes through: 
 - Extracting all LRRK2 coding variants
 - Performing GWAS of chromosome 12 for each cohort
 - Prepping before meta-analysis
 
-### [4. Adding in UK Biobank](#4-adding-in-uk-biobank)
+### [4. Add in UK Biobank](#4-add-in-uk-biobank)
  This section goes through: 
 - Subsetting the UK Biobank data
 - Making covariate files
 - Performing GWAS on CHR12
 - Reformatting data for meta-analysis
 
-### [5. Making forest plots for LRRK2 coding variants](#5-making-forest-plots-for-lrrk2-coding-variants)
+### [5. Making forest plots for LRRK2 coding variants](#5-making-forest-plots-for-lrrk2-coding-variants-1)
 This section goes through: 
 - Pulling the amino acid changes for each variant
 - Using metafor to make forest plots for LRRK2 coding variants
 
-### [6. Check LD co-inheritance of LRRK2 coding variants](#6-check-ld-co-inheritance-of-lrrk2-coding-variants)
+### [6. Check LD co-inheritance of LRRK2 coding variants](#6-check-ld-co-inheritance-of-lrrk2-coding-variants-1)
 This section goes through:
 - Making frequency files for IPDGC and UKB data
 - Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
 - Determining a frequency cutoff for LRRK2 coding variants
 
-### [7. Add in some other conditional GWAS types](#7-add-in-some-other-conditional-gwas-types)
+### [7. Add in some other conditional GWAS types](#7-add-in-some-other-conditional-gwas-types-1)
 This section goes through:
 - Adding in GWAS conditioned on G2019S, rs76904798, N2081D individually
 - Adding in GWAS with only carriers of G2019S and rs76904798
 - Adding in GWAS with only carriers of R1398H
 
-### [8. Make final tables and figures](#8-make-final-tables-and-figures)
+### [8. Make final tables and figures](#8-make-final-tables-and-figures-1)
 This section goes through:
 - Preparing tables for manuscript
 - Preparing figures for manuscript
