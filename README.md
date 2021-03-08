@@ -21,7 +21,8 @@ LRRK2 is an important gene for PD and both rare highly damaging missense variant
 TBD
 
 ## Structure of README:
-### [1. Understanding the underlying data and creating an overview of the data](#1-understanding-the underlying-data-and-creating-an-overview-of-the-data)
+
+### [1. Understanding the underlying data and creating an overview of the data](https://github.com/neurogenetics/LRRK2_conditional_v3/blob/main/README.md#L73)
 This section goes through:
 - Intro to the IPDGC data
 - Checking the imputation quality of the IPDGC data
