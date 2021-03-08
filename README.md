@@ -4,7 +4,7 @@
 
  - **Project:** LRRK2 conditional GWAS
  - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG) Nicole Bryant-Garner (Duke Uni)
- - **Date Last Updated:** November 2020
+ - **Date Last Updated:** March 2021
     - **Update Description:** Edits to README
 
 ---
@@ -21,49 +21,49 @@ LRRK2 is an important gene for PD and both rare highly damaging missense variant
 TBD
 
 ## Structure of README:
-### [1. Understanding the underlying data and creating an overview of the data](#1-Understanding-the-underlying-data-and-creating-an-overview-of-the-data)
+### [1. Understanding the underlying data and creating an overview of the data](#1.-Understanding-the underlying-data-and-creating-an-overview-of-the-data)
 This section goes through:
 - Intro to the IPDGC data
 - Checking the imputation quality of the IPDGC data
 - Assessing frequency of LRRK2 G2019S and rs76904798 in the data
 - Overview of the full data and selection of data 
 
-### [2. Create covariate files for each IPDGC cohort](#2-Create-covariate-files-for-each-IPDGC-cohort)
+### [2. Create covariate files for each IPDGC cohort](#2.-Create-covariate-files-for-each-IPDGC-cohort)
 This section goes through:
 - Creating new PC's for each cohort
 - Creating covariate files
 
-### [3. Perform cohort-level GWAS on IPDGC data excluding rs76904798 and G2019S](#3-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-rs76904798-and-G2019S)
+### [3. Perform cohort level GWAS on IPDGC data excluding rs76904798 and G2019S](#3.-Perform-cohort-level-GWAS-on-IPDGC-data-excluding-rs76904798-and-G2019S)
 This section goes through: 
 - Extracting all LRRK2 coding variants
 - Performing GWAS of chromosome 12 for each cohort
 - Prepping before meta-analysis
 
-### [4. Adding in UKBiobank](#4-Adding-in-UKBiobank)
+### [4. Adding in UKBiobank](#4.-Adding-in-UKBiobank)
  This section goes through: 
 - Subsetting the UK Biobank data
 - Making covariate files
 - Performing GWAS on CHR12
 - Reformatting data for meta-analysis
 
-### [5. Making forest plots for LRRK2 coding variants](#5-Making-forest-plots-for-LRRK2-coding-variants)
+### [5. Making forest plots for LRRK2 coding variants](#5.-Making-forest-plots-for-LRRK2-coding-variants)
 This section goes through: 
 - Pulling the amino acid changes for each variant
 - Using metafor to make forest plots for LRRK2 coding variants
 
-### [6. Check LD co-inheritance of LRRK2 coding variants](#6-Check-LD-co-inheritance-of-LRRK2-coding-variants)
+### [6. Check LD co-inheritance of LRRK2 coding variants](#6.-Check-LD-co-inheritance-of-LRRK2-coding-variants)
 This section goes through:
 - Making frequency files for IPDGC and UKB data
 - Checking co-inheritance of G2019S, rs76904798 and N2081D with all other coding variants
 - Determining a frequency cutoff for LRRK2 coding variants
 
-### [7. Add in some other conditional GWAS types](#7-Add-in-some-other-conditional-GWAS-types)
+### [7. Add in some other conditional GWAS types](#7.-Add-in-some-other-conditional-GWAS-types)
 This section goes through:
 - Adding in GWAS conditioned on G2019S, rs76904798, N2081D individually
 - Adding in GWAS with only carriers of G2019S and rs76904798
 - Adding in GWAS with only carriers of R1398H
 
-### [8. Make final tables and figures](#7-Make-final-tables-and-figures)
+### [8. Make final tables and figures](#7.-Make-final-tables-and-figures)
 This section goes through:
 - Preparing tables for manuscript
 - Preparing figures for manuscript
@@ -611,7 +611,7 @@ mv *CONDI.eigenvec CONDI_COVARIATES
 mv LRRK2_condi_covariates_CONDI* CONDI_COVARIATES
 ```
 
-## 3. Perform cohort-level GWAS on IPDGC data excluding rs76904798 and G2019S
+## 3. Perform cohort level GWAS on IPDGC data excluding rs76904798 and G2019S
 
 This section goes through: 
 - Extracting all LRRK2 coding variants
@@ -1118,7 +1118,7 @@ flashpca --bfile FILENAME_3 --suffix _UKB_PD_cases_control_over60.txt --numthrea
 # Combine the subset filenames
 ls UKB_P* > PC_files.txt
 
-# Make sure PC_files.txt contains these phenptype files: 
+# Make sure PC_files.txt contains these phenotype files: 
 # UKB_PD_cases_control_over60_noNDGS.txt
 # UKB_PD_cases_control_over60_noriskGS.txt
 # UKB_PD_cases_control_over60.txt
@@ -1164,7 +1164,7 @@ cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_fina
 # Remove the PC columns from cov so that we can merge with the new PCs
 cov2 <- cov %>% select(1:8)
 
-# Pull the subset phenptype files from your working directory
+# Pull the subset phenotype files from your working directory
 file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/", pattern="^UKB_P") 
 for(file in file.names) {  
   pc <- fread(paste("pcs_",file,sep=""),header=T)
@@ -2836,14 +2836,15 @@ cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
 do
 	mkdir $line
 	cd $line
-	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/${line}/${line} --keep /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/LRRK2_${gwas_type}_with_COV.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+	plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/${line}/${line} \
+	--keep /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/LRRK2_${gwas_type}_with_COV.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
 	plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
 	plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
 	plink --bfile prune --pca --out $line.LRRK2_condi_PCA_${gwas_type}
 	# Send the .eigenvec files back to the working directory to combine into a new combined PC file
 	scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi/other_GWAS/${gwas_type}
 	cd ..
-		cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
+	cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
 done
 }
 
@@ -3566,7 +3567,7 @@ done
 
 echo """
 OUTFILE ${GWAS_TYPE}_metal .tbl
-ANALYZE
+ANALYZE HETEROGENEITY
 
 QUIT
 """
@@ -3785,34 +3786,28 @@ n
 module load locuszoom
 
 locuszoom --meta final_NORMAL.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Unconditioned" theme=black --prefix "normal" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
-    --denote-markers-file marker_file_normal.txt signifLineColor="gray" signifLineWidth=1 
+    --no-ld --build hg19 --refgene LRRK2 title="Unconditioned" theme=black --prefix "normal" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1 
 
 locuszoom --meta final_CONDI.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and rs76904798" theme=black --prefix "condi" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7\
-    --denote-markers-file marker_file_condi.txt signifLineColor="gray" signifLineWidth=1 ymax=3 
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and rs76904798" theme=black --prefix "condi" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1 ymax=3 
 
 locuszoom --meta final_G2019S_only.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S" theme=black --prefix "GS" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 \
-    --denote-markers-file marker_file_GS.txt signifLineColor="gray" signifLineWidth=1 ymax=3
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S" theme=black --prefix "GS" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1 
 
 locuszoom --meta final_rs76904798_only.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on rs76904798" theme=black --prefix "RS" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 refsnpTextSize=0.7\
-    --denote-markers-file marker_file_RS.txt signifLineColor="gray" signifLineWidth=1
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on rs76904798" theme=black --prefix "RS" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1
 
 locuszoom --meta final_N2081D_only.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.N2081D" theme=black --prefix "N2081D_only" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7  \
-    --denote-markers-file marker_file_ND.txt signifLineColor="gray" signifLineWidth=1 
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.N2081D" theme=black --prefix "N2081D_only" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1 
 
 locuszoom --meta final_SPECIAL.txt \
-    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and p.N2081D" theme=black --prefix "SPECIAL" --flank 23kb \
-    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date refsnpTextSize=0.7 ymax=8 \
-    --denote-markers-file marker_file_special.txt signifLineColor="gray" signifLineWidth=1 
+    --no-ld --build hg19 --refgene LRRK2 title="Conditioned on p.G2019S and p.N2081D" theme=black --prefix "SPECIAL" --flank 23kb --no-snp-name \
+    width=8 height=7 --plotonly largeDot=.6 colorCol="color" signifLine=7.3 --no-date signifLineColor="gray" signifLineWidth=1 
 
 # Export
 scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/locuszoom_plots/*pdf /Users/lakejs/Desktop/locuszoom
