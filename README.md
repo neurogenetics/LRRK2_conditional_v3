@@ -11,12 +11,6 @@
 ### Quick Description: 
 LRRK2 is an important gene for PD and both rare highly damaging missense variants (including G2019S) and common non-coding variants (rs76904798) have been associated with PD risk. Rare highly damaging missense variants often results in a very high increase of risk for PD >10 OR, while the common non-coding variant have the usual moderate risk increase of ~1.15. The goal here is to identify whether other more common coding variants also result in an higher risk of PD or whether they are just associated with PD as result of complex linkage disequilibrium (LD) structures.
 
-
-### Motivation/Goals:
-1) Understanding the underlying data and creating an overview of the data...
-2) Perform quick and dirty GWAS excluding risk and G2019S variant...
-3) Perform GWAS excluding risk and G2019S variant on a cohort level basis and meta-analyze
-
 ### Link to Manuscript:
 TBD
 
