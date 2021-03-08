@@ -40,7 +40,7 @@ This section goes through:
 - Performing GWAS of chromosome 12 for each cohort
 - Prepping before meta-analysis
 
-### [4. Add in UK Biobank](#4-add-in-uk-biobank)
+### [4. Add in UK Biobank](#4-add-in-uk-biobank-1)
  This section goes through: 
 - Subsetting the UK Biobank data
 - Making covariate files
