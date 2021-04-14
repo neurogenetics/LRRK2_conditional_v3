@@ -3,7 +3,7 @@
 `LNG ❤️ Open Science 😍`
 
  - **Project:** LRRK2 conditional GWAS
- - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG) Nicole Bryant-Garner (Duke Uni)
+ - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG)
  - **Date Last Updated:** March 2021
     - **Update Description:** Edits to README
 
