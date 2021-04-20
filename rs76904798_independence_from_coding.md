@@ -7,12 +7,12 @@
 
 ### IPDGC
 ```
-cd /data/LNG/Julie/Julie_LRRK2_Condi
+cd /PATH/TO/Julie/Julie_LRRK2_Condi
 mkdir no_coding_GWAS
 cd no_coding_GWAS
 
 # Recode the genotypes of interest as single allele dosage numbers 
-plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40629436, 12:40657700, 12:40671989, 12:40702911, 12:40707778, 12:40707861, 12:40713899, 12:40734202, 12:40740686 --recodeA --keep /data/LNG/Julie/Julie_LRRK2_Condi/co_inheritance/NORMAL_covariates_GWAS.txt --out LRRK2_no_coding_GWAS
+plink --bfile /PATH/TO/Julie/Julie_LRRK2_Condi/HARDCALLS_with_rs10847864 --snps 12:40629436, 12:40657700, 12:40671989, 12:40702911, 12:40707778, 12:40707861, 12:40713899, 12:40734202, 12:40740686 --recodeA --keep /PATH/TO/Julie/Julie_LRRK2_Condi/co_inheritance/NORMAL_covariates_GWAS.txt --out LRRK2_no_coding_GWAS
 ```
 
 #### These are the variants we want to remove because they are the rare LRRK2 coding variants we analyzed
@@ -45,7 +45,7 @@ coding_no_L119P <- subset(newdata1, X12.40671989_G == 0 & X12.40707778_A == 0 & 
 
 # Since L119P was not present in the MCGILL,MF,SPAIN3 and SPAIN4 cohorts due to low imputation quality, don't filter for this variant in those cohorts
 # Add the dataset column to filter
-cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T) %>% select(FID, DATASET)
+cov <- read.table("/PATH/TO/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T) %>% select(FID, DATASET)
 `%notin%` <- Negate(`%in%`)
 coding_no_L119P <- merge(coding_no_L119P, cov, by="FID")
 yes_filter_L119P <- filter(coding_no_L119P, DATASET != "MCGILL" & DATASET != "MF" & DATASET != "SPAIN3" & DATASET != "SPAIN4" & DATASET != "GERMANY") %>% subset(X12.40629436_C == 0)
@@ -59,7 +59,7 @@ dim(newdata2)
 # 20266    15
 
 # Adding some additional sample info
-cov <- read.table("/data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
+cov <- read.table("/PATH/TO/CORNELIS_TEMP/PD_FINAL_PLINK_2018/IPDGC_all_samples_covariates.txt",header=T)
 # Drop some columns because otherwise merge conflict
 cov$IID <- NULL
 cov$fatid <- NULL
@@ -74,19 +74,19 @@ n
 ### Make COV files for IPDGC
 PCA_IPDGC() {
 gwas_type=$1
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 mkdir $gwas_type
 cd $gwas_type
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+cat /PATH/TO/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
 do
     mkdir $line
     cd $line
-    plink --bfile /data/LNG/Julie/Julie_LRRK2_Condi/${line}/${line} --keep /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/LRRK2_${gwas_type}_with_COV.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
+    plink --bfile /PATH/TO/Julie/Julie_LRRK2_Condi/${line}/${line} --keep /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/LRRK2_${gwas_type}_with_COV.txt --maf 0.01 --geno 0.15 --hwe 1E-6 --make-bed --out $line.filter
     plink --bfile $line.filter --indep-pairwise 50 5 0.5 --out prune
     plink --bfile $line.filter --extract prune.prune.in --make-bed --out prune 
     plink --bfile prune --pca --out $line.LRRK2_condi_PCA_${gwas_type}
     # Send the .eigenvec files back to the working directory to combine into a new combined PC file
-    scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}
+    scp $line.LRRK2_condi_PCA_${gwas_type}.eigenvec /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}
     cd ..
     cat *${gwas_type}.eigenvec > ${gwas_type}_PCs.txt
 done
@@ -96,15 +96,15 @@ PCA_IPDGC no_PDlinked_coding
 PCA_IPDGC no_coding
 
 ### Create covariate files
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 R
 require(data.table)
 require(dplyr)
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS", pattern="LRRK2.*with_COV.txt") 
+file.names <- dir("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS", pattern="LRRK2.*with_COV.txt") 
 for(file in file.names) { 
   gwas_type <- file %>% gsub(pattern="LRRK2_", replacement="") %>% gsub(pattern="_with_COV.txt", replacement="")
-  cov <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/", file,sep=""),header=T)
-  PC <- read.table(paste("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",gwas_type,"/",gwas_type,"_PCs.txt",sep=""),header=F)
+  cov <- read.table(paste("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/", file,sep=""),header=T)
+  PC <- read.table(paste("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",gwas_type,"/",gwas_type,"_PCs.txt",sep=""),header=F)
   # We want to keep the phenotype information but get rid of the old PCs before merging
   cov2 <- cov[,c(1:21)]
   # Now add the new PCs
@@ -126,15 +126,15 @@ for(file in file.names) {
   colnames(Mrg2)[31]  <- "PC10"
   # The old sample selection files have an extra column, get rid of it 
   # Export the final coviariate files
-  write.table(Mrg2, file=paste("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",gwas_type,"/LRRK2_condi_covariates_",gwas_type,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
+  write.table(Mrg2, file=paste("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",gwas_type,"/LRRK2_condi_covariates_",gwas_type,".txt",sep=""), quote=FALSE,row.names=F,sep="\t")
 }
 q()
 n
 
 subset_cohorts() {
 gwas_type=$1
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/$gwas_type
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt  | while read line
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/$gwas_type
+cat /PATH/TO/Julie/Julie_LRRK2_Condi/cohort_file.txt  | while read line
 do
 	# Pull out all of the lines that contain the cohort name
 	# Combine these lines with the header
@@ -151,19 +151,19 @@ subset_cohorts no_coding
 
 #### Run the GWAS
 ```
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_no_coding_GWAS.sh no_PDlinked_coding
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 IPDGC_no_coding_GWAS.sh no_coding
 
 # Reformat
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 reformat() {
 gwas_type=$1
 # Loop over to reformat the .hybrid files into .txt files
-cat /data/LNG/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
+cat /PATH/TO/Julie/Julie_LRRK2_Condi/cohort_file.txt | while read line
 do
-  cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}/${gwas_type}_GWAS_CHR12/
-  Rscript --vanilla /data/LNG/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R ${gwas_type}_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid
+  cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}/${gwas_type}_GWAS_CHR12/
+  Rscript --vanilla /PATH/TO/Julie/Julie_LRRK2_Condi/reformat_IPDGC.R ${gwas_type}_GWAS_CHR12.$line.PHENO_PLINK.glm.logistic.hybrid
 done
 }
 
@@ -171,10 +171,10 @@ reformat no_PDlinked_coding
 reformat no_coding
 
 # Organize the files 
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 organize() {
   gwas_type=$1
-  cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}/
+  cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${gwas_type}/
   mkdir ${gwas_type}_COVARIATES
   mv *${gwas_type}.eigenvec ${gwas_type}_COVARIATES
   mv LRRK2_condi_covariates_${gwas_type}* ${gwas_type}_COVARIATES
@@ -193,20 +193,20 @@ organize no_coding
 #### Create covariate files removing LRRK2 coding variants
 ```
 # Determine LRRK2 carrier status
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 module load plink/2.3-alpha
-plink2 --bgen /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb_imp_chr12_v3.bgen --snps rs33995463, rs7308720, rs10878307, rs7133914, rs35507033, rs33958906, rs35303786, rs34637584, rs33995883 --make-bed --sample /data/CARD/UKBIOBANK/IMPUTED_DATA/ukb33601_imp_chr1_v3_s487395.sample --out LRRK2_no_coding_GWAS_UKB
+plink2 --bgen /PATH/TO/UKBIOBANK/IMPUTED_DATA/ukb_imp_chr12_v3.bgen --snps rs33995463, rs7308720, rs10878307, rs7133914, rs35507033, rs33958906, rs35303786, rs34637584, rs33995883 --make-bed --sample /PATH/TO/UKBIOBANK/IMPUTED_DATA/ukb33601_imp_chr1_v3_s487395.sample --out LRRK2_no_coding_GWAS_UKB
 module load plink
 plink --bfile LRRK2_no_coding_GWAS_UKB --recodeA --out LRRK2_no_coding_GWAS_UKB2
 
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 module load R
 R
 require(data.table)
 require(dplyr)
-PD_normal <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_PD_cases_control_over60.txt",header=T)
+PD_normal <- fread("/PATH/TO/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_PD_cases_control_over60.txt",header=T)
 PD_normal <- PD_normal[,c(1:5)]
-Proxy_normal <- fread("/data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_Proxy_cases_control_over60.txt",header=T)
+Proxy_normal <- fread("/PATH/TO/Julie/Julie_LRRK2_Condi/UKB_GWAS/UKB_Proxy_cases_control_over60.txt",header=T)
 Proxy_normal <- Proxy_normal[,c(1:5)]
 LRRK2_status <- fread("LRRK2_no_coding_GWAS_UKB2.raw",header=T)
 LRRK2_status$IID <- NULL
@@ -235,29 +235,29 @@ n
 module load flashpca
 module load plink
 
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 mkdir UKB_no_coding_GWAS
 cd UKB_no_coding_GWAS
 
-sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/flashpca_UKB_no_coding.sh no_PDlinked_coding
-sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/flashpca_UKB_no_coding.sh no_coding
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/flashpca_UKB_no_coding.sh no_PDlinked_coding
+sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/flashpca_UKB_no_coding.sh no_coding
 
 # Merge files in R
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
 module load R
 R
 require(data.table)
 require(dplyr)
 # Load the full covariates file
-cov <- fread("/data/CARD/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
+cov <- fread("/PATH/TO/UKBIOBANK/ICD10_UKBB/Covariates/covariates_phenome_final.txt",header=T)
 # Remove the PC columns from cov so that we can merge with the new PCs
 cov2 <- cov %>% select(1:8)
 # Pull the subset phenotype files from your working directory
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS", pattern="^UKB_P")
+file.names <- dir("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS", pattern="^UKB_P")
 for(file in file.names) {  
   pc <- fread(paste("pcs_",file,sep=""),header=T)
   pc$IID <- NULL
-  pheno <- fread(paste("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",file,sep=""),header=T)
+  pheno <- fread(paste("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/",file,sep=""),header=T)
   # This info will become redundant when merging, keep (PD/CONTROL/PROXY) STATUS and LRRK2 carrier status
   pheno$IID <- pheno$SEX <- pheno$AGE <- NULL
   Mrg = merge(cov2,pheno,by='FID')
@@ -268,7 +268,7 @@ q()
 n
 
 # Replace PD/CONTROL/PROXY STATUS with numbers
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
 ls COV_UKB_P* > UKB_COV_files.txt
 
 cat UKB_COV_files.txt | while read line
@@ -293,13 +293,13 @@ rm pruned_data*
 
 #### Perform GWAS
 ```
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
 module load plink/2.0-dev-20191128
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 UKB_GWAS_no_coding.sh no_PDlinked_coding
 sbatch --cpus-per-task=16 --mem=200g --mail-type=ALL --time=24:00:00 UKB_GWAS_no_coding.sh no_coding
 
 # Reformat plink2 GWAS output
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
 ls COV_UKB_P*.hybrid > GWAS_files.txt
 module load python/3.6
 cat GWAS_files.txt | while read line
@@ -308,10 +308,10 @@ do
   awk '{ if($13 >= 0.0001) { print }}' $line > input.txt
   # Reformat the plink2 results for meta-analysis using python
   if [[ $line == "COV_UKB_PD"* ]]; then
-    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
+    python /PATH/TO/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
     --outfile toMeta.${line%%.*}.txt --B-or-C B
   elif [[ $line == "COV_UKB_Proxy"* ]]; then
-    python /data/CARD/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
+    python /PATH/TO/projects/CHR_X/UKBB/RESULTS/reformat_plink2_results.py --infile input.txt \
     --outfile toProxy.${line%%.*}.txt --B-or-C B; fi
 done
 
@@ -321,7 +321,7 @@ module load R
 R
 require(data.table)
 require(dplyr)
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS", pattern="toProxy") 
+file.names <- dir("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS", pattern="toProxy") 
 for(file in file.names) {  
   data <- fread(file,header=T)
   newname <- file %>% gsub(pattern=".txt", replacement=".csv") %>% gsub(pattern="toProxy",replacement="toConvert")
@@ -337,7 +337,7 @@ do
     pattern="toConvert"
     replacement="toMeta"
     newname="${line/$pattern/$replacement}"
-    python /data/CARD/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxStyle.py \
+    python /PATH/TO/projects/CHR_X/UKBB/RESULTS/Proxy_conversion/proxy_gwas_gwaxStyle.py \
     --infile $line --beta-proxy beta --se-proxy se --p-proxy P --outfile $newname
 done
 
@@ -345,7 +345,7 @@ done
 R
 require(data.table)
 require(dplyr)
-file.names <- dir("/data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS", pattern="toMeta.COV_UKB_Proxy.*csv") 
+file.names <- dir("/PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS", pattern="toMeta.COV_UKB_Proxy.*csv") 
 for(file in file.names) {  
   data <- fread(file,header=T)
   newname <- file %>% gsub(pattern=".csv", replacement=".txt")
@@ -355,7 +355,7 @@ q()
 n
 
 # Reformat and move to the same directory as the IPDGC CHR12 files for meta-analysis
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/UKB_no_coding_GWAS
 
 ls toMeta*.txt > meta_files.txt
 cat meta_files.txt | while read line
@@ -368,25 +368,25 @@ do
     newname1="${line/$pattern1/$replacement}"
     newname2="${newname1/$pattern2/$replacement}"
     if [[ $line == "toMeta.COV_UKB_PD"* ]]; then
-        cut -f1-7 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBPD.txt
+        cut -f1-7 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $7, $4, $5, $6}' > /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBPD.txt
     elif [[ $line == "toMeta.COV_UKB_Proxy"* ]]; then
-        cut -f1,2,3,7,15,16,17 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBproxy.txt; fi
+        cut -f1,2,3,7,15,16,17 $line | awk 'BEGIN {FS="\t"; OFS="\t"} {print $1, $3, $2, $4, $5, $6, $7}' > /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/${newname2}/${newname2}_GWAS_CHR12/${newname2}_GWAS_CHR12.UKBproxy.txt; fi
 done
 ```
 ### Forest plot of rs76904798 association after removing PD-linked and all rare LRRK2 coding variants 
 ```
-cd /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS
 
-head -1 /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.DUTCH.txt > header.txt
-grep "12:40614434" /data/LNG/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL*txt > temp
+head -1 /PATH/TO/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL_GWAS_CHR12.DUTCH.txt > header.txt
+grep "12:40614434" /PATH/TO/Julie/Julie_LRRK2_Condi/NORMAL_GWAS_CHR12/NORMAL*txt > temp
 cat header.txt temp > NORMAL_12:40614434.txt
 sed -e 's/.*GWAS_CHR12.//g' NORMAL_12:40614434.txt |  sed -e 's/.txt:12:40614434//g' > NORMAL_12:40614434v2.txt
 
-grep "12:40614434" /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/no_coding/no_coding_GWAS_CHR12/no_coding_GWAS_CHR12.*.txt > temp
+grep "12:40614434" /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/no_coding/no_coding_GWAS_CHR12/no_coding_GWAS_CHR12.*.txt > temp
 cat header.txt temp > no_coding_12:40614434.txt
 sed -e 's/.*GWAS_CHR12.//g' no_coding_12:40614434.txt | sed -e 's/.txt:12:40614434//g' > no_coding_12:40614434v2.txt
 
-grep "12:40614434" /data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/no_PDlinked_coding/no_PDlinked_coding_GWAS_CHR12/no_PDlinked_coding_GWAS_CHR12.*.txt > temp
+grep "12:40614434" /PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/no_PDlinked_coding/no_PDlinked_coding_GWAS_CHR12/no_PDlinked_coding_GWAS_CHR12.*.txt > temp
 cat header.txt temp > no_PDlinked_coding_12:40614434.txt
 sed -e 's/.*GWAS_CHR12.//g' no_PDlinked_coding_12:40614434.txt |  sed -e 's/.txt:12:40614434//g' > no_PDlinked_coding_12:40614434v2.txt
 
@@ -455,7 +455,7 @@ dev.off()
 q()
 n
 
-scp lakejs@biowulf.nih.gov://data/LNG/Julie/Julie_LRRK2_Condi/no_coding_GWAS/12:40614434_combined.pdf /Users/lakejs/Desktop/
+scp lakejs@biowulf.nih.gov://PATH/TO/Julie/Julie_LRRK2_Condi/no_coding_GWAS/12:40614434_combined.pdf /Users/lakejs/Desktop/
 ```
 
 Main conclusion => rs76904798 association signal is independent of LRRK2 coding variants
