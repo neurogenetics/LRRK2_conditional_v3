@@ -1706,7 +1706,7 @@ df.to_csv(outfile, index=False)
 
 ```
 # Convert the "normalized" proxy .csv files back to .txt files
-cd /data/LNG/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output
+cd /PATH/TO/Julie/Julie_LRRK2_Condi/UKB_GWAS/GWAS_output
 module load R
 R
 require(data.table)
