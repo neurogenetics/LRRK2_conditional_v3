@@ -8,7 +8,7 @@
 2) IPDGC data and LNG WGS => genotypes vs genome seq
 
 working dir:
-cd /data/CARD/projects/LRRK2_sandbox/
+cd /PATH/TO/projects/LRRK2_sandbox/
 
 Tl;dr => Imputation of LRRK2 coding variants is pretty accurate...
 
@@ -22,7 +22,7 @@ UK Biobank => genotypes vs exome seq
 ##### Processing imputed genotype data (hg19)
 ```
 # using imputed genotyped from:
-cd /data/CARD/UKBIOBANK/IMPUTED_DATA/
+cd /PATH/TO/UKBIOBANK/IMPUTED_DATA/
 
 # subset LRRK2 area
 module load plink/2.3-alpha
@@ -32,10 +32,10 @@ plink2 --bgen ukb_imp_chr12_v3.bgen --chr 12 --from-kb 40604 --to-kb 40769 \
 # 5224 variants remaining after main filters.
 
 # copy to working dir
-scp LRRK2_area.* /data/CARD/projects/LRRK2_sandbox
+scp LRRK2_area.* /PATH/TO/projects/LRRK2_sandbox
 
 # working in sandbox
-cd /data/CARD/projects/LRRK2_sandbox/
+cd /PATH/TO/projects/LRRK2_sandbox/
 
 plink2 --pfile LRRK2_area --make-bed --out LRRK2_area_imputed
 
@@ -50,7 +50,7 @@ plink2 --bfile LRRK2_area_imputed --extract RS_to_keep.txt --make-bed --out LRRK
 ##### Processing exome sequencing data
 ```
 # using exome sequencing data from:
-cd /data/CARD/UKBIOBANK/EXOME_DATA_200K/PLINK_files/
+cd /PATH/TO/UKBIOBANK/EXOME_DATA_200K/PLINK_files/
 
 module load plink/2.3-alpha
 plink2 --bed ukb23155_c12_b0_v1.bed --fam ukb23155_c1_b0_v1_s200632.fam \
@@ -58,10 +58,10 @@ plink2 --bed ukb23155_c12_b0_v1.bed --fam ukb23155_c1_b0_v1_s200632.fam \
 # 3692 variants remaining after main filters.
 
 # copy to working dir
-scp LRRK2_area_exome.* /data/CARD/projects/LRRK2_sandbox
+scp LRRK2_area_exome.* /PATH/TO/projects/LRRK2_sandbox
 
 # working in sandbox
-cd /data/CARD/projects/LRRK2_sandbox/
+cd /PATH/TO/projects/LRRK2_sandbox/
 
 grep -f extract_exome_variants.txt LRRK2_area_exome.bim | cut -f 2 > exome_to_RS.txt
 
@@ -130,17 +130,17 @@ IPDGC => IPDGC_overlap_with_WGS.txt
 ##### Processing imputed genotype data (hg19)
 ```
 # using imputed genotyped from:
-cd /data/LNG/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
+cd /PATH/TO/CORNELIS_TEMP/PD_FINAL_PLINK_2018/
 HARDCALLS_PD_september_2018_no_cousins.
 
 module load plink/2.3-alpha
 
-plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --keep /data/CARD/projects/LRRK2_sandbox/IPDGC_overlap_with_WGS.txt \
---make-bed --out /data/CARD/projects/LRRK2_sandbox/IPDGC_overlap_WGS --mac 1 
+plink2 --bfile HARDCALLS_PD_september_2018_no_cousins --keep /PATH/TO/projects/LRRK2_sandbox/IPDGC_overlap_with_WGS.txt \
+--make-bed --out /PATH/TO/projects/LRRK2_sandbox/IPDGC_overlap_WGS --mac 1 
 # 1947 samples
 
 # subset variants of interest
-cd /data/CARD/projects/LRRK2_sandbox/
+cd /PATH/TO/projects/LRRK2_sandbox/
 plink2 --bfile IPDGC_overlap_WGS --extract IPDGC_variants_to_RS.txt --update-ids update_fam_IPDGC.txt --keep WGS_overlap_IPDGC.fam \
 --out IPDGC_for_merge --make-bed 
 # 1899 samples remaining
@@ -153,15 +153,15 @@ plink2 --bfile IPDGC_for_merge --extract IPDGC_variants_to_RS.txt --update-name 
 ##### Processing genome sequencing data
 ```
 # using genome sequencing data from:
-cd /data/CARD/PD/GENOMES/august19/genotypes/
+cd /PATH/TO/PD/GENOMES/august19/genotypes/
 
 module load plink/2.3-alpha
-plink2 --pfile pd.june2019.chr12.sqc --keep /data/CARD/projects/LRRK2_sandbox/WGS_overlap_with_IPDGC.txt \
---make-bed --out /data/CARD/projects/LRRK2_sandbox/WGS_overlap_IPDGC --mac 1 
+plink2 --pfile pd.june2019.chr12.sqc --keep /PATH/TO/projects/LRRK2_sandbox/WGS_overlap_with_IPDGC.txt \
+--make-bed --out /PATH/TO/projects/LRRK2_sandbox/WGS_overlap_IPDGC --mac 1 
 # 1899 samples
 
 # subset variants of interest
-cd /data/CARD/projects/LRRK2_sandbox/
+cd /PATH/TO/projects/LRRK2_sandbox/
 plink2 --bfile WGS_overlap_IPDGC --extract WGS_variants_to_RS.txt  \
 --out WGS_for_merge --make-bed 
 # 1899 samples remaining
