@@ -4,7 +4,7 @@
 
  - **Project:** LRRK2 conditional GWAS
  - **Author(s):** Cornelis Blauwendraat, Julie Lake, Hampton Leonard (LNG)
- - **Date Last Updated:** March 2021
+ - **Date Last Updated:** June 2021
     - **Update Description:** Edits to README
 
 ---
@@ -89,11 +89,12 @@ module load plink
 
 # Simple test
 plink --bfile /PATH/TO/CORNELIS_TEMP/PD_FINAL_PLINK_2018/HARDCALLS_PD_september_2018_no_cousins --snps 12:40734202,12:40614434 --assoc --out test
-# Among remaining phenotypes, 21478 are cases and 24388 are controls.
  CHR           SNP         BP   A1      F_A      F_U   A2        CHISQ            P           OR 
   12   12:40614434   40614434    T   0.1564   0.1406    C        45.29    1.702e-11        1.133 
   12   12:40734202   40734202    A 0.007297 0.0005648    G        203.6    3.346e-46        13.01 
 # Confirming associations, so thats good :)
+# Please note that these associations were calculated using a chi-square allelic test
+# These results do not include the covariates used in the final logistic regression model nor do they include data from the UK Biobank
 
 rm test* 
 ```
@@ -1344,31 +1345,6 @@ done
 # This is reformat_plink2_results.py
 
 # -*- coding: utf-8 -*-
-"""
-# Intro
- - **Project:** GenoML
- - **Author(s):** Mary B. Makarious, Mike A. Nalls, Juan Botia, Hampton Leonard
- - **Date Notebook Started:** 19.09.2019
-    - **Quick Description:** Notebook relating to experimental implementation of networkx for community generation.
-
----
-### Quick Description: 
-**Problem:** Many software have been used for building networks, within a biological context and in social network and sales analysis. Lets try to do something outside of simple networks.
-
-**Solution:** Lets try to use networkx prioritizing adding Louvain community detection through its widespread application in business https://iopscience.iop.org/article/10.1088/1742-5468/2008/10/P10008. Eventualy we will add decomposition tree based analyses as suggested by https://www.nature.com/articles/s41467-018-03424-4. 
-
-### Motivation/Background:
-Data suggests we can do better than very simple coexpression networks also more flexible for SNPs and clinical in nodes?  
-
-### Concerns/Impact on Related Code: 
-- Depends on switch to detect discrete or continuous workflows.
-
-### Thoughts for Future Development of Code in this Notebook: 
-- Networks could be helpful in partitioning samples and unsupervised learning.
-
-# Imports
-"""
-
 import argparse
 import sys
 import pandas as pd
